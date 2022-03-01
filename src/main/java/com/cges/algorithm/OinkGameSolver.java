@@ -22,7 +22,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 public final class OinkGameSolver {
-  private static final String OINK_EXECUTABLE_NAME = "/home/master/tools/oink/build/oink";
+  private static final String OINK_EXECUTABLE_NAME = "oink";
 
   private OinkGameSolver() {
   }

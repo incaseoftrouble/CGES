@@ -5,8 +5,6 @@ import static com.google.common.base.Preconditions.checkState;
 
 import com.cges.model.RunGraph;
 import com.cges.model.RunGraph.State;
-import com.google.common.collect.Lists;
-import com.google.common.collect.Sets;
 import com.microsoft.z3.BitVecExpr;
 import com.microsoft.z3.BitVecNum;
 import com.microsoft.z3.BitVecSort;
@@ -15,127 +13,25 @@ import com.microsoft.z3.BoolSort;
 import com.microsoft.z3.Context;
 import com.microsoft.z3.Expr;
 import com.microsoft.z3.Model;
-import com.microsoft.z3.SeqSort;
 import com.microsoft.z3.Solver;
 import com.microsoft.z3.Status;
 import com.microsoft.z3.Z3Exception;
-import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
-import java.util.Queue;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
-import owl.automaton.algorithm.SccDecomposition;
 
-public final class BoundedChecker {
-  private record SccPair(Set<State> scc, Set<State> accepting) {}
+public final class RunGraphBmcSolver {
+  private static final Logger logger = Logger.getLogger(RunGraphBmcSolver.class.getName());
 
-  private static final Logger logger = Logger.getLogger(BoundedChecker.class.getName());
-
-  private BoundedChecker() {}
-
-  public static List<State> checkScc(RunGraph graph) {
-    Set<State> acceptingStates = graph.states().stream().filter(State::accepting).collect(Collectors.toSet());
-    List<SccPair> sccs = SccDecomposition.of(graph.initialStates(), graph::successors).sccsWithoutTransient()
-        .stream()
-        .map(scc -> new SccPair(scc, Set.copyOf(Sets.intersection(scc, acceptingStates))))
-        .filter(pair -> !pair.accepting().isEmpty())
-        .toList();
-    Set<State> statesInAcceptingSccs = sccs.stream().map(SccPair::scc).flatMap(Collection::stream).collect(Collectors.toSet());
-
-    List<State> path = new ArrayList<>();
-    {
-      Set<State> states = new HashSet<>(graph.initialStates());
-      Queue<State> queue = new ArrayDeque<>(states);
-      Map<State, State> predecessor = new HashMap<>();
-
-      while (!queue.isEmpty()) {
-        State current = queue.poll();
-        if (statesInAcceptingSccs.contains(current)) {
-          while (current != null) {
-            path.add(current);
-            current = predecessor.get(current);
-          }
-          break;
-        }
-        for (State successor : graph.successors(current)) {
-          if (states.add(successor)) {
-            predecessor.put(successor, current);
-            queue.add(successor);
-          }
-        }
-      }
-    }
-    if (path.isEmpty()) {
-      return path;
-    }
-    State recurrentState = path.get(0);
-    SccPair scc = sccs.stream().filter(pair -> pair.scc().contains(recurrentState)).findAny().orElseThrow();
-
-    List<State> sccPath = new ArrayList<>();
-    {
-      Set<State> states = new HashSet<>(List.of(recurrentState));
-      Queue<State> queue = new ArrayDeque<>(states);
-      Map<State, State> predecessor = new HashMap<>();
-
-      while (!queue.isEmpty()) {
-        State current = queue.poll();
-        if (current.accepting()) {
-          while (current != null) {
-            sccPath.add(current);
-            current = predecessor.get(current);
-          }
-          break;
-        }
-        for (State successor : Sets.intersection(graph.successors(current), scc.scc())) {
-          if (states.add(successor)) {
-            predecessor.put(successor, current);
-            queue.add(successor);
-          }
-        }
-      }
-    }
-
-    State acceptingState = sccPath.get(0);
-    List<State> sccRecurrentPath = new ArrayList<>();
-    {
-      Set<State> states = new HashSet<>(List.of(acceptingState));
-      Queue<State> queue = new ArrayDeque<>(states);
-      Map<State, State> predecessor = new HashMap<>();
-
-      while (!queue.isEmpty()) {
-        State current = queue.poll();
-        if (current.equals(acceptingState)) {
-          while (current != null) {
-            sccRecurrentPath.add(current);
-            current = predecessor.get(current);
-          }
-          break;
-        }
-        for (State successor : Sets.intersection(graph.successors(current), scc.scc())) {
-          if (states.add(successor)) {
-            predecessor.put(successor, current);
-            queue.add(successor);
-          }
-        }
-      }
-    }
-
-    List<State> loop = new ArrayList<>();
-    loop.addAll(sccRecurrentPath);
-    loop.addAll(sccPath);
-    loop.addAll(path);
-    return Lists.reverse(loop);
-  }
+  private RunGraphBmcSolver() {}
 
   @SuppressWarnings("unchecked")
   public static List<State> check(RunGraph graph) {
@@ -276,7 +172,6 @@ public final class BoundedChecker {
           stepStateExpressions[step].put(state, ctx.mkEq(ctx.mkBV(index, bits), stepVariables[step]));
         }
       }
-      SeqSort<BitVecSort> seqSort = ctx.mkSeqSort(ctx.mkBitVecSort(bits));
 
       Solver solver = ctx.mkSolver();
       solver.add(ctx.mkOr(graph.initialStates().stream()

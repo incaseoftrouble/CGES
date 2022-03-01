@@ -1,6 +1,6 @@
 package com.cges;
 
-import com.cges.algorithm.BoundedChecker;
+import com.cges.algorithm.RunGraphSccSolver;
 import com.cges.algorithm.SuspectSolver;
 import com.cges.model.ConcurrentGame;
 import com.cges.model.RunGraph;
@@ -25,7 +25,7 @@ public class Main {
       System.out.println("Winning: " + stopwatch);
       RunGraph runGraph = RunGraph.create(suspectGame, winningEveStates);
       System.out.println("Run: " + stopwatch);
-      List<RunGraph.State> lasso = BoundedChecker.checkScc(runGraph);
+      List<RunGraph.State> lasso = RunGraphSccSolver.solve(runGraph);
       System.out.println("Lasso: " + stopwatch);
       System.out.println(lasso.size());
       System.out.println(lasso);
