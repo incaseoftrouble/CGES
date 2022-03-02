@@ -15,8 +15,13 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import owl.automaton.algorithm.SccDecomposition;
 
-public class RunGraphSccSolver {
+public final class RunGraphSccSolver {
+  private RunGraphSccSolver() {}
+
   public static List<RunGraph.State> solve(RunGraph graph) {
+    // TODO This is a bit messy, to obtain minimal lasso probably should run a dijkstra on the graph and for each encountered accepting
+    //  state run a BFS searching for a loop back to itself in lockstep
+
     Set<RunGraph.State> acceptingStates = graph.states().stream().filter(RunGraph.State::accepting).collect(Collectors.toSet());
     List<Set<RunGraph.State>> sccs = SccDecomposition.of(graph.initialStates(), graph::successors).sccsWithoutTransient()
         .stream()
