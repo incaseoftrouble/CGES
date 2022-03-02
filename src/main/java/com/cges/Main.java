@@ -1,5 +1,7 @@
 package com.cges;
 
+import static com.google.common.base.Preconditions.checkState;
+
 import com.cges.algorithm.RunGraphSccSolver;
 import com.cges.algorithm.SuspectSolver;
 import com.cges.model.ConcurrentGame;
@@ -27,6 +29,7 @@ public class Main {
       System.out.println("Run: " + stopwatch);
       List<RunGraph.State> lasso = RunGraphSccSolver.solve(runGraph);
       System.out.println("Lasso: " + stopwatch);
+      checkState(runGraph.isAcceptingLasso(lasso));
       System.out.println(lasso.size());
       System.out.println(lasso);
     }

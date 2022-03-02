@@ -18,12 +18,11 @@ import owl.automaton.algorithm.SccDecomposition;
 public class RunGraphSccSolver {
   public static List<RunGraph.State> solve(RunGraph graph) {
     Set<RunGraph.State> acceptingStates = graph.states().stream().filter(RunGraph.State::accepting).collect(Collectors.toSet());
-    List<SccPair> sccs = SccDecomposition.of(graph.initialStates(), graph::successors).sccsWithoutTransient()
+    List<Set<RunGraph.State>> sccs = SccDecomposition.of(graph.initialStates(), graph::successors).sccsWithoutTransient()
         .stream()
-        .map(scc -> new SccPair(scc, Set.copyOf(Sets.intersection(scc, acceptingStates))))
-        .filter(pair -> !pair.accepting().isEmpty())
+        .filter(scc -> !Sets.intersection(scc, acceptingStates).isEmpty())
         .toList();
-    Set<RunGraph.State> statesInAcceptingSccs = sccs.stream().map(SccPair::scc).flatMap(Collection::stream).collect(Collectors.toSet());
+    Set<RunGraph.State> statesInAcceptingSccs = sccs.stream().flatMap(Collection::stream).collect(Collectors.toSet());
 
     List<RunGraph.State> path = new ArrayList<>();
     {
@@ -49,10 +48,10 @@ public class RunGraphSccSolver {
       }
     }
     if (path.isEmpty()) {
-      return path;
+      return List.of();
     }
     RunGraph.State recurrentState = path.get(0);
-    SccPair scc = sccs.stream().filter(pair -> pair.scc().contains(recurrentState)).findAny().orElseThrow();
+    Set<RunGraph.State> scc = sccs.stream().filter(c -> c.contains(recurrentState)).findAny().orElseThrow();
 
     List<RunGraph.State> sccPath = new ArrayList<>();
     {
@@ -63,13 +62,13 @@ public class RunGraphSccSolver {
       while (!queue.isEmpty()) {
         RunGraph.State current = queue.poll();
         if (current.accepting()) {
-          while (current != null) {
+          while (!current.equals(recurrentState)) {
             sccPath.add(current);
             current = predecessor.get(current);
           }
           break;
         }
-        for (RunGraph.State successor : Sets.intersection(graph.successors(current), scc.scc())) {
+        for (RunGraph.State successor : Sets.intersection(graph.successors(current), scc)) {
           if (states.add(successor)) {
             predecessor.put(successor, current);
             queue.add(successor);
@@ -78,23 +77,26 @@ public class RunGraphSccSolver {
       }
     }
 
-    RunGraph.State acceptingState = sccPath.get(0);
+    RunGraph.State acceptingState = sccPath.isEmpty() ? recurrentState : sccPath.get(0);
     List<RunGraph.State> sccRecurrentPath = new ArrayList<>();
     {
-      Set<RunGraph.State> states = new HashSet<>(List.of(acceptingState));
+      Set<RunGraph.State> states = new HashSet<>(graph.successors(acceptingState));
       Queue<RunGraph.State> queue = new ArrayDeque<>(states);
       Map<RunGraph.State, RunGraph.State> predecessor = new HashMap<>();
+      for (RunGraph.State state : states) {
+        predecessor.put(state, acceptingState);
+      }
 
       while (!queue.isEmpty()) {
         RunGraph.State current = queue.poll();
         if (current.equals(acceptingState)) {
-          while (current != null) {
+          do {
             sccRecurrentPath.add(current);
             current = predecessor.get(current);
-          }
+          } while (!current.equals(acceptingState));
           break;
         }
-        for (RunGraph.State successor : Sets.intersection(graph.successors(current), scc.scc())) {
+        for (RunGraph.State successor : Sets.intersection(graph.successors(current), scc)) {
           if (states.add(successor)) {
             predecessor.put(successor, current);
             queue.add(successor);
@@ -109,6 +111,4 @@ public class RunGraphSccSolver {
     loop.addAll(path);
     return Lists.reverse(loop);
   }
-
-  private record SccPair(Set<RunGraph.State> scc, Set<RunGraph.State> accepting) {}
 }

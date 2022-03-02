@@ -6,6 +6,7 @@ import de.tum.in.naturals.bitset.BitSets;
 import java.util.ArrayDeque;
 import java.util.BitSet;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -109,6 +110,30 @@ public final class RunGraph {
     return successors.get(state);
   }
 
-  public record State(Object automatonState, SuspectGame.EveState eveState, boolean accepting) {
+  public boolean isAcceptingLasso(List<RunGraph.State> lasso) {
+    if (lasso.size() < 2) {
+      return false;
+    }
+    Iterator<State> iterator = lasso.iterator();
+    State current = iterator.next();
+    if (!initialStates.contains(current)) {
+      return false;
+    }
+    while (iterator.hasNext()) {
+      State next = iterator.next();
+      if (!successors.get(current).contains(next)) {
+        return false;
+      }
+      current = next;
+    }
+
+    State lastState = current;
+    int firstOccurrence = lasso.indexOf(lastState);
+    if (firstOccurrence == lasso.size() - 1) {
+      return false;
+    }
+    return lasso.subList(firstOccurrence, lasso.size() - 1).stream().anyMatch(State::accepting);
   }
+
+  public record State(Object automatonState, SuspectGame.EveState eveState, boolean accepting) {}
 }
