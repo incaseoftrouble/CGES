@@ -1,0 +1,122 @@
+{
+  "name": "gossip2",
+  "ap": [
+    "g1",
+    "g2"
+  ],
+  "agents": {
+    "A1": {
+      "goal": "G F g1",
+      "payoff": true,
+      "actions": [
+        "a",
+        "g",
+        "w"
+      ]
+    },
+    "A2": {
+      "goal": "G F g2",
+      "payoff": true,
+      "actions": [
+        "a",
+        "g",
+        "w"
+      ]
+    }
+  },
+  "arena": {
+    "initial": "s0",
+    "states": {
+      "s0": {
+        "labels": [],
+        "transitions": [
+          {
+            "actions": {
+              "A1": "a",
+              "A2": "a"
+            },
+            "to": "s0"
+          },
+          {
+            "actions": {
+              "A1": "a",
+              "A2": "g"
+            },
+            "to": "s1"
+          },
+          {
+            "actions": {
+              "A1": "g",
+              "A2": "a"
+            },
+            "to": "s2"
+          },
+          {
+            "actions": {
+              "A1": "g",
+              "A2": "g"
+            },
+            "to": "s3"
+          }
+        ]
+      },
+      "s1": {
+        "labels": [
+          "g2"
+        ],
+        "transitions": [
+          {
+            "actions": {
+              "A1": "a",
+              "A2": "w"
+            },
+            "to": "s1"
+          },
+          {
+            "actions": {
+              "A1": "g",
+              "A2": "w"
+            },
+            "to": "s3"
+          }
+        ]
+      },
+      "s2": {
+        "labels": [
+          "g1"
+        ],
+        "transitions": [
+          {
+            "actions": {
+              "A1": "w",
+              "A2": "a"
+            },
+            "to": "s2"
+          },
+          {
+            "actions": {
+              "A1": "w",
+              "A2": "g"
+            },
+            "to": "s3"
+          }
+        ]
+      },
+      "s3": {
+        "labels": [
+          "g1",
+          "g2"
+        ],
+        "transitions": [
+          {
+            "actions": {
+              "A1": "a",
+              "A2": "a"
+            },
+            "to": "s0"
+          }
+        ]
+      }
+    }
+  }
+}

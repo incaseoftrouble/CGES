@@ -1,0 +1,87 @@
+{
+  "name": "gossip2",
+  "ap": [
+    "g1",
+    "g2"
+  ],
+  "modules": {
+    "A1": {
+      "goal": "G F g1",
+      "payoff": true,
+      "actions": ["a", "g", "w"],
+      "labels": ["g1"],
+      "initial": "s11",
+      "states": {
+        "s11": {
+          "labels": [],
+          "transitions": [
+            {
+              "action": "a",
+              "guard": "true",
+              "to": "s11"
+            },
+            {
+              "action": "g",
+              "guard": "true",
+              "to": "s12"
+            }
+          ]
+        },
+        "s12": {
+          "labels": ["g1"],
+          "transitions": [
+            {
+              "action": "w",
+              "guard": "!g2",
+              "to": "s12"
+            },
+            {
+              "action": "a",
+              "guard": "g2",
+              "to": "s11"
+            }
+          ]
+        }
+      }
+    },
+    "A2": {
+      "goal": "G F g2",
+      "payoff": true,
+      "actions": ["a", "g", "w"],
+      "labels": ["g2"],
+      "initial": "s21",
+      "states": {
+        "s21": {
+          "labels": [],
+          "transitions": [
+            {
+              "action": "a",
+              "guard": "true",
+              "to": "s21"
+            },
+            {
+              "action": "g",
+              "guard": "true",
+              "to": "s22"
+            }
+          ]
+        },
+        "s22": {
+          "labels": ["g2"],
+          "transitions": [
+            {
+              "action": "w",
+              "guard": "!g1",
+              "to": "s22"
+            },
+            {
+              "action": "a",
+              "guard": "g1",
+              "to": "s21"
+            }
+          ]
+        }
+      }
+    }
+  }
+}

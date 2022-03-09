@@ -1,12 +1,11 @@
-package com.cges.model;
+package com.cges.algorithm;
 
+import static com.cges.algorithm.SuspectParityGame.PriorityState;
 import static com.google.common.base.Preconditions.checkArgument;
 
-import com.cges.algorithm.OinkGameSolver;
 import com.google.common.collect.ImmutableSetMultimap;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.SetMultimap;
-import de.tum.in.naturals.bitset.BitSets;
 import java.util.ArrayDeque;
 import java.util.BitSet;
 import java.util.Collection;
@@ -25,24 +24,25 @@ import owl.automaton.Automaton;
 import owl.automaton.acceptance.ParityAcceptance;
 import owl.automaton.edge.Edge;
 
-public final class SuspectParityGame implements OinkGameSolver.ParityGame<SuspectParityGame.PriorityState> {
-  private final PriorityState initialState;
-  private final Set<PriorityState> states;
-  private final SetMultimap<PriorityState, PriorityState> successors;
+public final class SuspectParityGame<S> implements OinkGameSolver.ParityGame<PriorityState<S>> {
+  private final PriorityState<S> initialState;
+  private final Set<PriorityState<S>> states;
+  private final SetMultimap<PriorityState<S>, PriorityState<S>> successors;
 
-  private SuspectParityGame(PriorityState initialState, Set<PriorityState> states, SetMultimap<PriorityState, PriorityState> successors) {
+  private SuspectParityGame(PriorityState<S> initialState, Set<PriorityState<S>> states,
+      SetMultimap<PriorityState<S>, PriorityState<S>> successors) {
     this.initialState = initialState;
-    this.states = states;
-    this.successors = successors;
+    this.states = Set.copyOf(states);
+    this.successors = ImmutableSetMultimap.copyOf(successors);
   }
 
-  public static SuspectParityGame create(SuspectGame suspectGame, SuspectGame.EveState eveState, Automaton<Object, ParityAcceptance> dpa,
-      @Nullable Predicate<SuspectGame.EveState> winningStates) {
+  public static <S> SuspectParityGame<S> create(SuspectGame<S> suspectGame, SuspectGame.EveState<S> eveState,
+      Automaton<Object, ParityAcceptance> dpa, @Nullable Predicate<SuspectGame.EveState<S>> winningStates) {
     checkArgument(dpa.acceptance().parity().equals(ParityAcceptance.Parity.MIN_EVEN));
-    PriorityState initialState = new PriorityState(dpa.onlyInitialState(), eveState, 0);
-    Queue<PriorityState> queue = new ArrayDeque<>(List.of(initialState));
-    Set<PriorityState> states = new HashSet<>(queue);
-    ImmutableSetMultimap.Builder<PriorityState, PriorityState> successors = ImmutableSetMultimap.builder();
+    PriorityState<S> initialState = new PriorityState<>(dpa.onlyInitialState(), eveState, 0);
+    Queue<PriorityState<S>> queue = new ArrayDeque<>(List.of(initialState));
+    Set<PriorityState<S>> states = new HashSet<>(queue);
+    ImmutableSetMultimap.Builder<PriorityState<S>, PriorityState<S>> successors = ImmutableSetMultimap.builder();
 
     List<String> propositions = dpa.factory().atomicPropositions();
     Map<String, Integer> propositionIndex = IntStream.range(0, propositions.size())
@@ -55,88 +55,93 @@ public final class SuspectParityGame implements OinkGameSolver.ParityGame<Suspec
       // Ensure that maximum priority is odd, so if priority is even then maximumPriority - priority is odd
       maximumPriority += 1;
     }
-    PriorityState winningState = new PriorityState(null, null, 1);
+    PriorityState<S> winningState = new PriorityState<>(null, null, 1);
 
     while (!queue.isEmpty()) {
-      PriorityState current = queue.poll();
-      Collection<PriorityState> currentSuccessors;
+      PriorityState<S> current = queue.poll();
+      Collection<PriorityState<S>> currentSuccessors;
       if (Objects.equals(current, winningState)) {
         currentSuccessors = Set.of(winningState);
       } else if (current.isEve()) {
         if (winningStates != null && winningStates.test(current.eve())) {
           currentSuccessors = Set.of(winningState);
         } else {
-          Integer index = propositionIndex.get(current.eve().gameState().name());
-          BitSet transition = index == null ? BitSets.of() : BitSets.of(index);
+          BitSet transition = new BitSet();
+          suspectGame.historyGame().concurrentGame().labels(current.eve().gameState()).stream()
+              .map(propositionIndex::get)
+              .filter(Objects::nonNull)
+              .forEach(transition::set);
           Set<Edge<Object>> automatonEdges = dpa.edges(current.automatonState(), transition);
           Edge<Object> automatonEdge = Iterables.getOnlyElement(automatonEdges);
 
           int priority = automatonEdge.hasAcceptanceSets() ? maximumPriority - automatonEdge.smallestAcceptanceSet() : 0;
           currentSuccessors = suspectGame.successors(current.eve()).stream()
               .map(successor -> {
-                Collection<SuspectGame.EveState> eveSuccessors = suspectGame.successors(successor);
+                Collection<SuspectGame.EveState<S>> eveSuccessors = suspectGame.successors(successor);
                 if (eveSuccessors.size() == 1) {
-                  return new PriorityState(automatonEdge.successor(), Iterables.getOnlyElement(eveSuccessors), priority);
+                  // Inline the "choice" of adam
+                  return new PriorityState<S>(automatonEdge.successor(), Iterables.getOnlyElement(eveSuccessors), priority);
                 } else {
-                  return new PriorityState(automatonEdge.successor(), successor, priority);
+                  return new PriorityState<S>(automatonEdge.successor(), successor, priority);
                 }
               })
               .collect(Collectors.toSet());
         }
       } else {
         currentSuccessors = suspectGame.successors(current.adam()).stream()
-            .map(successor -> new PriorityState(current.automatonState(), successor, current.priority()))
+            .map(successor -> new PriorityState<S>(current.automatonState(), successor, current.priority()))
             .collect(Collectors.toSet());
       }
       successors.putAll(current, currentSuccessors);
-      for (PriorityState paritySuccessor : currentSuccessors) {
+      for (PriorityState<S> paritySuccessor : currentSuccessors) {
         if (states.add(paritySuccessor)) {
           queue.add(paritySuccessor);
         }
       }
     }
 
-    return new SuspectParityGame(initialState, states, successors.build());
+    return new SuspectParityGame<>(initialState, states, successors.build());
   }
 
   @Override
-  public PriorityState initialState() {
+  public PriorityState<S> initialState() {
     return initialState;
   }
 
   @Override
-  public Set<PriorityState> successors(PriorityState state) {
+  public Set<PriorityState<S>> successors(PriorityState<S> state) {
     assert states.contains(state);
     return successors.get(state);
   }
 
   @Override
-  public int priority(PriorityState state) {
+  public int priority(PriorityState<S> state) {
     return state.priority();
   }
 
   @Override
-  public boolean isEvenPlayer(PriorityState state) {
+  public boolean isEvenPlayer(PriorityState<S> state) {
     return !state.isEve();
   }
 
   @Override
-  public Set<PriorityState> states() {
+  public Set<PriorityState<S>> states() {
     return states;
   }
 
 
-  public record PriorityState(Object automatonState, Object gameState, int priority) {
+  @SuppressWarnings("unchecked")
+  public record PriorityState<S>(Object automatonState, Object gameState, int priority) {
     public boolean isEve() {
       return gameState instanceof SuspectGame.EveState;
     }
 
-    public SuspectGame.AdamState adam() {
-      return (SuspectGame.AdamState) gameState;
+    public SuspectGame.AdamState<S> adam() {
+      return (SuspectGame.AdamState<S>) gameState;
     }
 
-    public SuspectGame.EveState eve() {
-      return (SuspectGame.EveState) gameState;
+    public SuspectGame.EveState<S> eve() {
+      return (SuspectGame.EveState<S>) gameState;
     }
 
     @Override

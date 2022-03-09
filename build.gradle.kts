@@ -3,6 +3,7 @@ plugins {
     distribution
     application
     idea
+    antlr
 }
 
 group = "org.game"
@@ -38,10 +39,13 @@ dependencies {
     implementation("de.tum.in", "jbdd", "0.5.2")
     implementation("de.tum.in", "naturals-util", "0.16.0")
     implementation("commons-cli", "commons-cli", "1.4")
-    implementation("org.antlr", "antlr4-runtime", "4.8")
+    implementation("org.antlr", "antlr4-runtime", "4.8-1")
 
     // Z3
     implementation("io.github.tudo-aqua", "z3-turnkey", "4.8.14")
+
+    // https://mvnrepository.com/artifact/com.google.code.gson/gson
+    implementation("com.google.code.gson", "gson", "2.9.0")
 
     // Guava
     implementation("com.google.guava", "guava", "31.0.1-jre")
@@ -49,9 +53,19 @@ dependencies {
     // https://mvnrepository.com/artifact/info.picocli/picocli
     implementation("info.picocli", "picocli", "4.6.3")
 
+    antlr("org.antlr", "antlr4", "4.8-1")
+}
+
+configurations {
+    api { setExtendsFrom(extendsFrom.filter { it.name != "antlr" }) }
 }
 
 application {
     mainClass.set("com.cges.Main")
     applicationDefaultJvmArgs = listOf("-ea")
+}
+
+tasks.generateGrammarSource {
+    arguments.addAll(listOf("-visitor", "-long-messages", "-lib", "src/main/antlr"))
+    outputDirectory = outputDirectory.resolve("com/cges/grammar")
 }

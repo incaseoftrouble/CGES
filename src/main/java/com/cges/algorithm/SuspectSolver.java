@@ -1,25 +1,29 @@
 package com.cges.algorithm;
 
-import com.cges.model.ConcurrentGame;
-import com.cges.model.SuspectGame;
-import com.cges.model.SuspectParityGame;
-import it.unimi.dsi.fastutil.objects.Object2IntMap;
-import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
+import com.cges.algorithm.SuspectGame.EveState;
+import com.cges.algorithm.SuspectParityGame.PriorityState;
+import com.cges.model.Agent;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
 import java.util.ArrayDeque;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.Deque;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
+import java.util.Queue;
 import java.util.Set;
+import java.util.stream.Collectors;
 import owl.automaton.Automaton;
 import owl.automaton.MutableAutomatonUtil;
 import owl.automaton.ParityUtil;
+import owl.automaton.SuccessorFunction;
 import owl.automaton.acceptance.ParityAcceptance;
 import owl.automaton.acceptance.optimization.AcceptanceOptimizations;
+import owl.automaton.algorithm.SccDecomposition;
 import owl.ltl.BooleanConstant;
 import owl.ltl.Conjunction;
 import owl.ltl.Formula;
@@ -28,62 +32,117 @@ import owl.ltl.rewriter.LiteralMapper;
 import owl.run.Environment;
 import owl.translations.ltl2dpa.LTL2DPAFunction;
 
-public class SuspectSolver {
+public final class SuspectSolver<S> {
   private final Environment env = Environment.standard();
   private final LTL2DPAFunction dpaFunction = new LTL2DPAFunction(env, LTL2DPAFunction.RECOMMENDED_SYMMETRIC_CONFIG);
-  private final SuspectGame suspectGame;
+  private final SuspectGame<S> suspectGame;
   private final Map<Formula, Automaton<Object, ParityAcceptance>> cache = new HashMap<>();
+  private final OinkGameSolver solver = new OinkGameSolver();
 
-  public SuspectSolver(SuspectGame suspectGame) {
+  private SuspectSolver(SuspectGame<S> suspectGame) {
     this.suspectGame = suspectGame;
   }
 
-  public static Set<SuspectGame.EveState> computeWinningEveStates(SuspectGame suspectGame) {
-    SuspectSolver solver = new SuspectSolver(suspectGame);
+  public interface SuspectSolution<S> {
+    Set<EveState<S>> winningStates();
 
-    Object2IntMap<SuspectGame.EveState> topSort = new Object2IntOpenHashMap<>();
-    topSort.defaultReturnValue(-1);
-    Deque<SuspectGame.EveState> stack = new ArrayDeque<>(List.of(suspectGame.initialState()));
-    topSort.put(suspectGame.initialState(), 0);
-    while (!stack.isEmpty()) {
-      SuspectGame.EveState current = stack.pollLast();
-      suspectGame.successors(current).stream().map(suspectGame::successors).flatMap(Collection::stream).forEach(successor -> {
-        if (topSort.put(current, topSort.size()) == -1) {
-          stack.push(successor);
-        }
-      });
-    }
-    Set<SuspectGame.EveState> winningStates = new HashSet<>();
-    Iterator<SuspectGame.EveState> iterator = suspectGame.eveStates().stream()
-        .sorted(Comparator.comparingInt(topSort::getInt).reversed())
-        .iterator();
-    while (iterator.hasNext()) {
-      SuspectGame.EveState eveState = iterator.next();
-      Iterator<Formula> formulaIterator = findEventualSuspects(suspectGame, eveState).stream()
-          .map(agents -> Conjunction.of(agents.stream()
-              .filter(ConcurrentGame.Agent::isLoser)
-              .map(ConcurrentGame.Agent::goal)
-              .map(Formula::not)))
-          .sorted(Comparator.comparingInt(Formula::height)).iterator();
-      while (formulaIterator.hasNext()) {
-        Formula formula = formulaIterator.next();
-        if (solver.isWinning(suspectGame, eveState, formula, winningStates)) {
-          winningStates.add(eveState);
-          break;
-        }
-      }
+    default boolean isWinning(EveState<S> state) {
+      return winningStates().contains(state);
     }
 
-    return winningStates;
+    PriorityState<S> initial(EveState<S> state);
+
+    SuspectStrategy<S> strategy();
   }
 
-  private boolean isWinning(SuspectGame game, SuspectGame.EveState eveState, Formula unlabelled, Set<SuspectGame.EveState> winningStates) {
-    if (unlabelled instanceof BooleanConstant) {
-      return ((BooleanConstant) unlabelled).value;
+  public interface SuspectStrategy<S> {
+    PriorityState<S> move(PriorityState<S> state);
+  }
+
+  record RecursiveStrategy<S>(
+      Map<EveState<S>, PriorityState<S>> initialStates,
+      Map<PriorityState<S>, PriorityState<S>> winningMoves,
+      Map<PriorityState<S>, RecursiveStrategy<S>> recursiveSolution) implements SuspectStrategy<S> {
+    @Override
+    public PriorityState<S> move(PriorityState<S> state) {
+      assert winningMoves.containsKey(state) || recursiveSolution.containsKey(state);
+      PriorityState<S> move = winningMoves.get(state);
+      return move == null ? recursiveSolution.get(state).move(state) : move;
+    }
+  }
+
+  record Solution<S>(
+      Map<EveState<S>, PriorityState<S>> initialStates,
+      Map<PriorityState<S>, PriorityState<S>> winningMoves) implements SuspectSolution<S>, SuspectStrategy<S> {
+
+    @Override
+    public Set<EveState<S>> winningStates() {
+      return winningMoves.keySet().stream().filter(PriorityState::isEve).map(PriorityState::eve).collect(Collectors.toSet());
+    }
+
+    @Override
+    public PriorityState<S> initial(EveState<S> state) {
+      return initialStates.get(state);
+    }
+
+    @Override
+    public SuspectStrategy<S> strategy() {
+      return this;
+    }
+
+    @Override
+    public PriorityState<S> move(PriorityState<S> state) {
+      return winningMoves.get(state);
+    }
+  }
+
+  public static <S> SuspectSolution<S> computeWinningEveStates(SuspectGame<S> suspectGame) {
+    SuccessorFunction<EveState<S>> successorFunction = current -> suspectGame.successors(current).stream()
+        .map(suspectGame::successors)
+        .flatMap(Collection::stream)
+        .collect(Collectors.toSet());
+    List<Set<EveState<S>>> decomposition = Lists.reverse(SccDecomposition.of(Set.of(suspectGame.initialState()), successorFunction).sccs());
+
+    SuspectSolver<S> solver = new SuspectSolver<>(suspectGame);
+    Map<EveState<S>, RecursiveStrategy<S>> solutions = new HashMap<>();
+    // Process in reverse topological order
+    decomposition.stream().flatMap(Collection::stream).forEachOrdered(eveState -> findEventualSuspects(suspectGame, eveState).stream()
+        .map(agents -> Conjunction.of(agents.stream()
+            .filter(Agent::isLoser)
+            .map(eveState.historyState()::goal)
+            .map(Formula::not)))
+        .sorted(Comparator.comparingInt(Formula::height)) // Try to solve "easy" formulae first
+        .flatMap(formula -> solver.isWinning(suspectGame, eveState, formula, solutions).stream())
+        .findFirst()
+        .ifPresent(solution -> solutions.put(eveState, solution)));
+
+    Map<EveState<S>, PriorityState<S>> initialStates = new HashMap<>();
+    Map<PriorityState<S>, PriorityState<S>> winningMoves = new HashMap<>();
+    for (RecursiveStrategy<S> value : solutions.values()) {
+      assert Sets.intersection(initialStates.keySet(), value.initialStates().keySet()).isEmpty();
+      initialStates.putAll(value.initialStates());
+      assert Sets.intersection(winningMoves.keySet(), value.winningMoves().keySet()).isEmpty();
+      winningMoves.putAll(value.winningMoves());
+    }
+    assert initialStates.keySet().equals(solutions.keySet());
+    assert winningMoves.keySet().stream().allMatch(PriorityState::isEve);
+    assert winningMoves.keySet().stream().map(PriorityState::eve).collect(Collectors.toSet()).equals(solutions.keySet());
+    return new Solution<>(Map.copyOf(initialStates), Map.copyOf(winningMoves));
+  }
+
+  private Optional<RecursiveStrategy<S>> isWinning(SuspectGame<S> game, EveState<S> eveState, Formula unlabelled,
+      Map<EveState<S>, RecursiveStrategy<S>> solutions) {
+    if (unlabelled instanceof BooleanConstant bool) {
+      if (bool.value) {
+        PriorityState<S> state = new PriorityState<>(null, eveState, 0);
+        return Optional.of(new RecursiveStrategy<>(Map.of(eveState, state), Map.of(state, state), Map.of()));
+      }
+      return Optional.empty();
     }
 
     Automaton<Object, ParityAcceptance> automaton = cache.computeIfAbsent(unlabelled, formula -> {
-      var shifted = LiteralMapper.shiftLiterals(LabelledFormula.of(unlabelled, suspectGame.game().formulaPropositions()));
+      var shifted = LiteralMapper.shiftLiterals(LabelledFormula.of(unlabelled,
+          suspectGame.historyGame().concurrentGame().atomicPropositions()));
       Automaton<Object, ParityAcceptance> dpa = (Automaton<Object, ParityAcceptance>) dpaFunction.apply(shifted.formula);
       MutableAutomatonUtil.Sink sink = new MutableAutomatonUtil.Sink();
       var mutable = MutableAutomatonUtil.asMutable(
@@ -102,23 +161,56 @@ public class SuspectSolver {
       return minimized;
     });
     if (automaton.size() == 0) {
-      return false;
+      return Optional.empty();
     }
 
-    SuspectParityGame parityGame = SuspectParityGame.create(game, eveState, automaton, winningStates::contains);
-    return OinkGameSolver.solve(parityGame).oddWinning().contains(parityGame.initialState());
+    SuspectParityGame<S> parityGame = SuspectParityGame.create(game, eveState, automaton, solutions.keySet()::contains);
+    var paritySolution = solver.solve(parityGame);
+    if (paritySolution.oddWinning().contains(parityGame.initialState())) {
+      Queue<PriorityState<S>> queue = new ArrayDeque<>(List.of(parityGame.initialState()));
+      Set<PriorityState<S>> reached = new HashSet<>();
+      while (!queue.isEmpty()) {
+        PriorityState<S> next = queue.iterator().next();
+        assert paritySolution.oddWinning().contains(next);
+        Set<PriorityState<S>> successors = parityGame.isEvenPlayer(next)
+            ? parityGame.successors(next)
+            : Set.of(paritySolution.strategy().get(next));
+        for (PriorityState<S> successor : successors) {
+          if (reached.add(successor)) {
+            queue.add(successor);
+          }
+        }
+      }
+      Map<PriorityState<S>, PriorityState<S>> strategy = new HashMap<>();
+      Map<PriorityState<S>, RecursiveStrategy<S>> recursiveStrategy = new HashMap<>();
+      Map<EveState<S>, PriorityState<S>> initialStates = new HashMap<>();
+      for (PriorityState<S> state : reached) {
+        if (state.isEve()) {
+          RecursiveStrategy<S> recursive = solutions.get(state.eve());
+          if (recursive == null) {
+            strategy.put(state, paritySolution.strategy().get(state));
+            initialStates.putIfAbsent(state.eve(), state);
+          } else {
+            recursiveStrategy.put(state, recursive);
+          }
+        }
+      }
+      assert Sets.intersection(strategy.keySet(), recursiveStrategy.keySet()).isEmpty();
+      return Optional.of(new RecursiveStrategy<>(Map.copyOf(initialStates), Map.copyOf(strategy), Map.copyOf(recursiveStrategy)));
+    }
+    return Optional.empty();
   }
 
-  public static Set<Set<ConcurrentGame.Agent>> findEventualSuspects(SuspectGame game, SuspectGame.EveState root) {
-    Deque<SuspectGame.EveState> queue = new ArrayDeque<>(List.of(root));
-    Set<SuspectGame.EveState> states = new HashSet<>(queue);
-    Set<Set<ConcurrentGame.Agent>> potentialLimitSuspectAgents = new HashSet<>();
+  public static <S> Set<Set<Agent>> findEventualSuspects(SuspectGame<S> game, EveState<S> root) {
+    Deque<EveState<S>> queue = new ArrayDeque<>(List.of(root));
+    Set<EveState<S>> states = new HashSet<>(queue);
+    Set<Set<Agent>> potentialLimitSuspectAgents = new HashSet<>();
 
     while (!queue.isEmpty()) {
-      SuspectGame.EveState current = queue.pollLast();
-      for (SuspectGame.AdamState adamSuccessor : game.successors(current)) {
+      EveState<S> current = queue.pollLast();
+      for (SuspectGame.AdamState<S> adamSuccessor : game.successors(current)) {
         assert adamSuccessor.eveState().equals(current);
-        for (SuspectGame.EveState eveSuccessor : game.successors(adamSuccessor)) {
+        for (EveState<S> eveSuccessor : game.successors(adamSuccessor)) {
           assert current.suspects().containsAll(eveSuccessor.suspects());
           if (states.add(eveSuccessor)) {
             queue.addLast(eveSuccessor);
