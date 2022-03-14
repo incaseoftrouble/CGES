@@ -14,12 +14,10 @@ import de.tum.in.naturals.Indices;
 import java.util.ArrayList;
 import java.util.BitSet;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
-import jdk.jshell.EvalException;
 import owl.collections.ValuationSet;
 import owl.factories.ValuationSetFactory;
 import owl.factories.jbdd.JBddSupplier;
@@ -45,7 +43,8 @@ public final class ModuleParser {
 
       Formula goal = LtlParser.parse(requireNonNull(agentData.getAsJsonPrimitive("goal"),
           () -> "Missing goal for module %s".formatted(moduleName)).getAsString(), propositions).formula();
-      boolean payoff = agentData.getAsJsonPrimitive("payoff").getAsBoolean();
+      Agent.Payoff payoff = ParseUtil.parsePayoff(requireNonNull(agentData.getAsJsonPrimitive("payoff"),
+          () -> "Missing payoff for module %s".formatted(moduleName)));
       Set<String> moduleLabels = stream(requireNonNull(agentData.getAsJsonArray("labels"),
           () -> "Missing labels for module %s".formatted(moduleName))).map(JsonElement::getAsString).collect(Collectors.toSet());
       checkArgument(propositionIndices.keySet().containsAll(moduleLabels),
@@ -65,7 +64,6 @@ public final class ModuleParser {
         String stateName = stateEntry.getKey();
         JsonObject stateData = stateEntry.getValue().getAsJsonObject();
 
-        State state = new State(stateName);
         Set<String> labels = stream(stateData.getAsJsonArray("labels"))
             .map(JsonElement::getAsString)
             .collect(Collectors.toSet());
@@ -73,6 +71,7 @@ public final class ModuleParser {
             stateName, moduleName, Sets.difference(labels, moduleLabels));
         BitSet labelSet = new BitSet();
         labels.stream().map(propositionIndices::get).forEach(labelSet::set);
+        State state = new State(stateName);
         stateLabels.put(state, labelSet);
 
         Map<ModuleTransition<State>, ValuationSet> stateTransitions = new HashMap<>();

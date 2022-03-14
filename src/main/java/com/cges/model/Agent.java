@@ -7,12 +7,25 @@ import java.util.stream.Collectors;
 import owl.ltl.Formula;
 
 public final class Agent {
+  public enum Payoff {
+    WINNING, LOSING, UNDEFINED;
+
+    @Override
+    public String toString() {
+      return switch (this) {
+        case WINNING -> "W";
+        case LOSING -> "L";
+        case UNDEFINED -> "?";
+      };
+    }
+  }
+
   private final String name;
   private final Formula goal;
-  private final boolean payoff;
+  private final Payoff payoff;
   private final Map<String, Action> actions;
 
-  public Agent(String name, Formula goal, boolean payoff, Collection<Action> actions) {
+  public Agent(String name, Formula goal, Payoff payoff, Collection<Action> actions) {
     this.name = name;
     this.goal = goal;
     this.payoff = payoff;
@@ -35,8 +48,8 @@ public final class Agent {
     return Objects.requireNonNull(actions.get(name));
   }
 
-  public boolean isLoser() {
-    return !payoff;
+  public Payoff payoff() {
+    return payoff;
   }
 
   @Override

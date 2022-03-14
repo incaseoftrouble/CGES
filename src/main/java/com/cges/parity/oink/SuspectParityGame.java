@@ -1,8 +1,11 @@
-package com.cges.algorithm;
+package com.cges.parity.oink;
 
-import static com.cges.algorithm.SuspectParityGame.PriorityState;
 import static com.google.common.base.Preconditions.checkArgument;
 
+import com.cges.algorithm.SuspectGame;
+import com.cges.algorithm.SuspectGame.EveState;
+import com.cges.model.ConcurrentGame;
+import com.cges.parity.Player;
 import com.google.common.collect.ImmutableSetMultimap;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.SetMultimap;
@@ -15,16 +18,16 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Queue;
 import java.util.Set;
+import java.util.function.Consumer;
 import java.util.function.Function;
-import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
-import javax.annotation.Nullable;
+import java.util.stream.Stream;
 import owl.automaton.Automaton;
 import owl.automaton.acceptance.ParityAcceptance;
 import owl.automaton.edge.Edge;
 
-public final class SuspectParityGame<S> implements OinkGameSolver.ParityGame<PriorityState<S>> {
+public final class SuspectParityGame<S> implements ParityGame<PriorityState<S>> {
   private final PriorityState<S> initialState;
   private final Set<PriorityState<S>> states;
   private final SetMultimap<PriorityState<S>, PriorityState<S>> successors;
@@ -36,8 +39,7 @@ public final class SuspectParityGame<S> implements OinkGameSolver.ParityGame<Pri
     this.successors = ImmutableSetMultimap.copyOf(successors);
   }
 
-  public static <S> SuspectParityGame<S> create(SuspectGame<S> suspectGame, SuspectGame.EveState<S> eveState,
-      Automaton<Object, ParityAcceptance> dpa, @Nullable Predicate<SuspectGame.EveState<S>> winningStates) {
+  public static <S> SuspectParityGame<S> create(SuspectGame<S> suspectGame, EveState<S> eveState, Automaton<Object, ParityAcceptance> dpa) {
     checkArgument(dpa.acceptance().parity().equals(ParityAcceptance.Parity.MIN_EVEN));
     PriorityState<S> initialState = new PriorityState<>(dpa.onlyInitialState(), eveState, 0);
     Queue<PriorityState<S>> queue = new ArrayDeque<>(List.of(initialState));
@@ -48,6 +50,12 @@ public final class SuspectParityGame<S> implements OinkGameSolver.ParityGame<Pri
     Map<String, Integer> propositionIndex = IntStream.range(0, propositions.size())
         .boxed()
         .collect(Collectors.toMap(propositions::get, Function.identity()));
+    ConcurrentGame<S> concurrentGame = suspectGame.historyGame().concurrentGame();
+    Map<S, BitSet> labelCache = concurrentGame.states().collect(Collectors.toMap(Function.identity(), state -> {
+      BitSet set = new BitSet();
+      concurrentGame.labels(state).stream().map(propositionIndex::get).filter(Objects::nonNull).forEach(set::set);
+      return set;
+    }));
 
     // We have a min even objective and want max + let eve be odd player
     int maximumPriority = dpa.acceptance().acceptanceSets();
@@ -55,41 +63,24 @@ public final class SuspectParityGame<S> implements OinkGameSolver.ParityGame<Pri
       // Ensure that maximum priority is odd, so if priority is even then maximumPriority - priority is odd
       maximumPriority += 1;
     }
-    PriorityState<S> winningState = new PriorityState<>(null, null, 1);
 
     while (!queue.isEmpty()) {
       PriorityState<S> current = queue.poll();
       Collection<PriorityState<S>> currentSuccessors;
-      if (Objects.equals(current, winningState)) {
-        currentSuccessors = Set.of(winningState);
-      } else if (current.isEve()) {
-        if (winningStates != null && winningStates.test(current.eve())) {
-          currentSuccessors = Set.of(winningState);
-        } else {
-          BitSet transition = new BitSet();
-          suspectGame.historyGame().concurrentGame().labels(current.eve().gameState()).stream()
-              .map(propositionIndex::get)
-              .filter(Objects::nonNull)
-              .forEach(transition::set);
-          Set<Edge<Object>> automatonEdges = dpa.edges(current.automatonState(), transition);
-          Edge<Object> automatonEdge = Iterables.getOnlyElement(automatonEdges);
+      if (current.isEve()) {
+        assert dpa.edges(current.automatonState()).size() == 1;
+        Edge<Object> automatonEdge = dpa.edge(current.automatonState(), labelCache.get(current.eve().gameState()));
+        assert automatonEdge != null;
 
-          int priority = automatonEdge.hasAcceptanceSets() ? maximumPriority - automatonEdge.smallestAcceptanceSet() : 0;
-          currentSuccessors = suspectGame.successors(current.eve()).stream()
-              .map(successor -> {
-                Collection<SuspectGame.EveState<S>> eveSuccessors = suspectGame.successors(successor);
-                if (eveSuccessors.size() == 1) {
-                  // Inline the "choice" of adam
-                  return new PriorityState<S>(automatonEdge.successor(), Iterables.getOnlyElement(eveSuccessors), priority);
-                } else {
-                  return new PriorityState<S>(automatonEdge.successor(), successor, priority);
-                }
-              })
-              .collect(Collectors.toSet());
-        }
+        int priority = automatonEdge.hasAcceptanceSets() ? maximumPriority - automatonEdge.smallestAcceptanceSet() : 0;
+        currentSuccessors = suspectGame.successors(current.eve()).stream().map(successor -> {
+          Collection<EveState<S>> eveSuccessors = suspectGame.successors(successor);
+          return new PriorityState<S>(automatonEdge.successor(),
+              eveSuccessors.size() == 1 ? Iterables.getOnlyElement(eveSuccessors) : successor, priority);
+        }).collect(Collectors.toSet());
       } else {
         currentSuccessors = suspectGame.successors(current.adam()).stream()
-            .map(successor -> new PriorityState<S>(current.automatonState(), successor, current.priority()))
+            .map(successor -> new PriorityState<S>(current.automatonState(), successor, 0))
             .collect(Collectors.toSet());
       }
       successors.putAll(current, currentSuccessors);
@@ -109,9 +100,9 @@ public final class SuspectParityGame<S> implements OinkGameSolver.ParityGame<Pri
   }
 
   @Override
-  public Set<PriorityState<S>> successors(PriorityState<S> state) {
+  public Stream<PriorityState<S>> successors(PriorityState<S> state) {
     assert states.contains(state);
-    return successors.get(state);
+    return successors.get(state).stream();
   }
 
   @Override
@@ -120,8 +111,8 @@ public final class SuspectParityGame<S> implements OinkGameSolver.ParityGame<Pri
   }
 
   @Override
-  public boolean isEvenPlayer(PriorityState<S> state) {
-    return !state.isEve();
+  public Player owner(PriorityState<S> state) {
+    return state.isEve() ? Player.ODD : Player.EVEN;
   }
 
   @Override
@@ -129,24 +120,8 @@ public final class SuspectParityGame<S> implements OinkGameSolver.ParityGame<Pri
     return states;
   }
 
-
-  @SuppressWarnings("unchecked")
-  public record PriorityState<S>(Object automatonState, Object gameState, int priority) {
-    public boolean isEve() {
-      return gameState instanceof SuspectGame.EveState;
-    }
-
-    public SuspectGame.AdamState<S> adam() {
-      return (SuspectGame.AdamState<S>) gameState;
-    }
-
-    public SuspectGame.EveState<S> eve() {
-      return (SuspectGame.EveState<S>) gameState;
-    }
-
-    @Override
-    public String toString() {
-      return "[%s,%s,%d]".formatted(automatonState, gameState, priority);
-    }
+  @Override
+  public void forEachState(Consumer<PriorityState<S>> action) {
+    states.forEach(action);
   }
 }

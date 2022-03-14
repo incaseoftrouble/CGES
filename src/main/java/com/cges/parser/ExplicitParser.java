@@ -40,8 +40,8 @@ public final class ExplicitParser {
           JsonObject data = entry.getValue().getAsJsonObject();
           Formula goal = LtlParser.parse(requireNonNull(data.getAsJsonPrimitive("goal"),
               () -> "Missing goal for agent %s".formatted(agentName)).getAsString(), propositions).formula();
-          boolean payoff = requireNonNull(data.getAsJsonPrimitive("payoff"),
-              () -> "Missing payoff for agent %s".formatted(agentName)).getAsBoolean();
+          Agent.Payoff payoff = ParseUtil.parsePayoff(requireNonNull(data.getAsJsonPrimitive("payoff"),
+              () -> "Missing payoff for agent %s".formatted(agentName)));
           Set<Action> actions = stream(requireNonNull(data.getAsJsonArray("actions"),
               () -> "Missing actions for agent %s".formatted(agentName)))
               .map(JsonElement::getAsString)
@@ -53,7 +53,7 @@ public final class ExplicitParser {
 
     JsonObject arena = requireNonNull(json.getAsJsonObject("arena"), "Missing arena definition");
 
-    State initialState = new State(requireNonNull(arena.getAsJsonPrimitive("initial"), "Missing initial state").getAsString());
+    State initialState = new State(requireNonNull(arena.getAsJsonPrimitive("initial"), "Missing initial adamState").getAsString());
     ImmutableSet.Builder<State> states = ImmutableSet.builder();
     ImmutableSetMultimap.Builder<State, String> labels = ImmutableSetMultimap.builder();
     ImmutableSetMultimap.Builder<State, Transition<State>> transitions = ImmutableSetMultimap.builder();

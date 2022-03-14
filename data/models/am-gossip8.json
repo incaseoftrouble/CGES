@@ -1,0 +1,391 @@
+{
+  "name": "gossip8",
+  "ap": [
+    "g1",
+    "g2",
+    "g3",
+    "g4",
+    "g5",
+    "g6",
+    "g7",
+    "g8"
+  ],
+  "modules": {
+    "A1": {
+      "goal": "G F g1",
+      "payoff": "?",
+      "actions": [
+        "a",
+        "g",
+        "w"
+      ],
+      "labels": [
+        "g1"
+      ],
+      "initial": "s1",
+      "states": {
+        "s1": {
+          "labels": [],
+          "transitions": [
+            {
+              "action": "a",
+              "guard": "true",
+              "to": "s1"
+            },
+            {
+              "action": "g",
+              "guard": "true",
+              "to": "s2"
+            }
+          ]
+        },
+        "s2": {
+          "labels": [
+            "g1"
+          ],
+          "transitions": [
+            {
+              "action": "w",
+              "guard": "!g2 & !g3 & !g4 & !g5 & !g6 & !g7 & !g8",
+              "to": "s2"
+            },
+            {
+              "action": "g",
+              "guard": "g2 | g3 | g4 | g5 | g6 | g7 | g8",
+              "to": "s2"
+            }
+          ]
+        }
+      }
+    },
+    "A2": {
+      "goal": "G F g2",
+      "payoff": "?",
+      "actions": [
+        "a",
+        "g",
+        "w"
+      ],
+      "labels": [
+        "g2"
+      ],
+      "initial": "s1",
+      "states": {
+        "s1": {
+          "labels": [],
+          "transitions": [
+            {
+              "action": "a",
+              "guard": "true",
+              "to": "s1"
+            },
+            {
+              "action": "g",
+              "guard": "true",
+              "to": "s2"
+            }
+          ]
+        },
+        "s2": {
+          "labels": [
+            "g2"
+          ],
+          "transitions": [
+            {
+              "action": "w",
+              "guard": "!g1 & !g3 & !g4 & !g5 & !g6 & !g7 & !g8",
+              "to": "s2"
+            },
+            {
+              "action": "g",
+              "guard": "g1 | g3 | g4 | g5 | g6 | g7 | g8",
+              "to": "s2"
+            }
+          ]
+        }
+      }
+    },
+    "A3": {
+      "goal": "G F g3",
+      "payoff": "?",
+      "actions": [
+        "a",
+        "g",
+        "w"
+      ],
+      "labels": [
+        "g3"
+      ],
+      "initial": "s1",
+      "states": {
+        "s1": {
+          "labels": [],
+          "transitions": [
+            {
+              "action": "a",
+              "guard": "true",
+              "to": "s1"
+            },
+            {
+              "action": "g",
+              "guard": "true",
+              "to": "s2"
+            }
+          ]
+        },
+        "s2": {
+          "labels": [
+            "g3"
+          ],
+          "transitions": [
+            {
+              "action": "w",
+              "guard": "!g1 & !g2 & !g4 & !g5 & !g6 & !g7 & !g8",
+              "to": "s2"
+            },
+            {
+              "action": "g",
+              "guard": "g1 | g2 | g4 | g5 | g6 | g7 | g8",
+              "to": "s2"
+            }
+          ]
+        }
+      }
+    },
+    "A4": {
+      "goal": "G F g4",
+      "payoff": "?",
+      "actions": [
+        "a",
+        "g",
+        "w"
+      ],
+      "labels": [
+        "g4"
+      ],
+      "initial": "s1",
+      "states": {
+        "s1": {
+          "labels": [],
+          "transitions": [
+            {
+              "action": "a",
+              "guard": "true",
+              "to": "s1"
+            },
+            {
+              "action": "g",
+              "guard": "true",
+              "to": "s2"
+            }
+          ]
+        },
+        "s2": {
+          "labels": [
+            "g4"
+          ],
+          "transitions": [
+            {
+              "action": "w",
+              "guard": "!g1 & !g2 & !g3 & !g5 & !g6 & !g7 & !g8",
+              "to": "s2"
+            },
+            {
+              "action": "g",
+              "guard": "g1 | g2 | g3 | g5 | g6 | g7 | g8",
+              "to": "s2"
+            }
+          ]
+        }
+      }
+    },
+    "A5": {
+      "goal": "G F g5",
+      "payoff": "?",
+      "actions": [
+        "a",
+        "g",
+        "w"
+      ],
+      "labels": [
+        "g5"
+      ],
+      "initial": "s1",
+      "states": {
+        "s1": {
+          "labels": [],
+          "transitions": [
+            {
+              "action": "a",
+              "guard": "true",
+              "to": "s1"
+            },
+            {
+              "action": "g",
+              "guard": "true",
+              "to": "s2"
+            }
+          ]
+        },
+        "s2": {
+          "labels": [
+            "g5"
+          ],
+          "transitions": [
+            {
+              "action": "w",
+              "guard": "!g1 & !g2 & !g3 & !g4 & !g6 & !g7 & !g8",
+              "to": "s2"
+            },
+            {
+              "action": "g",
+              "guard": "g1 | g2 | g3 | g4 | g6 | g7 | g8",
+              "to": "s2"
+            }
+          ]
+        }
+      }
+    },
+    "A6": {
+      "goal": "G F g6",
+      "payoff": "?",
+      "actions": [
+        "a",
+        "g",
+        "w"
+      ],
+      "labels": [
+        "g6"
+      ],
+      "initial": "s1",
+      "states": {
+        "s1": {
+          "labels": [],
+          "transitions": [
+            {
+              "action": "a",
+              "guard": "true",
+              "to": "s1"
+            },
+            {
+              "action": "g",
+              "guard": "true",
+              "to": "s2"
+            }
+          ]
+        },
+        "s2": {
+          "labels": [
+            "g6"
+          ],
+          "transitions": [
+            {
+              "action": "w",
+              "guard": "!g1 & !g2 & !g3 & !g4 & !g5 & !g7 & !g8",
+              "to": "s2"
+            },
+            {
+              "action": "g",
+              "guard": "g1 | g2 | g3 | g4 | g5 | g7 | g8",
+              "to": "s2"
+            }
+          ]
+        }
+      }
+    },
+    "A7": {
+      "goal": "G F g7",
+      "payoff": "?",
+      "actions": [
+        "a",
+        "g",
+        "w"
+      ],
+      "labels": [
+        "g7"
+      ],
+      "initial": "s1",
+      "states": {
+        "s1": {
+          "labels": [],
+          "transitions": [
+            {
+              "action": "a",
+              "guard": "true",
+              "to": "s1"
+            },
+            {
+              "action": "g",
+              "guard": "true",
+              "to": "s2"
+            }
+          ]
+        },
+        "s2": {
+          "labels": [
+            "g7"
+          ],
+          "transitions": [
+            {
+              "action": "w",
+              "guard": "!g1 & !g2 & !g3 & !g4 & !g5 & !g6 & !g8",
+              "to": "s2"
+            },
+            {
+              "action": "g",
+              "guard": "g1 | g2 | g3 | g4 | g5 | g6 | g8",
+              "to": "s2"
+            }
+          ]
+        }
+      }
+    },
+    "A8": {
+      "goal": "G F g8",
+      "payoff": "?",
+      "actions": [
+        "a",
+        "g",
+        "w"
+      ],
+      "labels": [
+        "g8"
+      ],
+      "initial": "s1",
+      "states": {
+        "s1": {
+          "labels": [],
+          "transitions": [
+            {
+              "action": "a",
+              "guard": "true",
+              "to": "s1"
+            },
+            {
+              "action": "g",
+              "guard": "true",
+              "to": "s2"
+            }
+          ]
+        },
+        "s2": {
+          "labels": [
+            "g8"
+          ],
+          "transitions": [
+            {
+              "action": "w",
+              "guard": "!g1 & !g2 & !g3 & !g4 & !g5 & !g6 & !g7",
+              "to": "s2"
+            },
+            {
+              "action": "g",
+              "guard": "g1 | g2 | g3 | g4 | g5 | g6 | g7",
+              "to": "s2"
+            }
+          ]
+        }
+      }
+    }
+  }
+}

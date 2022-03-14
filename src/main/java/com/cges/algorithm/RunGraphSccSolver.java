@@ -116,6 +116,8 @@ public final class RunGraphSccSolver {
     loop.addAll(sccRecurrentPath);
     loop.addAll(sccPath);
     loop.addAll(path);
-    return Optional.of(new AcceptingLasso<>(Lists.reverse(loop)));
+    AcceptingLasso<S> lasso = new AcceptingLasso<>(Lists.reverse(loop));
+    assert graph.initialStates().contains(lasso.states(true).iterator().next());
+    return Optional.of(lasso);
   }
 }

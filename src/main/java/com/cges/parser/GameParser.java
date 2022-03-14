@@ -58,7 +58,7 @@ public final class GameParser {
       checkArgument(Set.of("0", "1").contains(agentData[2]), "Expected 0/1, got %s", agentData[2]);
       boolean payoff = agentData[2].equals("1");
       List<Action> actions = Arrays.asList(agentData).subList(3, agentData.length).stream().map(Action::new).toList();
-      agents.add(new Agent(name, goal.formula(), payoff, actions));
+      agents.add(new Agent(name, goal.formula(), payoff ? Agent.Payoff.WINNING : Agent.Payoff.LOSING, actions));
     }
     for (String[] stateData : stateStrings) {
       State state = new State(stateData[0]);

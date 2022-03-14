@@ -22,11 +22,12 @@ LDQUOTE    : '"' -> mode(DOUBLE_QUOTED);
 LSQUOTE    : '\'' -> mode(SINGLE_QUOTED);
 
 VARIABLE   : [a-zA-Z_0-9]+;
-ERROR : . ;
 
 fragment
 WHITESPACE : [ \t\n\r\f]+;
 SKIP_DEF   : WHITESPACE -> skip;
+
+ERROR : . ;
 
 mode DOUBLE_QUOTED;
 RDQUOTE : '"' -> mode(DEFAULT_MODE);

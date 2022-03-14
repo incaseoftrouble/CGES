@@ -8,18 +8,17 @@ import com.google.common.collect.ImmutableSetMultimap;
 import com.google.common.collect.SetMultimap;
 import java.util.ArrayDeque;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
-import java.util.Optional;
 import java.util.Queue;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
 public final class SuspectGame<S> {
+  record AdamTransition<S>(AdamState<S> adamState, EveState<S> eveSuccessor) {}
+
   public static <S> SuspectGame<S> create(HistoryGame<S> game) {
     HistoryState<S> initialState = game.initialState();
 
@@ -29,7 +28,6 @@ public final class SuspectGame<S> {
 
     ImmutableSetMultimap.Builder<EveState<S>, AdamState<S>> eveTransitions = ImmutableSetMultimap.builder();
     ImmutableSetMultimap.Builder<AdamState<S>, EveState<S>> adamTransitions = ImmutableSetMultimap.builder();
-    Map<AdamState<S>, EveState<S>> compliantSuccessor = new HashMap<>();
 
     var movesReachingSuccessor = game.concurrentGame().states()
         .collect(Collectors.toMap(Function.identity(), gameState -> game.concurrentGame().transitions(gameState)
@@ -40,11 +38,9 @@ public final class SuspectGame<S> {
       HistoryState<S> gameState = currentEveState.historyState();
 
       var movesBySuccessor = movesReachingSuccessor.get(gameState.state());
-      Collection<AdamState<S>> adamSuccessors = game.transitions(gameState)
-          .map(transition -> new AdamState<>(currentEveState, transition.move())).toList();
-      eveTransitions.putAll(currentEveState, adamSuccessors);
 
-      for (AdamState<S> adamSuccessor : adamSuccessors) {
+      Set<AdamTransition<S>> currentTransitions = new HashSet<>();
+      game.transitions(gameState).map(transition -> new AdamState<>(currentEveState, transition.move())).forEach(adamSuccessor -> {
         Iterator<Transition<HistoryState<S>>> transitionIterator = game.transitions(currentEveState.historyState()).iterator();
         while (transitionIterator.hasNext()) {
           Transition<HistoryState<S>> gameTransition = transitionIterator.next();
@@ -58,7 +54,7 @@ public final class SuspectGame<S> {
           } else {
             successorSuspects = new HashSet<>();
             for (Move move : availableMoves) {
-              // Check if there is a single suspect who could deviate to achieve this move (i.e. move to the successor state)
+              // Check if there is a single suspect who could deviate to achieve this move (i.e. move to the eve successor)
               var iterator = currentSuspects.stream()
                   .filter(a -> !adamSuccessor.move().action(a).equals(move.action(a)))
                   .iterator();
@@ -74,38 +70,45 @@ public final class SuspectGame<S> {
 
           if (!successorSuspects.isEmpty()) {
             EveState<S> eveSuccessor = new EveState<>(gameTransition.destination(), Set.copyOf(successorSuspects));
-            adamTransitions.put(adamSuccessor, eveSuccessor);
-            if (complies) {
-              EveState<S> oldSuccessor = compliantSuccessor.put(adamSuccessor, eveSuccessor);
-              assert oldSuccessor == null || eveSuccessor.equals(oldSuccessor); // Complying should yield a unique successor
-            }
-            if (eveStates.add(eveSuccessor)) {
-              eveQueue.add(eveSuccessor);
-            }
+            currentTransitions.add(new AdamTransition<>(adamSuccessor, eveSuccessor));
           }
         }
+      });
+
+      for (AdamTransition<S> transition : currentTransitions) {
+        eveTransitions.put(currentEveState, transition.adamState());
+        adamTransitions.put(transition.adamState(), transition.eveSuccessor());
+        if (eveStates.add(transition.eveSuccessor())) {
+          eveQueue.add(transition.eveSuccessor());
+        }
       }
+      assert currentTransitions.stream()
+          .map(AdamTransition::eveSuccessor)
+          .map(EveState::suspects).flatMap(Collection::stream)
+          .collect(Collectors.toSet()).equals(currentEveState.suspects()) : "Vanishing suspects";
+      assert currentTransitions.stream()
+          .map(AdamTransition::eveSuccessor)
+          .map(EveState::historyState)
+          .collect(Collectors.toSet())
+          .containsAll(game.transitions(currentEveState.historyState()).map(Transition::destination).collect(Collectors.toSet()));
     }
-    return new SuspectGame<>(game, initialEveState, eveTransitions.build(), adamTransitions.build(), compliantSuccessor);
+    return new SuspectGame<>(game, initialEveState, eveTransitions.build(), adamTransitions.build());
   }
 
   private final HistoryGame<S> game;
   private final EveState<S> initialState;
   private final SetMultimap<EveState<S>, AdamState<S>> eveTransitions;
   private final SetMultimap<AdamState<S>, EveState<S>> adamTransitions;
-  private final Map<AdamState<S>, EveState<S>> compliantSuccessor;
 
   private SuspectGame(HistoryGame<S> game, EveState<S> initialState,
       SetMultimap<EveState<S>, AdamState<S>> eveTransitions,
-      SetMultimap<AdamState<S>, EveState<S>> adamTransitions,
-      Map<AdamState<S>, EveState<S>> compliantSuccessor) {
+      SetMultimap<AdamState<S>, EveState<S>> adamTransitions) {
     assert eveTransitions.entries().stream().allMatch(e -> e.getKey().equals(e.getValue().eveState()));
     assert adamTransitions.entries().stream().allMatch(e -> e.getKey().eveState().suspects().containsAll(e.getValue().suspects()));
     this.game = game;
     this.initialState = initialState;
     this.eveTransitions = eveTransitions;
     this.adamTransitions = adamTransitions;
-    this.compliantSuccessor = compliantSuccessor;
   }
 
   public Set<EveState<S>> eveStates() {
@@ -128,10 +131,6 @@ public final class SuspectGame<S> {
     return adamTransitions.get(adamState);
   }
 
-  public Optional<EveState<S>> compliantSuccessor(AdamState<S> adamState) {
-    return Optional.ofNullable(compliantSuccessor.get(adamState));
-  }
-
   public HistoryGame<S> historyGame() {
     return game;
   }
@@ -150,7 +149,7 @@ public final class SuspectGame<S> {
 
     @Override
     public String toString() {
-      return "ES[%s]suspect{%s}".formatted(historyState, suspects.stream().map(Agent::name).sorted().collect(Collectors.joining(",")));
+      return "ES[%s]{%s}".formatted(historyState, suspects.stream().map(Agent::name).sorted().collect(Collectors.joining(",")));
     }
   }
 }
