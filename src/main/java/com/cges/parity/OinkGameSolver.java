@@ -1,4 +1,4 @@
-package com.cges.parity.oink;
+package com.cges.parity;
 
 import static com.google.common.base.Preconditions.checkState;
 import static java.util.Objects.requireNonNull;
@@ -35,7 +35,7 @@ public final class OinkGameSolver {
 
   public OinkGameSolver() {}
 
-  public <S> ParityGame.Solution<S> solve(ParityGame<S> game) {
+  public <S> Solution<S> solve(ParityGame<S> game) {
     Object2IntMap<S> oinkNumbering = new Object2IntOpenHashMap<>();
     oinkNumbering.defaultReturnValue(-1);
     oinkNumbering.put(game.initialState(), 0);
@@ -43,7 +43,6 @@ public final class OinkGameSolver {
     List<S> reverseMapping = new ArrayList<>();
     reverseMapping.add(game.initialState());
     Queue<S> queue = new ArrayDeque<>(List.of(game.initialState()));
-
     while (!queue.isEmpty()) {
       game.successors(queue.poll()).forEach(successor -> {
         int id = oinkNumbering.size();
@@ -57,13 +56,11 @@ public final class OinkGameSolver {
     ProcessBuilder oinkProcessBuilder = new ProcessBuilder(OINK_EXECUTABLE_NAME, "-o", "/dev/stdout");
     oinkProcessBuilder.redirectErrorStream(false);
     Process oinkProcess;
-
     try {
       oinkProcess = oinkProcessBuilder.start();
     } catch (IOException e) {
       throw new OinkExecutionException("Oink process could not be started", e);
     }
-
     var writerFuture = executor.<Void>submit(() -> {
       try (BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(oinkProcess.getOutputStream()))) {
         writer.append("parity ").append(String.valueOf(oinkNumbering.size())).append(";");
@@ -72,14 +69,18 @@ public final class OinkGameSolver {
         while (iterator.hasNext()) {
           int index = iterator.nextIndex();
           var state = iterator.next();
-          String successorsString = game.successors(state)
+          writer.append(String.valueOf(index)).append(' ')
+              .append(String.valueOf(game.priority(state))).append(' ')
+              .append(String.valueOf(game.owner(state).id())).append(' ');
+          var successorIterator = game.successors(state)
               .mapToInt(oinkNumbering::getInt)
               .mapToObj(String::valueOf)
-              .collect(Collectors.joining(","));
-          writer.append("%d %d %d %s;".formatted(index,
-              game.priority(state),
-              game.owner(state).id(),
-              successorsString));
+              .iterator();
+          writer.append(successorIterator.next());
+          while (successorIterator.hasNext()) {
+            writer.append(',').append(successorIterator.next());
+          }
+          writer.append(';');
           writer.newLine();
         }
       }
@@ -141,6 +142,6 @@ public final class OinkGameSolver {
       throw new OinkExecutionException("Failed to read from oink", e);
     }
 
-    return new ParityGame.Solution<>(oddWinning, strategy);
+    return new Solution<>(oddWinning, strategy);
   }
 }

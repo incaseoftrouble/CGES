@@ -1,11 +1,10 @@
-package com.cges.parity.oink;
+package com.cges.parity;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
 import com.cges.algorithm.SuspectGame;
 import com.cges.algorithm.SuspectGame.EveState;
 import com.cges.model.ConcurrentGame;
-import com.cges.parity.Player;
 import com.google.common.collect.Iterables;
 import java.util.BitSet;
 import java.util.Collection;
@@ -20,14 +19,15 @@ import owl.automaton.Automaton;
 import owl.automaton.acceptance.ParityAcceptance;
 import owl.automaton.edge.Edge;
 
-public final class LazySuspectParityGame<S> implements ParityGame<PriorityState<S>> {
+public final class SuspectParityGame<S> implements ParityGame<PriorityState<S>> {
   private final SuspectGame<S> suspectGame;
   private final PriorityState<S> initialState;
   private final Automaton<Object, ParityAcceptance> dpa;
   private final Map<S, BitSet> labelCache;
   private final int maximumPriority;
 
-  private LazySuspectParityGame(SuspectGame<S> suspectGame, PriorityState<S> initialState, Automaton<Object, ParityAcceptance> dpa) {
+  private SuspectParityGame(SuspectGame<S> suspectGame, PriorityState<S> initialState, Automaton<Object, ParityAcceptance> dpa) {
+    assert !dpa.acceptance().parity().max();
     this.suspectGame = suspectGame;
     this.initialState = initialState;
     this.dpa = dpa;
@@ -35,7 +35,7 @@ public final class LazySuspectParityGame<S> implements ParityGame<PriorityState<
     // We have a min even objective and want max + let eve be odd player
     int maximumPriority = dpa.acceptance().acceptanceSets();
     if (dpa.acceptance().isAccepting(maximumPriority)) {
-      // Ensure that maximum priority is odd, so if priority is even then maximumPriority - priority is odd
+      // Ensure that maximum priority is odd, so if priority is even then maximum priority is odd
       maximumPriority += 1;
     }
     this.maximumPriority = maximumPriority;
@@ -45,18 +45,17 @@ public final class LazySuspectParityGame<S> implements ParityGame<PriorityState<
         .boxed()
         .collect(Collectors.toMap(propositions::get, Function.identity()));
     ConcurrentGame<S> concurrentGame = suspectGame.historyGame().concurrentGame();
-    labelCache = concurrentGame.states().collect(Collectors.toUnmodifiableMap(
-        Function.identity(), state -> {
-          BitSet set = new BitSet();
-          concurrentGame.labels(state).stream().map(propositionIndex::get).filter(Objects::nonNull).forEach(set::set);
-          return set;
-        }));
+    labelCache = concurrentGame.states().collect(Collectors.toUnmodifiableMap(Function.identity(), state -> {
+      BitSet set = new BitSet();
+      concurrentGame.labels(state).stream().map(propositionIndex::get).filter(Objects::nonNull).forEach(set::set);
+      return set;
+    }));
   }
 
-  public static <S> LazySuspectParityGame<S>
+  public static <S> SuspectParityGame<S>
   create(SuspectGame<S> suspectGame, EveState<S> eveState, Automaton<Object, ParityAcceptance> dpa) {
     checkArgument(dpa.acceptance().parity().equals(ParityAcceptance.Parity.MIN_EVEN));
-    return new LazySuspectParityGame<>(suspectGame, new PriorityState<S>(dpa.onlyInitialState(), eveState, 0), dpa);
+    return new SuspectParityGame<>(suspectGame, new PriorityState<S>(dpa.onlyInitialState(), eveState, 0), dpa);
   }
 
   @Override
@@ -67,8 +66,9 @@ public final class LazySuspectParityGame<S> implements ParityGame<PriorityState<
   @Override
   public Stream<PriorityState<S>> successors(PriorityState<S> current) {
     if (current.isEve()) {
-      assert dpa.edges(current.automatonState()).size() == 1;
-      Edge<Object> automatonEdge = dpa.edge(current.automatonState(), labelCache.get(current.eve().gameState()));
+      BitSet label = labelCache.get(current.eve().gameState());
+      assert dpa.edges(current.automatonState(), label).size() == 1;
+      Edge<Object> automatonEdge = dpa.edge(current.automatonState(), label);
       assert automatonEdge != null;
       int priority = automatonEdge.hasAcceptanceSets() ? maximumPriority - automatonEdge.smallestAcceptanceSet() : 0;
       return suspectGame.successors(current.eve()).stream().map(successor -> {

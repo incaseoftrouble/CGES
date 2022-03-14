@@ -1,5 +1,6 @@
 package com.cges.algorithm;
 
+import com.cges.algorithm.HistoryGame.HistoryState;
 import com.cges.model.Agent;
 import com.cges.model.ConcurrentGame;
 import com.cges.model.PayoffAssignment;
@@ -36,7 +37,7 @@ public final class RunGraph<S> {
   private static final Logger logger = Logger.getLogger(RunGraph.class.getName());
 
   public static <S> RunGraph<S> create(HistoryGame<S> historyGame, PayoffAssignment payoffAssignment,
-      Predicate<HistoryGame.HistoryState<S>> winningHistoryStates) {
+      Predicate<HistoryState<S>> winningHistoryStates) {
     if (!winningHistoryStates.test(historyGame.initialState())) {
       return new RunGraph<>(Set.of(), Set.of(), ImmutableSetMultimap.of());
     }
@@ -100,6 +101,7 @@ public final class RunGraph<S> {
       }
     }
 
+    assert states.stream().map(RunState::historyState).allMatch(winningHistoryStates);
     logger.log(Level.FINER, () -> "Run graph has %d states, %d initial".formatted(states.size(), initialStates.size()));
     return new RunGraph<>(initialStates, states, runGraph.build());
   }
@@ -135,7 +137,7 @@ public final class RunGraph<S> {
     return transitions(state).stream().map(Transition::destination).collect(Collectors.toSet());
   }
 
-  public record RunState<S>(Object automatonState, HistoryGame.HistoryState<S> historyState, boolean accepting) {
+  public record RunState<S>(Object automatonState, HistoryState<S> historyState, boolean accepting) {
     @Override
     public String toString() {
       return "(%s,%s)%s".formatted(automatonState, historyState, accepting ? "!" : "");

@@ -6,9 +6,9 @@ import com.cges.algorithm.SuspectGame.EveState;
 import com.cges.model.Agent;
 import com.cges.model.PayoffAssignment;
 import com.cges.parity.Player;
-import com.cges.parity.oink.LazySuspectParityGame;
-import com.cges.parity.oink.OinkGameSolver;
-import com.cges.parity.oink.PriorityState;
+import com.cges.parity.SuspectParityGame;
+import com.cges.parity.OinkGameSolver;
+import com.cges.parity.PriorityState;
 import java.util.ArrayDeque;
 import java.util.Collection;
 import java.util.Comparator;
@@ -170,46 +170,13 @@ public final class SuspectSolver<S> {
         minimized.acceptance(minimized.acceptance().withAcceptanceSets(2));
       }
       MutableAutomatonUtil.complete(minimized, sink);
-      minimized.trim();
       return minimized;
     });
     if (automaton.size() == 0) {
       return Optional.empty();
     }
 
-    //    if (true) {
-    //      var edgeGame = new SuspectEdgeGame<>(game, automaton);
-    //      var solution = new StrategyIterationSolver<>(edgeGame).solve();
-    //
-    //      if (solution.winner(edgeGame.initialState()) == Player.EVEN) {
-    //        return Optional.empty();
-    //      }
-    //
-    //      Queue<EdgePriorityState<S>> queue = new ArrayDeque<>(List.of(edgeGame.initialState()));
-    //      Set<EdgePriorityState<S>> reached = new HashSet<>();
-    //      Map<EdgePriorityState<S>, Edge<EdgePriorityState<S>>> strategy = new HashMap<>();
-    //      while (!queue.isEmpty()) {
-    //        EdgePriorityState<S> next = queue.poll();
-    //        assert solution.winner(next) == Player.ODD;
-    //        Stream<Edge<EdgePriorityState<S>>> edges;
-    //        if (edgeGame.owner(next) == Player.EVEN) {
-    //          edges = edgeGame.edges(next);
-    //        } else {
-    //          var solutionEdge = solution.oddStrategy().apply(next).iterator().next();
-    //          strategy.put(next, solutionEdge);
-    //          edges = Stream.of(solutionEdge);
-    //        }
-    //        edges.forEach(edge -> {
-    //          EdgePriorityState<S> successor = edge.successor();
-    //          if (reached.add(successor)) {
-    //            queue.add(successor);
-    //          }
-    //        });
-    //      }
-    //
-    //      return Optional.of(new Strategy<>(null, Map.of()));
-    //    }
-    var parityGame = LazySuspectParityGame.create(game, eveState, automaton);
+    var parityGame = SuspectParityGame.create(game, eveState, automaton);
     var paritySolution = solver.solve(parityGame);
 
     if (paritySolution.winner(parityGame.initialState()) == Player.EVEN) {

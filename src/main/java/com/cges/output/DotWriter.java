@@ -7,7 +7,7 @@ import com.cges.model.ConcurrentGame;
 import com.cges.model.EquilibriumStrategy;
 import com.cges.model.Transition;
 import com.cges.parity.Player;
-import com.cges.parity.oink.ParityGame;
+import com.cges.parity.ParityGame;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import java.io.PrintStream;

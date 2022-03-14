@@ -85,7 +85,15 @@ final class ExplicitGame<S> implements ConcurrentGame<S> {
     return labels.apply(state);
   }
 
-  public record MapMove(Map<Agent, Action> actions) implements Move, DotFormatted {
+  public static final class MapMove implements Move, DotFormatted {
+    private final Map<Agent, Action> actions;
+    private final int hashCode;
+
+    public MapMove(Map<Agent, Action> actions) {
+      this.actions = Map.copyOf(actions);
+      this.hashCode = this.actions.hashCode();
+    }
+
     @Override
     public Action action(Agent agent) {
       return actions.get(agent);
@@ -108,6 +116,19 @@ final class ExplicitGame<S> implements ConcurrentGame<S> {
           .map(Map.Entry::getValue)
           .map(Action::name)
           .collect(Collectors.joining());
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+      return this == obj
+          || (obj instanceof MapMove that
+          && hashCode == that.hashCode
+          && actions.equals(that.actions));
+    }
+
+    @Override
+    public int hashCode() {
+      return hashCode;
     }
   }
 }

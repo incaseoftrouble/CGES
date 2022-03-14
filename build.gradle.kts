@@ -62,7 +62,7 @@ configurations {
 
 application {
     mainClass.set("com.cges.Main")
-    // applicationDefaultJvmArgs = listOf("-ea")
+    applicationDefaultJvmArgs = listOf("-ea")
 }
 
 tasks.generateGrammarSource {

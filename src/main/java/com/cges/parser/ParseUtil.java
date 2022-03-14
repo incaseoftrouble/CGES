@@ -46,11 +46,6 @@ public final class ParseUtil {
       return payoffPrimitive.getAsBoolean() ? Agent.Payoff.WINNING : Agent.Payoff.LOSING;
     }
     String payoffString = payoffPrimitive.getAsString();
-    return switch (payoffString) {
-      case "1", "true" -> Agent.Payoff.WINNING;
-      case "0", "false" -> Agent.Payoff.LOSING;
-      case "?" -> Agent.Payoff.UNDEFINED;
-      default -> throw new IllegalArgumentException("Unsupported payoff string " + payoffString);
-    };
+    return Agent.Payoff.parse(payoffString);
   }
 }

@@ -1,4 +1,4 @@
-package com.cges.parity.oink;
+package com.cges.parity;
 
 public class OinkExecutionException extends RuntimeException {
   public OinkExecutionException(String message) {

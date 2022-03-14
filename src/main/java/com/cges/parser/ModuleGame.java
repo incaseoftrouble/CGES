@@ -13,6 +13,7 @@ import de.tum.in.naturals.set.NatBitSets;
 import java.util.ArrayList;
 import java.util.BitSet;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -40,7 +41,7 @@ public class ModuleGame<S> implements ConcurrentGame<ModuleState<S>> {
     Indices.forEachIndexed(agents, (index, agent) -> agentIndices.put(agent, index));
     this.agentIndices = Map.copyOf(agentIndices);
 
-    initialState = new ModuleState<>(Lists.transform(this.modules, Module::initialState), agentIndices);
+    initialState = new ModuleState<>(Lists.transform(this.modules, Module::initialState), this.agentIndices);
   }
 
   @Override
@@ -96,6 +97,17 @@ public class ModuleGame<S> implements ConcurrentGame<ModuleState<S>> {
     @Override
     public Action action(Agent agent) {
       return transition.get(agentIndices.get(agent)).getKey();
+    }
+
+    @Override
+    public String toString() {
+      return agentIndices.entrySet().stream()
+          .sorted(Map.Entry.comparingByKey(Comparator.comparing(Agent::name)))
+          .map(Map.Entry::getValue)
+          .map(transition::get)
+          .map(Map.Entry::getKey)
+          .map(Action::name)
+          .collect(Collectors.joining(",", "[", "]"));
     }
 
     @Override

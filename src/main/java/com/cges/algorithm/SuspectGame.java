@@ -135,14 +135,56 @@ public final class SuspectGame<S> {
     return game;
   }
 
-  public record AdamState<S>(EveState<S> eveState, Move move) {
+  public static final class AdamState<S> {
+    private final EveState<S> eveState;
+    private final Move move;
+    private final int hashCode;
+
+    public AdamState(EveState<S> eveState, Move move) {
+      this.eveState = eveState;
+      this.move = move;
+      this.hashCode = eveState.hashCode() ^ move.hashCode();
+    }
+
     @Override
     public String toString() {
       return "AS[%s]@[%s]".formatted(eveState.historyState(), move);
     }
+
+    public EveState<S> eveState() {
+      return eveState;
+    }
+
+    public Move move() {
+      return move;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+      return obj == this
+          || (obj instanceof SuspectGame.AdamState<?> that
+          && hashCode == that.hashCode
+          && eveState.equals(that.eveState)
+          && move.equals(that.move));
+    }
+
+    @Override
+    public int hashCode() {
+      return hashCode;
+    }
   }
 
-  public record EveState<S>(HistoryState<S> historyState, Set<Agent> suspects) {
+  public static final class EveState<S> {
+    private final HistoryState<S> historyState;
+    private final Set<Agent> suspects;
+    private final int hashCode;
+
+    public EveState(HistoryState<S> historyState, Set<Agent> suspects) {
+      this.historyState = historyState;
+      this.suspects = Set.copyOf(suspects);
+      this.hashCode = historyState.hashCode() ^ suspects.hashCode();
+    }
+
     public S gameState() {
       return historyState.state();
     }
@@ -150,6 +192,28 @@ public final class SuspectGame<S> {
     @Override
     public String toString() {
       return "ES[%s]{%s}".formatted(historyState, suspects.stream().map(Agent::name).sorted().collect(Collectors.joining(",")));
+    }
+
+    public HistoryState<S> historyState() {
+      return historyState;
+    }
+
+    public Set<Agent> suspects() {
+      return suspects;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+      return (this == obj)
+          || (obj instanceof EveState<?> that
+          && hashCode == that.hashCode
+          && historyState.equals(that.historyState)
+          && suspects.equals(that.suspects));
+    }
+
+    @Override
+    public int hashCode() {
+      return hashCode;
     }
   }
 }

@@ -1,6 +1,7 @@
 package com.cges;
 
 import com.cges.algorithm.FormulaHistoryGame;
+import com.cges.algorithm.HistoryGame;
 import com.cges.algorithm.RunGraph;
 import com.cges.algorithm.RunGraphSccSolver;
 import com.cges.algorithm.StrategyMapper;
@@ -53,7 +54,7 @@ public final class Main {
     }
     analyse(game).forEach(solution -> System.out.printf("Found NE for %s:%n%s%n",
         Formatter.format(solution.assignment(), game),
-        solution.strategy().lasso()));
+        solution.strategy()));
     System.out.println("Overall: " + overall);
   }
 
@@ -73,9 +74,13 @@ public final class Main {
           var suspectSolution = SuspectSolver.computeReachableWinningEveStates(suspectGame, payoff);
           System.out.println("Winning: " + winningStopwatch);
 
+          Set<HistoryGame.HistoryState<S>> winningHistoryStates = suspectSolution.winningStates().stream()
+              .filter(eve -> eve.suspects().equals(game.agents()))
+              .map(SuspectGame.EveState::historyState)
+              .collect(Collectors.toSet());
+
           Stopwatch solutionStopwatch = Stopwatch.createStarted();
-          var runGraph = RunGraph.create(suspectGame.historyGame(), payoff,
-              state -> suspectSolution.isWinning(new SuspectGame.EveState<>(state, game.agents())));
+          var runGraph = RunGraph.create(suspectGame.historyGame(), payoff, winningHistoryStates::contains);
           var lasso = RunGraphSccSolver.solve(runGraph);
           System.out.println("Solution: " + solutionStopwatch);
           if (lasso.isPresent()) {
@@ -84,8 +89,7 @@ public final class Main {
           } else {
             return Optional.empty();
           }
-        })
-        .flatMap(Optional::stream);
+        }).flatMap(Optional::stream);
   }
 
   record GameSolution<S>(PayoffAssignment assignment, EquilibriumStrategy<S> strategy) {}

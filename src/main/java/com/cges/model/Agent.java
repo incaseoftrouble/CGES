@@ -18,6 +18,15 @@ public final class Agent {
         case UNDEFINED -> "?";
       };
     }
+
+    public static Payoff parse(String string) {
+      return switch (string) {
+        case "1", "true" -> Agent.Payoff.WINNING;
+        case "0", "false" -> Agent.Payoff.LOSING;
+        case "?" -> Agent.Payoff.UNDEFINED;
+        default -> throw new IllegalArgumentException("Unsupported payoff string " + string);
+      };
+    }
   }
 
   private final String name;

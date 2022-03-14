@@ -1,10 +1,9 @@
-package com.cges.parity.oink;
+package com.cges.parity;
 
 import com.cges.parity.Player;
 import java.util.ArrayDeque;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Queue;
 import java.util.Set;
 import java.util.function.Consumer;
@@ -47,9 +46,4 @@ public interface ParityGame<S> {
 
   Player owner(S state);
 
-  record Solution<S>(Set<S> oddWinning, Map<S, S> oddStrategy) {
-    public Player winner(S state) {
-      return oddWinning.contains(state) ? Player.ODD : Player.EVEN;
-    }
-  }
 }

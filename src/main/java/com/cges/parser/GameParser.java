@@ -55,10 +55,10 @@ public final class GameParser {
     for (String[] agentData : agentStrings) {
       String name = agentData[0];
       LabelledFormula goal = LtlParser.parse(agentData[1], propositions);
-      checkArgument(Set.of("0", "1").contains(agentData[2]), "Expected 0/1, got %s", agentData[2]);
-      boolean payoff = agentData[2].equals("1");
+      checkArgument(Set.of("0", "1", "?").contains(agentData[2]), "Expected 0/1, got %s", agentData[2]);
+      Agent.Payoff payoff = Agent.Payoff.parse(agentData[2]);
       List<Action> actions = Arrays.asList(agentData).subList(3, agentData.length).stream().map(Action::new).toList();
-      agents.add(new Agent(name, goal.formula(), payoff ? Agent.Payoff.WINNING : Agent.Payoff.LOSING, actions));
+      agents.add(new Agent(name, goal.formula(), payoff, actions));
     }
     for (String[] stateData : stateStrings) {
       State state = new State(stateData[0]);
