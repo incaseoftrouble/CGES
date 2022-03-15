@@ -2,16 +2,17 @@ package com.cges.algorithm;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
+import com.cges.algorithm.HistoryGame.HistoryState;
 import com.cges.algorithm.SuspectGame.EveState;
 import com.cges.model.Agent;
+import com.cges.model.ConcurrentGame;
 import com.cges.model.PayoffAssignment;
-import com.cges.parity.Player;
-import com.cges.parity.SuspectParityGame;
+import com.cges.model.Transition;
 import com.cges.parity.OinkGameSolver;
+import com.cges.parity.Player;
 import com.cges.parity.PriorityState;
+import com.cges.parity.SuspectParityGame;
 import java.util.ArrayDeque;
-import java.util.Collection;
-import java.util.Comparator;
 import java.util.Deque;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -20,6 +21,8 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Queue;
 import java.util.Set;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import owl.automaton.Automaton;
 import owl.automaton.MutableAutomatonUtil;
@@ -28,8 +31,10 @@ import owl.automaton.acceptance.ParityAcceptance;
 import owl.automaton.acceptance.optimization.AcceptanceOptimizations;
 import owl.ltl.BooleanConstant;
 import owl.ltl.Conjunction;
-import owl.ltl.Formula;
+import owl.ltl.Disjunction;
+import owl.ltl.GOperator;
 import owl.ltl.LabelledFormula;
+import owl.ltl.Literal;
 import owl.ltl.rewriter.LiteralMapper;
 import owl.ltl.rewriter.SimplifierFactory;
 import owl.run.Environment;
@@ -37,7 +42,7 @@ import owl.translations.ltl2dpa.LTL2DPAFunction;
 
 public final class SuspectSolver<S> {
   private final Environment env = Environment.standard();
-  private final LTL2DPAFunction dpaFunction = new LTL2DPAFunction(env, LTL2DPAFunction.RECOMMENDED_SYMMETRIC_CONFIG);
+  private final LTL2DPAFunction dpaFunction = new LTL2DPAFunction(env, LTL2DPAFunction.RECOMMENDED_ASYMMETRIC_CONFIG);
   private final SuspectGame<S> suspectGame;
   // TODO Make caching work on unlabelled formulas?
   private final Map<LabelledFormula, Automaton<Object, ParityAcceptance>> automatonCache = new HashMap<>();
@@ -47,93 +52,29 @@ public final class SuspectSolver<S> {
     this.suspectGame = suspectGame;
   }
 
-  public interface SuspectSolution<S> {
-    Set<EveState<S>> winningStates();
-
-    default boolean isWinning(EveState<S> state) {
-      return winningStates().contains(state);
-    }
-
-    PriorityState<S> initial(EveState<S> state);
-
-    SuspectStrategy<S> strategy(EveState<S> state);
-  }
-
-  public interface SuspectStrategy<S> {
-    PriorityState<S> winningMove(PriorityState<S> state);
-  }
-
-  record Solution<S>(Map<EveState<S>, Strategy<S>> strategies) implements SuspectSolution<S> {
-    @Override
-    public Set<EveState<S>> winningStates() {
-      return strategies.keySet();
-    }
-
-    @Override
-    public PriorityState<S> initial(EveState<S> state) {
-      return strategies.get(state).initialState();
-    }
-
-    @Override
-    public SuspectStrategy<S> strategy(EveState<S> state) {
-      return strategies.get(state);
-    }
-  }
-
-  record Strategy<S>(PriorityState<S> initialState, Map<PriorityState<S>, PriorityState<S>> strategies) implements SuspectStrategy<S> {
-    @Override
-    public PriorityState<S> winningMove(PriorityState<S> state) {
-      checkArgument(strategies.containsKey(state));
-      return strategies.get(state);
-    }
-  }
-
-  public static <S> SuspectSolution<S> computeWinningEveStatesLimitSet(SuspectGame<S> suspectGame, PayoffAssignment payoff) {
-    // TODO Reuse winning / losing states
-    /*
-    SuccessorFunction<EveState<S>> successorFunction = current -> suspectGame.successors(current).stream()
-        .map(suspectGame::successors)
-        .flatMap(Collection::stream)
-        .collect(Collectors.toSet());
-    List<Set<EveState<S>>> decomposition = Lists.reverse(SccDecomposition.of(Set.of(suspectGame.initialState()), successorFunction).sccs());
-    assert decomposition.stream().flatMap(Collection::stream).collect(Collectors.toSet()).equals(suspectGame.eveStates());
-     */
-
+  public static <S> HistorySolution<S> computeReachableWinningStates(SuspectGame<S> suspectGame, PayoffAssignment payoff) {
     SuspectSolver<S> solver = new SuspectSolver<>(suspectGame);
-    Map<EveState<S>, Strategy<S>> strategies = new HashMap<>();
+    Map<HistoryState<S>, Strategy<S>> strategies = new HashMap<>();
 
-    for (EveState<S> state : suspectGame.eveStates()) {
-      findEventualSuspects(suspectGame, state).stream()
-          .map(agents -> Conjunction.of(agents.stream()
-              .filter(payoff::isLoser)
-              .map(state.historyState()::goal)
-              .map(Formula::not)))
-          .sorted(Comparator.comparingInt(Formula::height)) // Try to solve "easy" formulae first
-          .map(formula -> LabelledFormula.of(formula, suspectGame.historyGame().concurrentGame().atomicPropositions()))
-          .flatMap(formula -> solver.isWinning(suspectGame, state, formula).stream())
-          .findFirst()
-          .ifPresent(strategy -> strategies.put(state, strategy));
-    }
-    return new Solution<>(Map.copyOf(strategies));
-  }
-
-  public static <S> SuspectSolution<S> computeReachableWinningEveStates(SuspectGame<S> suspectGame, PayoffAssignment payoff) {
-    SuspectSolver<S> solver = new SuspectSolver<>(suspectGame);
-    Map<EveState<S>, Strategy<S>> strategies = new HashMap<>();
-
-    List<String> atomicPropositions = suspectGame.historyGame().concurrentGame().atomicPropositions();
-    Set<EveState<S>> states = new HashSet<>(List.of(suspectGame.initialState()));
-    Queue<EveState<S>> queue = new ArrayDeque<>(states);
+    HistoryGame<S> historyGame = suspectGame.historyGame();
+    ConcurrentGame<S> concurrentGame = historyGame.concurrentGame();
+    Set<Agent> losingAgents = concurrentGame.agents().stream().filter(payoff::isLoser).collect(Collectors.toSet());
+    List<String> atomicPropositions = Stream.concat(
+        concurrentGame.atomicPropositions().stream(),
+        losingAgents.stream().map(Agent::name)).toList();
+    Map<Agent, Literal> agentLiterals = losingAgents.stream().collect(Collectors.toMap(Function.identity(),
+        a -> Literal.of(atomicPropositions.indexOf(a.name()))));
+    assert Set.copyOf(atomicPropositions).size() == atomicPropositions.size();
+    Set<HistoryState<S>> states = new HashSet<>(List.of(historyGame.initialState()));
+    Queue<HistoryState<S>> queue = new ArrayDeque<>(states);
 
     while (!queue.isEmpty()) {
-      EveState<S> state = queue.poll();
-      solver.isWinning(suspectGame, state, LabelledFormula.of(Conjunction.of(state.suspects().stream()
-              .filter(payoff::isLoser)
-              .map(state.historyState()::goal)
-              .map(Formula::not)),
-          atomicPropositions)).ifPresent(strategy -> {
+      HistoryState<S> state = queue.poll();
+      LabelledFormula formula = LabelledFormula.of(Disjunction.of(
+          losingAgents.stream().map(a -> Conjunction.of(GOperator.of(agentLiterals.get(a)), state.goal(a)))), atomicPropositions);
+      solver.isWinning(suspectGame, new EveState<>(state, concurrentGame.agents()), formula.not()).ifPresent(strategy -> {
         strategies.put(state, strategy);
-        suspectGame.successors(state).stream().map(suspectGame::successors).flatMap(Collection::stream).forEach(successor -> {
+        historyGame.transitions(state).map(Transition::destination).forEach(successor -> {
           if (states.add(successor)) {
             queue.add(successor);
           }
@@ -143,8 +84,8 @@ public final class SuspectSolver<S> {
     return new Solution<>(Map.copyOf(strategies));
   }
 
-  private Optional<Strategy<S>> isWinning(SuspectGame<S> game, EveState<S> eveState, LabelledFormula agentGoal) {
-    var goal = SimplifierFactory.apply(agentGoal, SimplifierFactory.Mode.SYNTACTIC_FIXPOINT);
+  private Optional<Strategy<S>> isWinning(SuspectGame<S> game, EveState<S> eveState, LabelledFormula eveGoal) {
+    var goal = SimplifierFactory.apply(eveGoal, SimplifierFactory.Mode.SYNTACTIC_FIXPOINT);
     if (goal.formula() instanceof BooleanConstant bool) {
       if (bool.value) {
         PriorityState<S> state = new PriorityState<>(null, eveState, 0);
@@ -226,5 +167,46 @@ public final class SuspectSolver<S> {
       }
     }
     return potentialLimitSuspectAgents;
+  }
+
+  public interface HistorySolution<S> {
+    Set<HistoryState<S>> winningStates();
+
+    default boolean isWinning(HistoryState<S> state) {
+      return winningStates().contains(state);
+    }
+
+    PriorityState<S> initial(HistoryState<S> state);
+
+    SuspectStrategy<S> strategy(HistoryState<S> state);
+  }
+
+  public interface SuspectStrategy<S> {
+    PriorityState<S> winningMove(PriorityState<S> state);
+  }
+
+  record Solution<S>(Map<HistoryState<S>, Strategy<S>> strategies) implements HistorySolution<S> {
+    @Override
+    public Set<HistoryState<S>> winningStates() {
+      return strategies.keySet();
+    }
+
+    @Override
+    public PriorityState<S> initial(HistoryState<S> state) {
+      return strategies.get(state).initialState();
+    }
+
+    @Override
+    public SuspectStrategy<S> strategy(HistoryState<S> state) {
+      return strategies.get(state);
+    }
+  }
+
+  record Strategy<S>(PriorityState<S> initialState, Map<PriorityState<S>, PriorityState<S>> strategies) implements SuspectStrategy<S> {
+    @Override
+    public PriorityState<S> winningMove(PriorityState<S> state) {
+      checkArgument(strategies.containsKey(state));
+      return strategies.get(state);
+    }
   }
 }

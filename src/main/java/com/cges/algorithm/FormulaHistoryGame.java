@@ -1,7 +1,5 @@
 package com.cges.algorithm;
 
-import static com.google.common.base.Preconditions.checkArgument;
-
 import com.cges.model.Agent;
 import com.cges.model.ConcurrentGame;
 import com.cges.model.Transition;
@@ -111,7 +109,7 @@ public class FormulaHistoryGame<S> implements HistoryGame<S> {
         return set;
       });
       List<EquivalenceClass> successorGoals = state.agentGoals().stream()
-          .map(f -> f.temporalStep(valuation).unfold())
+          .map(goal -> goal.temporalStep(valuation).unfold())
           .toList();
       var successors = game.transitions(state.state())
           .map(transition -> transition.withDestination((HistoryState<S>)
@@ -135,9 +133,7 @@ public class FormulaHistoryGame<S> implements HistoryGame<S> {
 
   @Override
   public Stream<Transition<HistoryState<S>>> transitions(HistoryState<S> state) {
-    checkArgument(state instanceof FormulaHistoryGame.ListHistoryState<S>);
-    ListHistoryState<S> history = (ListHistoryState<S>) state;
-    return transitions.get(history).stream();
+    return transitions.get(state).stream();
   }
 
   @Override

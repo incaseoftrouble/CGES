@@ -1,7 +1,6 @@
 package com.cges;
 
 import com.cges.algorithm.FormulaHistoryGame;
-import com.cges.algorithm.HistoryGame;
 import com.cges.algorithm.RunGraph;
 import com.cges.algorithm.RunGraphSccSolver;
 import com.cges.algorithm.StrategyMapper;
@@ -71,16 +70,11 @@ public final class Main {
         .peek(p -> System.out.printf("Processing: %s%n", Formatter.format(p, game)))
         .<Optional<GameSolution<S>>>map(payoff -> {
           Stopwatch winningStopwatch = Stopwatch.createStarted();
-          var suspectSolution = SuspectSolver.computeReachableWinningEveStates(suspectGame, payoff);
+          var suspectSolution = SuspectSolver.computeReachableWinningStates(suspectGame, payoff);
           System.out.println("Winning: " + winningStopwatch);
 
-          Set<HistoryGame.HistoryState<S>> winningHistoryStates = suspectSolution.winningStates().stream()
-              .filter(eve -> eve.suspects().equals(game.agents()))
-              .map(SuspectGame.EveState::historyState)
-              .collect(Collectors.toSet());
-
           Stopwatch solutionStopwatch = Stopwatch.createStarted();
-          var runGraph = RunGraph.create(suspectGame.historyGame(), payoff, winningHistoryStates::contains);
+          var runGraph = RunGraph.create(suspectGame.historyGame(), payoff, suspectSolution::isWinning);
           var lasso = RunGraphSccSolver.solve(runGraph);
           System.out.println("Solution: " + solutionStopwatch);
           if (lasso.isPresent()) {

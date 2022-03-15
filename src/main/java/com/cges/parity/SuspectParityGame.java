@@ -4,8 +4,10 @@ import static com.google.common.base.Preconditions.checkArgument;
 
 import com.cges.algorithm.SuspectGame;
 import com.cges.algorithm.SuspectGame.EveState;
+import com.cges.model.Agent;
 import com.cges.model.ConcurrentGame;
 import com.google.common.collect.Iterables;
+import de.tum.in.naturals.bitset.BitSets;
 import java.util.BitSet;
 import java.util.Collection;
 import java.util.List;
@@ -25,6 +27,7 @@ public final class SuspectParityGame<S> implements ParityGame<PriorityState<S>> 
   private final Automaton<Object, ParityAcceptance> dpa;
   private final Map<S, BitSet> labelCache;
   private final int maximumPriority;
+  private final Map<String, Integer> propositionIndex;
 
   private SuspectParityGame(SuspectGame<S> suspectGame, PriorityState<S> initialState, Automaton<Object, ParityAcceptance> dpa) {
     assert !dpa.acceptance().parity().max();
@@ -41,7 +44,7 @@ public final class SuspectParityGame<S> implements ParityGame<PriorityState<S>> 
     this.maximumPriority = maximumPriority;
 
     List<String> propositions = dpa.factory().atomicPropositions();
-    Map<String, Integer> propositionIndex = IntStream.range(0, propositions.size())
+    propositionIndex = IntStream.range(0, propositions.size())
         .boxed()
         .collect(Collectors.toMap(propositions::get, Function.identity()));
     ConcurrentGame<S> concurrentGame = suspectGame.historyGame().concurrentGame();
@@ -66,7 +69,9 @@ public final class SuspectParityGame<S> implements ParityGame<PriorityState<S>> 
   @Override
   public Stream<PriorityState<S>> successors(PriorityState<S> current) {
     if (current.isEve()) {
-      BitSet label = labelCache.get(current.eve().gameState());
+      BitSet label = BitSets.copyOf(labelCache.get(current.eve().gameState()));
+      current.eve().suspects().stream().map(Agent::name).map(propositionIndex::get).filter(Objects::nonNull).forEach(label::set);
+
       assert dpa.edges(current.automatonState(), label).size() == 1;
       Edge<Object> automatonEdge = dpa.edge(current.automatonState(), label);
       assert automatonEdge != null;

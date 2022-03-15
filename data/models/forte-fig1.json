@@ -1,0 +1,84 @@
+{
+  "name": "example",
+  "ap": [
+    "s1",
+    "s2"
+  ],
+  "agents": {
+    "A1": {
+      "goal": "F G s1",
+      "payoff": "?",
+      "actions": [
+        "a",
+        "b"
+      ]
+    },
+    "A2": {
+      "goal": "F G s2",
+      "payoff": "?",
+      "actions": [
+        "c",
+        "d"
+      ]
+    }
+  },
+  "arena": {
+    "initial": "s0",
+    "states": {
+      "s0": {
+        "labels": [],
+        "transitions": [
+          {
+            "actions": {
+              "A1": "a",
+              "A2": "c"
+            },
+            "to": "s0"
+          },
+          {
+            "actions": {
+              "A1": "b",
+              "A2": "c"
+            },
+            "to": "s1"
+          }
+        ]
+      },
+      "s1": {
+        "labels": [
+          "s1"
+        ],
+        "transitions": [
+          {
+            "actions": {
+              "A1": "a",
+              "A2": "c"
+            },
+            "to": "s1"
+          },
+          {
+            "actions": {
+              "A1": "a",
+              "A2": "d"
+            },
+            "to": "s2"
+          }
+        ]
+      },
+      "s2": {
+        "labels": [
+          "s2"
+        ],
+        "transitions": [
+          {
+            "actions": {
+              "A1": "a",
+              "A2": "c"
+            },
+            "to": "s2"
+          }
+        ]
+      }
+    }
+  }
+}

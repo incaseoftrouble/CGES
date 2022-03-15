@@ -1,6 +1,5 @@
 package com.cges.algorithm;
 
-import com.cges.algorithm.SuspectGame.EveState;
 import com.cges.model.AcceptingLasso;
 import com.cges.model.Agent;
 import com.cges.model.EquilibriumStrategy;
@@ -15,7 +14,7 @@ public final class StrategyMapper {
   private StrategyMapper() {}
 
   public static <S> EquilibriumStrategy<S>
-  createStrategy(SuspectGame<S> suspectGame, SuspectSolver.SuspectSolution<S> suspectSolution, AcceptingLasso<S> lasso) {
+  createStrategy(SuspectGame<S> suspectGame, SuspectSolver.HistorySolution<S> historySolution, AcceptingLasso<S> lasso) {
     Iterator<RunGraph.RunState<S>> iterator = lasso.states(true).iterator();
     var current = iterator.next();
     assert current.historyState().equals(suspectGame.initialState().historyState());
@@ -35,10 +34,9 @@ public final class StrategyMapper {
           .iterator().next();
       runGraphMoves.put(current, move);
 
-      EveState<S> eveState = new EveState<>(current.historyState(), agents);
-      assert suspectSolution.isWinning(eveState);
+      assert historySolution.isWinning(current.historyState());
       // For each deviation, provide a proof that we can punish someone
-      punishmentStrategy.put(current, suspectSolution.strategy(eveState));
+      punishmentStrategy.put(current, historySolution.strategy(current.historyState()));
       current = next;
     }
     return new EquilibriumStrategy<>(lasso, Map.copyOf(runGraphMoves), Map.copyOf(punishmentStrategy));
