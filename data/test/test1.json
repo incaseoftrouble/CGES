@@ -1,0 +1,50 @@
+{
+  "name": "test1",
+  "type": "explicit",
+  "expected": [
+    {
+      "A1": false
+    }
+  ],
+  "ap": [
+    "s1"
+  ],
+  "agents": {
+    "A1": {
+      "goal": "G s1",
+      "payoff": "?",
+      "actions": [
+        "a"
+      ]
+    }
+  },
+  "arena": {
+    "initial": "s0",
+    "states": {
+      "s0": {
+        "labels": [],
+        "transitions": [
+          {
+            "actions": {
+              "A1": "a"
+            },
+            "to": "s1"
+          }
+        ]
+      },
+      "s1": {
+        "labels": [
+          "s1"
+        ],
+        "transitions": [
+          {
+            "actions": {
+              "A1": "a"
+            },
+            "to": "s1"
+          }
+        ]
+      }
+    }
+  }
+}

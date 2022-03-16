@@ -1,6 +1,6 @@
 package com.cges.model;
 
-import com.cges.algorithm.RunGraph;
+import com.cges.graph.RunGraph;
 import com.cges.algorithm.DeviationSolver;
 import java.util.Map;
 import java.util.stream.Collectors;

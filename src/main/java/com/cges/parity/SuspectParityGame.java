@@ -2,8 +2,8 @@ package com.cges.parity;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
-import com.cges.algorithm.SuspectGame;
-import com.cges.algorithm.SuspectGame.EveState;
+import com.cges.graph.SuspectGame;
+import com.cges.graph.SuspectGame.EveState;
 import com.cges.model.Agent;
 import de.tum.in.naturals.bitset.BitSets;
 import java.util.BitSet;
@@ -67,7 +67,9 @@ public final class SuspectParityGame<S> implements ParityGame<PriorityState<S>> 
       BitSet label = BitSets.copyOf(gameStateLabelCache.computeIfAbsent(eveState.gameState(), state -> {
         BitSet set = new BitSet();
         suspectGame.historyGame().concurrentGame().labels(state).stream()
-            .map(propositionIndex::get).filter(Objects::nonNull).forEach(set::set);
+            .map(propositionIndex::get)
+            .filter(Objects::nonNull)
+            .forEach(set::set);
         return set;
       }));
       eveState.suspects().stream().map(Agent::name).map(propositionIndex::get).filter(Objects::nonNull).forEach(label::set);

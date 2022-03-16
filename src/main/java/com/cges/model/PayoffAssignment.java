@@ -11,6 +11,14 @@ public record PayoffAssignment(Set<Agent> winning) {
     };
   }
 
+  public boolean isWinner(Agent agent) {
+    return switch (agent.payoff()) {
+      case WINNING -> true;
+      case LOSING -> false;
+      case UNDEFINED -> winning.contains(agent);
+    };
+  }
+
   public Agent.Payoff map(Agent agent) {
     return switch (agent.payoff()) {
       case WINNING -> Agent.Payoff.WINNING;

@@ -1,11 +1,12 @@
-package com.cges.algorithm;
+package com.cges.graph;
 
-import com.cges.algorithm.HistoryGame.HistoryState;
+import com.cges.graph.HistoryGame.HistoryState;
 import com.cges.model.Agent;
 import com.cges.model.Move;
 import com.cges.model.Transition;
 import com.google.common.collect.ImmutableSetMultimap;
 import com.google.common.collect.SetMultimap;
+import com.google.common.collect.Sets;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -47,36 +48,40 @@ public final class SuspectGame<S> {
   }
 
   public Stream<EveState<S>> eveSuccessors(EveState<S> eveState) {
-    return transitions.computeIfAbsent(eveState, this::computeSuccessorMap).values().stream().distinct();
+    return transitions.computeIfAbsent(eveState, this::computeSuccessorMap).values().stream();
   }
 
   private SetMultimap<AdamState<S>, EveState<S>> computeSuccessorMap(EveState<S> eveState) {
     var gameState = eveState.historyState();
-    var movesBySuccessor = game.concurrentGame().transitions(eveState.gameState())
+    var movesToSuccessors = game.transitions(eveState.historyState())
         .collect(ImmutableSetMultimap.toImmutableSetMultimap(Transition::destination, Transition::move));
+    var nonSuspects = Set.copyOf(Sets.difference(game.concurrentGame().agents(), eveState.suspects()));
 
+    // TODO This is somewhat inefficient, but this is much smaller than the subsequent algorithmic problems
     ImmutableSetMultimap.Builder<AdamState<S>, EveState<S>> transitions = ImmutableSetMultimap.builder();
     game.transitions(gameState).forEach(transition -> {
       var adamSuccessor = new AdamState<>(eveState, transition.move());
       Collection<Agent> currentSuspects = eveState.suspects();
 
-      game.transitions(eveState.historyState()).forEach(gameTransition -> {
-        Set<Move> availableMoves = movesBySuccessor.get(gameTransition.destination().state());
+      game.transitions(eveState.historyState()).map(Transition::destination).distinct().forEach(historySuccessor -> {
+        Set<Move> gameMoves = movesToSuccessors.get(historySuccessor);
         Collection<Agent> successorSuspects;
-        if (availableMoves.contains(adamSuccessor.move())) {
+        if (gameMoves.contains(adamSuccessor.move())) {
           // Nobody needs to deviate to achieve this move
           successorSuspects = currentSuspects;
         } else {
           successorSuspects = new HashSet<>();
-          for (Move move : availableMoves) {
-            // Check if there is a single suspect who could deviate to achieve this move (i.e. move to the eve successor)
-            var iterator = currentSuspects.stream()
-                .filter(a -> !adamSuccessor.move().action(a).equals(move.action(a)))
-                .iterator();
-            if (iterator.hasNext()) {
-              Agent deviating = iterator.next();
-              if (!iterator.hasNext()) {
-                successorSuspects.add(deviating);
+          for (Move move : gameMoves) {
+            if (nonSuspects.stream().allMatch(a -> move.action(a).equals(adamSuccessor.move().action(a)))) {
+              // Check if there is a single suspect who could deviate to achieve this move (i.e. move to the successor)
+              var deviatingAgents = currentSuspects.stream()
+                  .filter(a -> !adamSuccessor.move().action(a).equals(move.action(a)))
+                  .iterator();
+              if (deviatingAgents.hasNext()) {
+                Agent deviating = deviatingAgents.next();
+                if (!deviatingAgents.hasNext()) {
+                  successorSuspects.add(deviating);
+                }
               }
             }
           }
@@ -84,7 +89,7 @@ public final class SuspectGame<S> {
         assert currentSuspects.containsAll(successorSuspects);
 
         if (!successorSuspects.isEmpty()) {
-          transitions.put(adamSuccessor, new EveState<>(gameTransition.destination(), Set.copyOf(successorSuspects)));
+          transitions.put(adamSuccessor, new EveState<>(historySuccessor, Set.copyOf(successorSuspects)));
         }
       });
     });

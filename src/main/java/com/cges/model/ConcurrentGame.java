@@ -6,7 +6,7 @@ import static com.google.common.base.Preconditions.checkState;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Set;
-import java.util.stream.Stream;
+import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 
 public interface ConcurrentGame<S> {
@@ -35,11 +35,11 @@ public interface ConcurrentGame<S> {
 
   Set<String> labels(S state);
 
-  Stream<S> states();
+  Set<S> states();
 
-  Stream<Transition<S>> transitions(S state);
+  Set<Transition<S>> transitions(S state);
 
-  default Stream<S> successors(S state) {
-    return transitions(state).map(Transition::destination).distinct();
+  default Set<S> successors(S state) {
+    return transitions(state).stream().map(Transition::destination).collect(Collectors.toSet());
   }
 }

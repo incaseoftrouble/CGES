@@ -1,0 +1,132 @@
+{
+  "name": "test3",
+  "type": "explicit",
+  "expected": [
+    {
+      "A1": true,
+      "A2": false
+    },
+    {
+      "A1": true,
+      "A2": true
+    }
+  ],
+  "ap": [
+    "a1", "a2", "b1", "b2"
+  ],
+  "agents": {
+    "A1": {
+      "goal": "true",
+      "payoff": "?",
+      "actions": [
+        "a", "b"
+      ]
+    },
+    "A2": {
+      "goal": "G ((a1 -> X X a2) & (b1 -> X X b2))",
+      "payoff": "?",
+      "actions": [
+        "a", "b"
+      ]
+    }
+  },
+  "arena": {
+    "initial": "s0",
+    "states": {
+      "s0": {
+        "labels": [],
+        "transitions": [
+          {
+            "actions": {
+              "A1": "*",
+              "A2": "a"
+            },
+            "to": "a1"
+          },
+          {
+            "actions": {
+              "A1": "*",
+              "A2": "b"
+            },
+            "to": "b1"
+          }
+        ]
+      },
+      "a1": {
+        "labels": [
+          "a1"
+        ],
+        "transitions": [
+          {
+            "actions": {
+              "A1": "*",
+              "A2": "*"
+            },
+            "to": "s1"
+          }
+        ]
+      },
+      "b1": {
+        "labels": [
+          "b1"
+        ],
+        "transitions": [
+          {
+            "actions": {
+              "A1": "*",
+              "A2": "*"
+            },
+            "to": "s1"
+          }
+        ]
+      },
+      "s1": {
+        "labels": [],
+        "transitions": [
+          {
+            "actions": {
+              "A1": "a",
+              "A2": "*"
+            },
+            "to": "a2"
+          },
+          {
+            "actions": {
+              "A1": "b",
+              "A2": "*"
+            },
+            "to": "b2"
+          }
+        ]
+      },
+      "a2": {
+        "labels": [
+          "a2"
+        ],
+        "transitions": [
+          {
+            "actions": {
+              "A1": "*",
+              "A2": "*"
+            },
+            "to": "a2"
+          }
+        ]
+      },
+      "b2": {
+        "labels": [
+          "b2"
+        ],
+        "transitions": [
+          {
+            "actions": {
+              "A1": "*",
+              "A2": "*"
+            },
+            "to": "b2"
+          }
+        ]
+      }
+    }
+  }
+}

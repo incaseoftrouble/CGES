@@ -1,6 +1,6 @@
 package com.cges.parity;
 
-import com.cges.algorithm.SuspectGame;
+import com.cges.graph.SuspectGame;
 import it.unimi.dsi.fastutil.HashCommon;
 import java.util.Objects;
 

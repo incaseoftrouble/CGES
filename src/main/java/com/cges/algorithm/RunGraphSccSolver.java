@@ -1,10 +1,7 @@
 package com.cges.algorithm;
 
-import com.cges.algorithm.RunGraph.RunState;
-import com.cges.model.AcceptingLasso;
-import com.cges.model.EquilibriumStrategy;
-import com.cges.model.Move;
-import com.cges.model.Transition;
+import com.cges.graph.RunGraph;
+import com.cges.graph.RunGraph.RunState;
 import com.google.common.collect.Lists;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
@@ -12,10 +9,8 @@ import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.PriorityQueue;
 import java.util.Queue;
 import java.util.Set;
@@ -26,7 +21,7 @@ import owl.automaton.algorithm.SccDecomposition;
 public final class RunGraphSccSolver {
   private RunGraphSccSolver() {}
 
-  private static <S> List<RunState<S>> searchShortest(RunGraph<S> graph) {
+  public static <S> List<RunState<S>> searchShort(RunGraph<S> graph) {
     List<Set<RunState<S>>> decomposition = SccDecomposition.of(graph.initialStates(), graph::successors).sccsWithoutTransient();
 
     Map<RunState<S>, List<RunState<S>>> shortestAcceptingCycle = new HashMap<>();
@@ -97,7 +92,6 @@ public final class RunGraphSccSolver {
 
     while (!queue.isEmpty()) {
       RunState<S> current = queue.poll();
-      Set<RunState<S>> successors = graph.successors(current);
       int distance = minimalDistance.getInt(current);
       assert 0 <= distance && distance < Integer.MAX_VALUE;
       if (shortestCycleTotalLength <= distance) {
@@ -113,7 +107,7 @@ public final class RunGraphSccSolver {
         }
       }
 
-      for (RunState<S> successor : successors) {
+      for (RunState<S> successor : graph.successors(current)) {
         if (minimalDistance.putIfAbsent(successor, distance + 1) == -1) {
           predecessor.put(successor, current);
           queue.add(successor);
@@ -136,39 +130,5 @@ public final class RunGraphSccSolver {
       transientState = predecessor.get(transientState);
     }
     return Lists.reverse(path);
-  }
-
-  public static <S> Optional<EquilibriumStrategy<S>> solve(RunGraph<S> graph) {
-    var path = searchShortest(graph);
-    if (path.isEmpty()) {
-      return Optional.empty();
-    }
-
-    AcceptingLasso<S> lasso = new AcceptingLasso<>(path);
-    assert graph.initialStates().contains(lasso.states(true).iterator().next());
-
-    Iterator<RunState<S>> iterator = lasso.states(true).iterator();
-    var current = iterator.next();
-    var suspectGame = graph.suspectGame();
-    assert current.historyState().equals(suspectGame.initialState().historyState());
-    assert iterator.hasNext();
-
-    // Construct the sequence of moves to obtain the lasso
-    Map<RunGraph.RunState<S>, Move> runGraphMoves = new HashMap<>();
-    Map<RunGraph.RunState<S>, DeviationSolver.PunishmentStrategy<S>> punishmentStrategy = new HashMap<>();
-    while (iterator.hasNext()) {
-      var next = iterator.next();
-      // TODO Bit ugly, could maybe store this information when constructing the lasso
-      Move move = suspectGame.historyGame().transitions(current.historyState())
-          .filter(t -> t.destination().equals(next.historyState()))
-          .map(Transition::move)
-          .iterator().next();
-      runGraphMoves.put(current, move);
-
-      // For each deviation, provide a proof that we can punish someone
-      punishmentStrategy.put(current, graph.deviationStrategy(current.historyState()));
-      current = next;
-    }
-    return Optional.of(new EquilibriumStrategy<>(lasso, Map.copyOf(runGraphMoves), Map.copyOf(punishmentStrategy)));
   }
 }

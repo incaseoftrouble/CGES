@@ -1,6 +1,7 @@
-package com.cges.algorithm;
+package com.cges.graph;
 
-import com.cges.algorithm.HistoryGame.HistoryState;
+import com.cges.algorithm.DeviationSolver;
+import com.cges.graph.HistoryGame.HistoryState;
 import com.cges.model.Agent;
 import com.cges.model.ConcurrentGame;
 import com.cges.model.PayoffAssignment;
@@ -69,7 +70,7 @@ public final class RunGraph<S> {
     return Set.of();
   }
 
-  private boolean isWinning(HistoryState<S> historyState) {
+  public boolean isWinning(HistoryState<S> historyState) {
     return historySolutions.computeIfAbsent(historyState, deviationSolver::solve).isPresent();
   }
 

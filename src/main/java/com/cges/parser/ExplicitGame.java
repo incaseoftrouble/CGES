@@ -16,7 +16,6 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 final class ExplicitGame<S> implements ConcurrentGame<S> {
   private final String name;
@@ -71,13 +70,13 @@ final class ExplicitGame<S> implements ConcurrentGame<S> {
   }
 
   @Override
-  public Stream<S> states() {
-    return states.stream();
+  public Set<S> states() {
+    return states;
   }
 
   @Override
-  public Stream<Transition<S>> transitions(S gameState) {
-    return transitions.get(gameState).stream();
+  public Set<Transition<S>> transitions(S gameState) {
+    return transitions.get(gameState);
   }
 
   @Override
@@ -96,6 +95,7 @@ final class ExplicitGame<S> implements ConcurrentGame<S> {
 
     @Override
     public Action action(Agent agent) {
+      assert actions.containsKey(agent);
       return actions.get(agent);
     }
 

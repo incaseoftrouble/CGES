@@ -1,11 +1,9 @@
-package com.cges.algorithm;
+package com.cges.graph;
 
 import com.cges.model.Agent;
 import com.cges.model.ConcurrentGame;
 import com.cges.model.Transition;
-import com.google.common.collect.ImmutableSetMultimap;
 import com.google.common.collect.Lists;
-import com.google.common.collect.SetMultimap;
 import de.tum.in.naturals.Indices;
 import java.util.ArrayDeque;
 import java.util.Arrays;
@@ -21,6 +19,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import owl.ltl.Formula;
+import owl.ltl.rewriter.SimplifierRepository;
 
 public class FormulaHistoryGame<S> implements HistoryGame<S> {
   static final class ListHistoryState<S> implements HistoryState<S> {
@@ -57,8 +56,8 @@ public class FormulaHistoryGame<S> implements HistoryGame<S> {
       return obj == this
           || (obj instanceof ListHistoryState<?> that
           && hashCode == that.hashCode
-          && Arrays.equals(agentGoals, that.agentGoals)
-          && state.equals(that.state));
+          && state.equals(that.state)
+          && Arrays.equals(agentGoals, that.agentGoals));
     }
 
     @Override
@@ -71,6 +70,7 @@ public class FormulaHistoryGame<S> implements HistoryGame<S> {
       return state + " " + agentIndices.entrySet().stream().sorted(Map.Entry.comparingByKey(Comparator.comparing(Agent::name)))
           .map(Map.Entry::getValue)
           .map(i -> agentGoals[i])
+          .map(SimplifierRepository.SYNTACTIC_FIXPOINT::apply)
           .map(Objects::toString)
           .collect(Collectors.joining(",", "[", "]"));
     }
@@ -78,7 +78,7 @@ public class FormulaHistoryGame<S> implements HistoryGame<S> {
 
   private final ConcurrentGame<S> game;
   private final ListHistoryState<S> initialState;
-  private final SetMultimap<HistoryState<S>, Transition<HistoryState<S>>> transitions;
+  private final Map<HistoryState<S>, Set<Transition<HistoryState<S>>>> transitions;
 
   public FormulaHistoryGame(ConcurrentGame<S> game) {
     this.game = game;
@@ -92,7 +92,7 @@ public class FormulaHistoryGame<S> implements HistoryGame<S> {
     this.initialState = new ListHistoryState<>(game.initialState(),
         game.agents().stream().map(Agent::goal).map(Formula::unfold).toList(), indices);
 
-    ImmutableSetMultimap.Builder<HistoryState<S>, Transition<HistoryState<S>>> transitions = ImmutableSetMultimap.builder();
+    Map<HistoryState<S>, Set<Transition<HistoryState<S>>>> transitions = new HashMap<>();
     Set<ListHistoryState<S>> states = new HashSet<>(List.of(initialState));
     Queue<ListHistoryState<S>> queue = new ArrayDeque<>(states);
     Map<S, BitSet> labelCache = new HashMap<>();
@@ -105,19 +105,17 @@ public class FormulaHistoryGame<S> implements HistoryGame<S> {
         return set;
       });
       List<Formula> successorGoals = List.copyOf(Lists.transform(state.agentGoals(), goal -> goal.temporalStep(valuation).unfold()));
-      var successors = game.transitions(state.state())
-          .map(transition -> transition.withDestination(
-              (HistoryState<S>) new ListHistoryState<>(transition.destination(), successorGoals, indices)))
-          .collect(Collectors.toSet());
-      transitions.putAll(state, successors);
-      for (Transition<HistoryState<S>> transition : successors) {
-        var successor = (ListHistoryState<S>) transition.destination();
+      Set<Transition<HistoryState<S>>> stateTransitions = new HashSet<>();
+      for (Transition<S> transition : game.transitions(state.state())) {
+        ListHistoryState<S> successor = new ListHistoryState<>(transition.destination(), successorGoals, indices);
+        stateTransitions.add(transition.withDestination(successor));
         if (states.add(successor)) {
           queue.add(successor);
         }
       }
+      transitions.put(state, Set.copyOf(stateTransitions));
     }
-    this.transitions = transitions.build();
+    this.transitions = Map.copyOf(transitions);
   }
 
   @Override

@@ -1,0 +1,72 @@
+{
+  "name": "test2",
+  "type": "explicit",
+  "expected": [
+    {
+      "A1": true,
+      "A2": false
+    }
+  ],
+  "ap": [
+    "s1"
+  ],
+  "agents": {
+    "A1": {
+      "goal": "F s1",
+      "payoff": "?",
+      "actions": [
+        "a"
+      ]
+    },
+    "A2": {
+      "goal": "G !s1",
+      "payoff": "?",
+      "actions": [
+        "a"
+      ]
+    }
+  },
+  "arena": {
+    "initial": "s0",
+    "states": {
+      "s0": {
+        "labels": [],
+        "transitions": [
+          {
+            "actions": {
+              "A1": "a",
+              "A2": "a"
+            },
+            "to": "s1"
+          }
+        ]
+      },
+      "s1": {
+        "labels": [
+          "s1"
+        ],
+        "transitions": [
+          {
+            "actions": {
+              "A1": "a",
+              "A2": "a"
+            },
+            "to": "s2"
+          }
+        ]
+      },
+      "s2": {
+        "labels": [],
+        "transitions": [
+          {
+            "actions": {
+              "A1": "a",
+              "A2": "a"
+            },
+            "to": "s2"
+          }
+        ]
+      }
+    }
+  }
+}

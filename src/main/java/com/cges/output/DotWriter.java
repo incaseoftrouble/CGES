@@ -1,13 +1,17 @@
 package com.cges.output;
 
-import com.cges.algorithm.HistoryGame;
-import com.cges.algorithm.RunGraph;
-import com.cges.algorithm.SuspectGame;
+import com.cges.graph.HistoryGame;
+import com.cges.graph.HistoryGame.HistoryState;
+import com.cges.graph.RunGraph;
+import com.cges.graph.SuspectGame;
 import com.cges.model.Agent;
 import com.cges.model.ConcurrentGame;
 import com.cges.model.EquilibriumStrategy;
+import com.cges.model.Move;
 import com.cges.parity.ParityGame;
 import com.cges.parity.Player;
+import com.google.common.collect.HashMultimap;
+import com.google.common.collect.SetMultimap;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import java.io.PrintStream;
@@ -26,12 +30,12 @@ public final class DotWriter {
   private DotWriter() {}
 
   public static <S> void writeHistoryGame(HistoryGame<S> game, PrintStream writer,
-      @Nullable Predicate<HistoryGame.HistoryState<S>> winning) {
-    Object2IntMap<HistoryGame.HistoryState<S>> ids = new Object2IntOpenHashMap<>();
+      @Nullable Predicate<HistoryState<S>> winning) {
+    Object2IntMap<HistoryState<S>> ids = new Object2IntOpenHashMap<>();
     ids.defaultReturnValue(-1);
-    HistoryGame.HistoryState<S> initialState = game.initialState();
+    HistoryState<S> initialState = game.initialState();
     ids.put(initialState, 0);
-    Queue<HistoryGame.HistoryState<S>> queue = new ArrayDeque<>(List.of(initialState));
+    Queue<HistoryState<S>> queue = new ArrayDeque<>(List.of(initialState));
     while (!queue.isEmpty()) {
       var state = queue.poll();
       game.transitions(state).forEach(transition -> {
@@ -42,18 +46,23 @@ public final class DotWriter {
     }
 
     writer.append("digraph {\n");
-    for (Object2IntMap.Entry<HistoryGame.HistoryState<S>> entry : ids.object2IntEntrySet()) {
+    for (Object2IntMap.Entry<HistoryState<S>> entry : ids.object2IntEntrySet()) {
       writer.append("HS_%d [color=%s,fillcolor=white,label=\"%s\"]\n".formatted(
           entry.getIntValue(),
           winning == null ? "black" : (winning.test(entry.getKey()) ? "green" : "red"),
           DotFormatted.toString(entry.getKey())
       ));
     }
-    for (Object2IntMap.Entry<HistoryGame.HistoryState<S>> entry : ids.object2IntEntrySet()) {
+    for (Object2IntMap.Entry<HistoryState<S>> entry : ids.object2IntEntrySet()) {
+      SetMultimap<HistoryState<S>, Move> movesBySuccessor = HashMultimap.create();
       game.transitions(entry.getKey()).forEach(transition ->
-          writer.append("HS_%d -> HS_%d [label=\"%s\"]\n".formatted(entry.getIntValue(),
-              ids.getInt(transition.destination()),
-              DotFormatted.toString(transition.move()))));
+          movesBySuccessor.put(transition.destination(), transition.move()));
+      for (var moveEntry : movesBySuccessor.asMap().entrySet()) {
+        writer.append("HS_%d -> HS_%d [label=\"%s\"]\n".formatted(
+            entry.getIntValue(),
+            ids.getInt(moveEntry.getKey()),
+            moveEntry.getValue().stream().map(DotFormatted::toString).collect(Collectors.joining(", "))));
+      }
     }
     writer.append("}");
   }
@@ -77,7 +86,7 @@ public final class DotWriter {
     writer.append("digraph {\n");
     for (Object2IntMap.Entry<SuspectGame.EveState<S>> entry : ids.object2IntEntrySet()) {
       SuspectGame.EveState<S> eveState = entry.getKey();
-      writer.append("ES_%d [shape=record,color=%s,fillcolor=white,label=\"{%s|%s}\"]\n".formatted(
+      writer.append("ES_%d [color=%s,fillcolor=white,label=\"%s -- %s\"]\n".formatted(
           entry.getIntValue(),
           winning == null ? "black" : (winning.test(eveState) ? "green" : "red"),
           DotFormatted.toString(eveState.historyState()),
@@ -86,11 +95,35 @@ public final class DotWriter {
     }
 
     for (Object2IntMap.Entry<SuspectGame.EveState<S>> entry : ids.object2IntEntrySet()) {
-      game.transitions(entry.getKey()).forEach(transition ->
-          writer.append("ES_%d -> ES_%d [label=\"%s\"]\n".formatted(
-              entry.getIntValue(),
-              ids.getInt(transition.eveSuccessor()),
-              DotFormatted.toString(transition.adamState().move()))));
+      SetMultimap<SuspectGame.EveState<S>, Move> deviatingMovesBySuccessor = HashMultimap.create();
+      SetMultimap<SuspectGame.EveState<S>, Move> compliantMoves = HashMultimap.create();
+
+      SuspectGame.EveState<S> eveState = entry.getKey();
+      game.successors(eveState).forEach(adamState -> {
+        var compliantTransition = game.historyGame().transition(eveState.historyState(), adamState.move()).orElseThrow();
+        game.successors(adamState).forEach(eveSuccessor -> {
+          if (eveSuccessor.historyState().equals(compliantTransition.destination())) {
+            assert compliantTransition.move().equals(adamState.move());
+            compliantMoves.put(eveSuccessor, compliantTransition.move());
+          } else {
+            deviatingMovesBySuccessor.put(eveSuccessor, adamState.move());
+          }
+        });
+      });
+      assert !compliantMoves.isEmpty();
+
+      for (var moveEntry : deviatingMovesBySuccessor.asMap().entrySet()) {
+        writer.append("ES_%d -> ES_%d [label=\"%s\",style=dotted]\n".formatted(
+            entry.getIntValue(),
+            ids.getInt(moveEntry.getKey()),
+            moveEntry.getValue().stream().map(DotFormatted::toString).collect(Collectors.joining(", "))));
+      }
+      for (var moveEntry : compliantMoves.asMap().entrySet()) {
+        writer.append("ES_%d -> ES_%d [label=\"%s\"]\n".formatted(
+            entry.getIntValue(),
+            ids.getInt(moveEntry.getKey()),
+            moveEntry.getValue().stream().map(DotFormatted::toString).collect(Collectors.joining(", "))));
+      }
     }
     writer.append("}");
   }
@@ -112,7 +145,7 @@ public final class DotWriter {
       );
     }
     for (var entry : ids.object2IntEntrySet()) {
-      game.successors(entry.getKey()).forEach(successor ->
+      game.successors(entry.getKey()).distinct().forEach(successor ->
           writer.append("S_%d -> S_%d\n".formatted(entry.getIntValue(), ids.getInt(successor))));
     }
     writer.append("}");
@@ -126,9 +159,15 @@ public final class DotWriter {
       writer.append("S_%d [label=\"%s\"]\n".formatted(entry.getIntValue(), DotFormatted.toString(entry.getKey())));
     }
     for (var entry : ids.object2IntEntrySet()) {
+      SetMultimap<S, Move> movesBySuccessor = HashMultimap.create();
       game.transitions(entry.getKey()).forEach(transition ->
-          writer.append("S_%d -> S_%d [label=\"%s\"];\n".formatted(
-              entry.getIntValue(), ids.getInt(transition.destination()), DotFormatted.toString(transition.move()))));
+          movesBySuccessor.put(transition.destination(), transition.move()));
+      for (var moveEntry : movesBySuccessor.asMap().entrySet()) {
+        writer.append("S_%d -> S_%d [label=\"%s\"]\n".formatted(
+            entry.getIntValue(),
+            ids.getInt(moveEntry.getKey()),
+            moveEntry.getValue().stream().map(DotFormatted::toString).collect(Collectors.joining(", "))));
+      }
     }
     writer.append("}");
   }

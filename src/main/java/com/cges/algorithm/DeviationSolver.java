@@ -2,8 +2,10 @@ package com.cges.algorithm;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
-import com.cges.algorithm.HistoryGame.HistoryState;
-import com.cges.algorithm.SuspectGame.EveState;
+import com.cges.graph.HistoryGame;
+import com.cges.graph.HistoryGame.HistoryState;
+import com.cges.graph.SuspectGame;
+import com.cges.graph.SuspectGame.EveState;
 import com.cges.model.Agent;
 import com.cges.model.ConcurrentGame;
 import com.cges.model.PayoffAssignment;
@@ -21,7 +23,6 @@ import java.util.Optional;
 import java.util.Queue;
 import java.util.Set;
 import java.util.function.Function;
-import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import owl.automaton.Automaton;
@@ -41,19 +42,29 @@ import owl.translations.LtlTranslationRepository.Option;
 public final class DeviationSolver<S> {
   private static final boolean CROSS_VALIDATE = false;
 
-  private final Function<LabelledFormula, Automaton<?, ? extends ParityAcceptance>> dpaFunction =
-      /* LtlTranslationRepository.defaultTranslation(EnumSet.of(Option.COMPLETE, Option.SIMPLIFY_AUTOMATON),
-          BranchingMode.DETERMINISTIC, ParityAcceptance.class); */
+  private static final Function<LabelledFormula, Automaton<?, ? extends ParityAcceptance>> translation =
       LtlTranslationRepository.LtlToDpaTranslation.SEJK16_EKRS17.translation(EnumSet.of(Option.SIMPLIFY_AUTOMATON));
 
+  private static final Function<LabelledFormula, Automaton<?, ? extends ParityAcceptance>> referenceTranslation =
+      LtlTranslationRepository.defaultTranslation(EnumSet.of(Option.COMPLETE),
+          LtlTranslationRepository.BranchingMode.DETERMINISTIC, ParityAcceptance.class);
+
+  @SuppressWarnings("unchecked")
+  private static final Function<LabelledFormula, Automaton<Object, ParityAcceptance>> referenceFunction =
+      formula -> (Automaton<Object, ParityAcceptance>) referenceTranslation.apply(formula);
+
   private final SuspectGame<S> suspectGame;
-  // TODO Make caching work on unlabelled formulas?
   private final Map<LabelledFormula, Automaton<?, ?>> automatonCache = new HashMap<>();
   private final OinkGameSolver solver = new OinkGameSolver();
   private final Map<Agent, Literal> agentLiterals;
   private final List<String> atomicPropositions;
   private final Set<Agent> losingAgents;
   private final Map<HistoryState<S>, PunishmentStrategy<S>> cache = new HashMap<>();
+
+  @SuppressWarnings("unchecked")
+  private final Function<LabelledFormula, Automaton<Object, ParityAcceptance>> dpaCachingFunction = formula ->
+      (Automaton<Object, ParityAcceptance>) automatonCache.computeIfAbsent(formula,
+          f -> ParityUtil.convert(translation.apply(f), ParityAcceptance.Parity.MIN_EVEN));
 
   public DeviationSolver(SuspectGame<S> suspectGame, PayoffAssignment payoff) {
     this.suspectGame = suspectGame;
@@ -65,13 +76,24 @@ public final class DeviationSolver<S> {
     agentLiterals = losingAgents.stream().collect(Collectors.toMap(Function.identity(),
         a -> Literal.of(atomicPropositions.indexOf(a.name()))));
     assert Set.copyOf(atomicPropositions).size() == atomicPropositions.size();
+
+    // TODO Properly do the cache -- it should be possible to solve the complete history game through the initial state only
+    doSolve(historyGame.initialState());
   }
 
-  public Optional<PunishmentStrategy<S>> solve(HistoryState<S> historyState) {
-    if (cache.containsKey(historyState)) {
-      return Optional.ofNullable(cache.get(historyState));
-    }
 
+  public Optional<PunishmentStrategy<S>> solve(HistoryState<S> historyState) {
+    assert cache.containsKey(historyState) || (SimplifierRepository.SYNTACTIC_FAIRNESS.apply(Disjunction.of(losingAgents.stream()
+        .map(a -> Conjunction.of(GOperator.of(agentLiterals.get(a)), historyState.goal(a)))).not()) instanceof BooleanConstant);
+    if (cache.containsKey(historyState)) {
+      PunishmentStrategy<S> strategy = cache.get(historyState);
+      assert doSolve(historyState).isPresent() == (strategy != null);
+      return Optional.ofNullable(strategy);
+    }
+    return doSolve(historyState);
+  }
+
+  private Optional<PunishmentStrategy<S>> doSolve(HistoryState<S> historyState) {
     LabelledFormula eveGoal = LabelledFormula.of(Disjunction.of(losingAgents.stream()
         .map(a -> Conjunction.of(GOperator.of(agentLiterals.get(a)), historyState.goal(a)))).not(), atomicPropositions);
 
@@ -81,37 +103,29 @@ public final class DeviationSolver<S> {
     if (goal.formula() instanceof BooleanConstant bool) {
       if (bool.value) {
         PriorityState<S> state = new PriorityState<>(null, eveState, 0);
-        return Optional.of(new Strategy<>(state, Map.of(state, state)));
+        Strategy<S> strategy = new Strategy<>(state, Map.of(state, state));
+        cache.put(historyState, strategy);
+        return Optional.of(strategy);
       }
+      cache.put(historyState, null);
       return Optional.empty();
     }
 
     var shifted = LiteralMapper.shiftLiterals(goal);
-    @SuppressWarnings("unchecked")
-    var automaton = (Automaton<Object, ParityAcceptance>) automatonCache.computeIfAbsent(shifted.formula,
-        formula -> ParityUtil.convert(dpaFunction.apply(formula), ParityAcceptance.Parity.MIN_EVEN));
+    var automaton = dpaCachingFunction.apply(shifted.formula);
     if (automaton.states().isEmpty()) {
+      cache.put(historyState, null);
       return Optional.empty();
     }
-
     var parityGame = SuspectParityGame.create(suspectGame, eveState, automaton);
     var paritySolution = solver.solve(parityGame);
 
-    assert !CROSS_VALIDATE || paritySolution.winner(parityGame.initialState()).equals(((Supplier<Player>) () -> {
-      var defaultTranslation = LtlTranslationRepository.LtlToDpaTranslation.DEFAULT.translation(EnumSet.of(Option.COMPLETE));
-      @SuppressWarnings("unchecked")
-      var otherGame = SuspectParityGame.create(suspectGame, eveState, (Automaton<Object, ParityAcceptance>)
-          ParityUtil.convert(defaultTranslation.apply(shifted.formula), ParityAcceptance.Parity.MIN_EVEN));
-      var otherSolution = solver.solve(otherGame);
-      return otherSolution.winner(otherGame.initialState());
-    }).get());
-
-
-    if (paritySolution.winner(parityGame.initialState()) == Player.EVEN) {
-      return Optional.empty();
-    }
-
-    Queue<PriorityState<S>> queue = new ArrayDeque<>(List.of(parityGame.initialState()));
+    Set<PriorityState<S>> solvedTopLevelEveStates = parityGame.states().stream()
+        .filter(p -> p.isEve() && p.eve().suspects().equals(losingAgents))
+        .collect(Collectors.toSet());
+    System.out.println(solvedTopLevelEveStates);
+    Queue<PriorityState<S>> queue = new ArrayDeque<>();
+    solvedTopLevelEveStates.stream().filter(p -> paritySolution.winner(p) == Player.ODD).forEach(queue::add);
     Set<PriorityState<S>> reached = new HashSet<>();
     Map<PriorityState<S>, PriorityState<S>> strategy = new HashMap<>();
     while (!queue.isEmpty()) {
@@ -131,18 +145,21 @@ public final class DeviationSolver<S> {
         }
       });
     }
+
     var strategyCopy = Map.copyOf(strategy);
-    for (PriorityState<S> priorityState : reached) {
-      if (priorityState.isEve() && priorityState.eve().suspects().equals(losingAgents)) {
-        HistoryState<S> gameHistoryState = priorityState.eve().historyState();
-        if (paritySolution.winner(priorityState) == Player.ODD) {
-          assert !cache.containsKey(gameHistoryState) || cache.get(gameHistoryState) != null;
-          cache.putIfAbsent(gameHistoryState, new Strategy<>(priorityState, strategyCopy));
-        } else {
-          assert !cache.containsKey(gameHistoryState) || cache.get(gameHistoryState) == null;
-          cache.putIfAbsent(gameHistoryState, null);
-        }
+    for (PriorityState<S> priorityState : solvedTopLevelEveStates) {
+      HistoryState<S> gameHistoryState = priorityState.eve().historyState();
+      if (paritySolution.winner(priorityState) == Player.ODD) {
+        assert !cache.containsKey(gameHistoryState) || cache.get(gameHistoryState) != null;
+        cache.putIfAbsent(gameHistoryState, new Strategy<>(priorityState, strategyCopy));
+      } else {
+        assert !cache.containsKey(gameHistoryState) || cache.get(gameHistoryState) == null;
+        cache.putIfAbsent(gameHistoryState, null);
       }
+    }
+
+    if (paritySolution.winner(parityGame.initialState()) == Player.EVEN) {
+      return Optional.empty();
     }
     return Optional.of(new Strategy<>(parityGame.initialState(), strategyCopy));
   }

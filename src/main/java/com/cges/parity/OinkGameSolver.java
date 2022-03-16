@@ -76,7 +76,7 @@ public final class OinkGameSolver {
       assert state.index() == oinkNumbering.getInt(state.object());
 
       IntSet stateSuccessorIds = new IntOpenHashSet();
-      game.successors(state.object()).forEach(successor -> {
+      game.successors(state.object()).distinct().forEach(successor -> {
         int newId = oinkNumbering.size();
         int existingId = oinkNumbering.putIfAbsent(successor, newId);
         if (existingId == -1) {
