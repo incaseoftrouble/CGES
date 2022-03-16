@@ -7,25 +7,25 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
-import owl.collections.ValuationSet;
+import owl.bdd.BddSet;
 
 public class Module<S> {
   private final Agent agent;
   private final S initialState;
   private final Map<S, BitSet> labels;
-  private final Map<S, Map<Action, Map<S, ValuationSet>>> transitions;
+  private final Map<S, Map<Action, Map<S, BddSet>>> transitions;
 
   Module(Agent agent, S initialState,
       Map<S, BitSet> labels,
-      Map<S, Map<ModuleTransition<S>, ValuationSet>> transitions) {
+      Map<S, Map<ModuleTransition<S>, BddSet>> transitions) {
     this.agent = agent;
     this.initialState = initialState;
     this.labels = Map.copyOf(labels);
     this.transitions = transitions.entrySet().stream().collect(Collectors.toUnmodifiableMap(Map.Entry::getKey, stateTransitions -> {
-      Map<Action, Map<S, ValuationSet>> actionMap = new HashMap<>();
+      Map<Action, Map<S, BddSet>> actionMap = new HashMap<>();
       for (var entry : stateTransitions.getValue().entrySet()) {
         ModuleTransition<S> transition = entry.getKey();
-        ValuationSet oldVs = actionMap.computeIfAbsent(transition.action(), k -> new HashMap<>())
+        BddSet oldVs = actionMap.computeIfAbsent(transition.action(), k -> new HashMap<>())
             .put(transition.destination(), entry.getValue());
         assert oldVs == null;
       }
@@ -55,10 +55,16 @@ public class Module<S> {
 
   public Map<Action, S> successors(S state, BitSet valuation) {
     Map<Action, S> successors = new HashMap<>();
-    transitions.get(state).forEach((action, actionTransitions) -> actionTransitions.entrySet().stream()
-        .filter(e -> e.getValue().contains(valuation))
-        .findAny().map(Map.Entry::getKey)
-        .ifPresent(successor -> successors.put(action, successor)));
+    transitions.get(state).forEach((action, actionTransitions) -> {
+      var iterator = actionTransitions.entrySet().stream().filter(e -> e.getValue().contains(valuation)).iterator();
+      if (!iterator.hasNext()) {
+        return;
+      }
+      var next = iterator.next();
+      assert !iterator.hasNext();
+      successors.put(action, next.getKey());
+    });
+
     return successors;
   }
 

@@ -120,10 +120,12 @@ final class ExplicitGame<S> implements ConcurrentGame<S> {
 
     @Override
     public boolean equals(Object obj) {
-      return this == obj
-          || (obj instanceof MapMove that
-          && hashCode == that.hashCode
-          && actions.equals(that.actions));
+      assert obj instanceof MapMove;
+      if (this == obj) {
+        return true;
+      }
+      MapMove that = (MapMove) obj;
+      return hashCode == that.hashCode && actions.equals(that.actions);
     }
 
     @Override

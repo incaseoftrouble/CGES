@@ -38,7 +38,7 @@ public final class Agent {
     this.name = name;
     this.goal = goal;
     this.payoff = payoff;
-    this.actions = actions.stream().collect(Collectors.toMap(Action::name, a -> a));
+    this.actions = actions.stream().collect(Collectors.toUnmodifiableMap(Action::name, a -> a));
   }
 
   public String name() {
@@ -64,5 +64,21 @@ public final class Agent {
   @Override
   public String toString() {
     return "A[%s,%s]@{%s}".formatted(name, payoff, actions.values().stream().map(Action::name).sorted().collect(Collectors.joining(",")));
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    assert o instanceof Agent that && (!name.equals(that.name)
+        || (actions.equals(that.actions) && payoff.equals(that.payoff) && goal.equals(that.goal)));
+    if (this == o) {
+      return true;
+    }
+    Agent that = (Agent) o;
+    return name.equals(that.name);
+  }
+
+  @Override
+  public int hashCode() {
+    return name.hashCode();
   }
 }

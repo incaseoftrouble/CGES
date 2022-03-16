@@ -1,6 +1,5 @@
 package com.cges.parity;
 
-import com.cges.parity.Player;
 import java.util.ArrayDeque;
 import java.util.HashSet;
 import java.util.List;
@@ -45,5 +44,4 @@ public interface ParityGame<S> {
   }
 
   Player owner(S state);
-
 }

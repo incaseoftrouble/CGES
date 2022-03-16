@@ -1,17 +1,20 @@
 package com.cges.output;
 
+import com.cges.algorithm.HistoryGame;
 import com.cges.algorithm.RunGraph;
 import com.cges.algorithm.SuspectGame;
 import com.cges.model.Agent;
 import com.cges.model.ConcurrentGame;
 import com.cges.model.EquilibriumStrategy;
-import com.cges.model.Transition;
-import com.cges.parity.Player;
 import com.cges.parity.ParityGame;
+import com.cges.parity.Player;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import java.io.PrintStream;
+import java.util.ArrayDeque;
 import java.util.Collection;
+import java.util.List;
+import java.util.Queue;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -22,18 +25,57 @@ import javax.annotation.Nullable;
 public final class DotWriter {
   private DotWriter() {}
 
-  public static <S> void writeSuspectGame(SuspectGame<S> game, PrintStream writer, @Nullable Predicate<SuspectGame.EveState<S>> winning) {
-    Object2IntMap<SuspectGame.EveState<S>> eveIds = new Object2IntOpenHashMap<>();
-    for (SuspectGame.EveState<S> eveState : game.eveStates()) {
-      eveIds.put(eveState, eveIds.size());
-    }
-    Object2IntMap<SuspectGame.AdamState<S>> adamIds = new Object2IntOpenHashMap<>();
-    for (SuspectGame.AdamState<S> adamState : game.adamStates()) {
-      adamIds.put(adamState, adamIds.size());
+  public static <S> void writeHistoryGame(HistoryGame<S> game, PrintStream writer,
+      @Nullable Predicate<HistoryGame.HistoryState<S>> winning) {
+    Object2IntMap<HistoryGame.HistoryState<S>> ids = new Object2IntOpenHashMap<>();
+    ids.defaultReturnValue(-1);
+    HistoryGame.HistoryState<S> initialState = game.initialState();
+    ids.put(initialState, 0);
+    Queue<HistoryGame.HistoryState<S>> queue = new ArrayDeque<>(List.of(initialState));
+    while (!queue.isEmpty()) {
+      var state = queue.poll();
+      game.transitions(state).forEach(transition -> {
+        if (ids.putIfAbsent(transition.destination(), ids.size()) == -1) {
+          queue.add(transition.destination());
+        }
+      });
     }
 
     writer.append("digraph {\n");
-    for (Object2IntMap.Entry<SuspectGame.EveState<S>> entry : eveIds.object2IntEntrySet()) {
+    for (Object2IntMap.Entry<HistoryGame.HistoryState<S>> entry : ids.object2IntEntrySet()) {
+      writer.append("HS_%d [color=%s,fillcolor=white,label=\"%s\"]\n".formatted(
+          entry.getIntValue(),
+          winning == null ? "black" : (winning.test(entry.getKey()) ? "green" : "red"),
+          DotFormatted.toString(entry.getKey())
+      ));
+    }
+    for (Object2IntMap.Entry<HistoryGame.HistoryState<S>> entry : ids.object2IntEntrySet()) {
+      game.transitions(entry.getKey()).forEach(transition ->
+          writer.append("HS_%d -> HS_%d [label=\"%s\"]\n".formatted(entry.getIntValue(),
+              ids.getInt(transition.destination()),
+              DotFormatted.toString(transition.move()))));
+    }
+    writer.append("}");
+  }
+
+
+  public static <S> void writeSuspectGame(SuspectGame<S> game, SuspectGame.EveState<S> initial,
+      PrintStream writer, @Nullable Predicate<SuspectGame.EveState<S>> winning) {
+    Object2IntMap<SuspectGame.EveState<S>> ids = new Object2IntOpenHashMap<>();
+    ids.defaultReturnValue(-1);
+    ids.put(initial, 0);
+    Queue<SuspectGame.EveState<S>> queue = new ArrayDeque<>(List.of(initial));
+    while (!queue.isEmpty()) {
+      var state = queue.poll();
+      game.eveSuccessors(state).forEach(successor -> {
+        if (ids.putIfAbsent(successor, ids.size()) == -1) {
+          queue.add(successor);
+        }
+      });
+    }
+
+    writer.append("digraph {\n");
+    for (Object2IntMap.Entry<SuspectGame.EveState<S>> entry : ids.object2IntEntrySet()) {
       SuspectGame.EveState<S> eveState = entry.getKey();
       writer.append("ES_%d [shape=record,color=%s,fillcolor=white,label=\"{%s|%s}\"]\n".formatted(
           entry.getIntValue(),
@@ -43,26 +85,12 @@ public final class DotWriter {
       );
     }
 
-    for (Object2IntMap.Entry<SuspectGame.AdamState<S>> entry : adamIds.object2IntEntrySet()) {
-      SuspectGame.AdamState<S> adamState = entry.getKey();
-      writer.append("AS_%d [shape=record,style=filled,fillcolor=black,fontcolor=white,label=\"{%s|%s|%s}\"]\n".formatted(
-          entry.getIntValue(),
-          DotFormatted.toString(adamState.eveState().historyState()),
-          adamState.eveState().suspects().stream().map(Agent::name).sorted().collect(Collectors.joining(",")),
-          DotFormatted.toString(adamState.move())));
-    }
-    for (Object2IntMap.Entry<SuspectGame.EveState<S>> entry : eveIds.object2IntEntrySet()) {
-      for (SuspectGame.AdamState<S> successor : game.successors(entry.getKey())) {
-        writer.append("ES_%d -> AS_%d [label=\"%s\"]\n".formatted(
-            entry.getIntValue(),
-            adamIds.getInt(successor),
-            DotFormatted.toString(successor.move())));
-      }
-    }
-    for (Object2IntMap.Entry<SuspectGame.AdamState<S>> entry : adamIds.object2IntEntrySet()) {
-      for (SuspectGame.EveState<S> successor : game.successors(entry.getKey())) {
-        writer.append("AS_%d -> ES_%d [style=dotted]\n".formatted(entry.getIntValue(), eveIds.getInt(successor)));
-      }
+    for (Object2IntMap.Entry<SuspectGame.EveState<S>> entry : ids.object2IntEntrySet()) {
+      game.transitions(entry.getKey()).forEach(transition ->
+          writer.append("ES_%d -> ES_%d [label=\"%s\"]\n".formatted(
+              entry.getIntValue(),
+              ids.getInt(transition.eveSuccessor()),
+              DotFormatted.toString(transition.adamState().move()))));
     }
     writer.append("}");
   }
@@ -108,22 +136,21 @@ public final class DotWriter {
   public static <S> void writeSolution(SuspectGame<S> suspectGame, RunGraph<S> runGraph, EquilibriumStrategy<S> strategy,
       PrintStream writer) {
     Object2IntMap<RunGraph.RunState<S>> ids = new Object2IntOpenHashMap<>();
-    runGraph.states().forEach(state -> ids.put(state, ids.size()));
+    // TODO
 
     writer.append("digraph {\n");
     Set<RunGraph.RunState<S>> loopStates = strategy.lasso().states(false).collect(Collectors.toSet());
     Set<RunGraph.RunState<S>> successors = loopStates.stream().map(runGraph::transitions)
         .flatMap(Collection::stream)
-        .map(Transition::destination)
+        .map(RunGraph.RunTransition::successor)
         .filter(s -> !loopStates.contains(s))
         .collect(Collectors.toSet());
 
     Stream.concat(loopStates.stream(), successors.stream()).forEach(runState -> {
       int id = ids.getInt(runState);
       // TODO Automaton state labels
-      writer.append("S_%d [label=\"{%s}\",color=%s,fillcolor=white]\n".formatted(id,
-          DotFormatted.toString(runState),
-          runState.accepting() ? "green" : "gray"));
+      writer.append("S_%d [label=\"{%s}\"]\n".formatted(id,
+          DotFormatted.toString(runState)));
     });
 
 //    oddStrategy.lasso().states(false).forEach(runState -> {
@@ -133,8 +160,8 @@ public final class DotWriter {
 //      Collection<SuspectGame.EveState<S>> eveSuccessors = suspectGame.successors(adamSuccessor);
 //
 //      runGraph.transitions(runState).forEach(transition ->
-//          writer.append("S_%d -> S_%d [color=%s,label=\"%s\"];\n".formatted(id, ids.getInt(transition.destination()),
-//              eveSuccessors.contains(transition.destination().eveState()) ? "green" : "gray",
+//          writer.append("S_%d -> S_%d [color=%s,label=\"%s\"];\n".formatted(id, ids.getInt(transition.eveSuccessor()),
+//              eveSuccessors.contains(transition.eveSuccessor().eveState()) ? "green" : "gray",
 //              DotFormatted.toString(transition.move()))));
 //    });
 

@@ -6,6 +6,7 @@ if __name__ == "__main__":
     json.dump({
         "name": f"gossip{n}",
         "ap": [f"g{i}" for i in range(1, n + 1)],
+        "type": "module",
         "modules": {
             f"A{i}": {
                 "goal": f"G F g{i}",

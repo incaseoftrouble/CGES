@@ -18,9 +18,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
-import owl.collections.ValuationSet;
-import owl.factories.ValuationSetFactory;
-import owl.factories.jbdd.JBddSupplier;
+import owl.bdd.BddSet;
+import owl.bdd.BddSetFactory;
+import owl.bdd.jbdd.JBddSupplier;
 import owl.ltl.Formula;
 import owl.ltl.parser.LtlParser;
 
@@ -33,8 +33,8 @@ public final class ModuleParser {
         .map(JsonElement::getAsString).toList();
     Map<String, Integer> propositionIndices = new HashMap<>();
     Indices.forEachIndexed(propositions, (index, proposition) -> propositionIndices.put(proposition, index));
-    ValuationSetFactory factory = JBddSupplier.async().getValuationSetFactory(propositions);
-    FormulaParser visitor = new FormulaParser(factory);
+    BddSetFactory factory = JBddSupplier.JBDD_SUPPLIER_INSTANCE.getBddSetFactory();
+    FormulaParser visitor = new FormulaParser(factory, propositions);
 
     List<Module<State>> modules = new ArrayList<>();
     for (var agentEntry : requireNonNull(json.getAsJsonObject("modules"), "Missing modules definition").entrySet()) {
@@ -59,7 +59,7 @@ public final class ModuleParser {
       State initialState = new State(agentData.getAsJsonPrimitive("initial").getAsString());
       Map<State, BitSet> stateLabels = new HashMap<>();
 
-      Map<State, Map<ModuleTransition<State>, ValuationSet>> transitions = new HashMap<>();
+      Map<State, Map<ModuleTransition<State>, BddSet>> transitions = new HashMap<>();
       for (Map.Entry<String, JsonElement> stateEntry : agentData.getAsJsonObject("states").entrySet()) {
         String stateName = stateEntry.getKey();
         JsonObject stateData = stateEntry.getValue().getAsJsonObject();
@@ -74,25 +74,25 @@ public final class ModuleParser {
         State state = new State(stateName);
         stateLabels.put(state, labelSet);
 
-        Map<ModuleTransition<State>, ValuationSet> stateTransitions = new HashMap<>();
+        Map<ModuleTransition<State>, BddSet> stateTransitions = new HashMap<>();
         transitions.put(state, stateTransitions);
         for (JsonElement transitionData : stateData.getAsJsonArray("transitions")) {
           JsonObject transition = transitionData.getAsJsonObject();
           State target = new State(transition.getAsJsonPrimitive("to").getAsString());
-          ValuationSet valuation = ParseUtil.parse(transition.getAsJsonPrimitive("guard").getAsString(), visitor);
+          BddSet valuation = ParseUtil.parse(transition.getAsJsonPrimitive("guard").getAsString(), visitor);
           String actionName = transition.getAsJsonPrimitive("action").getAsString();
           (actionName.equals("*") ? agent.actions() : List.of(agent.action(actionName))).forEach(action ->
-              stateTransitions.merge(new ModuleTransition<>(action, target), valuation, ValuationSet::union)
+              stateTransitions.merge(new ModuleTransition<>(action, target), valuation, BddSet::union)
           );
         }
 
-        checkArgument(stateTransitions.values().stream().reduce(ValuationSet::union).orElse(factory.empty()).isUniverse(),
+        checkArgument(stateTransitions.values().stream().reduce(BddSet::union).orElse(factory.of(false)).isUniverse(),
             "Incomplete transitions in state %s of module %s", stateName, moduleName);
 
-        Map<Action, ValuationSet> actionTransitions = new HashMap<>();
+        Map<Action, BddSet> actionTransitions = new HashMap<>();
         for (var entry : stateTransitions.entrySet()) {
           actionTransitions.merge(entry.getKey().action(), entry.getValue(), (oldVs, newVs) -> {
-            checkArgument(!oldVs.intersects(newVs), "Transitions in state %s of module %s under action %s overlap",
+            checkArgument(oldVs.intersection(newVs).isEmpty(), "Transitions in state %s of module %s under action %s overlap",
                 stateName, moduleName, entry.getKey());
             return oldVs.union(newVs);
           });
@@ -108,6 +108,6 @@ public final class ModuleParser {
       }
       modules.add(new Module<>(agent, initialState, stateLabels, transitions));
     }
-    return new ModuleGame<>(gameName, factory, modules);
+    return new ModuleGame<>(gameName, propositions, modules);
   }
 }

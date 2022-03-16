@@ -35,7 +35,7 @@ repositories {
 
 dependencies {
     // Owl
-    implementation(files("lib/owl-20.06.jar", "lib/jhoafparser-1.1.1-patched.jar"))
+    implementation(files("lib/owl-21.0.jar", "lib/jhoafparser-1.1.1-patched.jar"))
     implementation("de.tum.in", "jbdd", "0.5.2")
     implementation("de.tum.in", "naturals-util", "0.16.0")
     implementation("commons-cli", "commons-cli", "1.4")
@@ -62,7 +62,6 @@ configurations {
 
 application {
     mainClass.set("com.cges.Main")
-    applicationDefaultJvmArgs = listOf("-ea")
 }
 
 tasks.generateGrammarSource {

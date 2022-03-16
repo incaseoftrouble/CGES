@@ -3,17 +3,13 @@ package com.cges;
 import com.cges.algorithm.FormulaHistoryGame;
 import com.cges.algorithm.RunGraph;
 import com.cges.algorithm.RunGraphSccSolver;
-import com.cges.algorithm.StrategyMapper;
 import com.cges.algorithm.SuspectGame;
-import com.cges.algorithm.SuspectSolver;
 import com.cges.model.Agent;
 import com.cges.model.ConcurrentGame;
 import com.cges.model.EquilibriumStrategy;
 import com.cges.model.PayoffAssignment;
 import com.cges.output.Formatter;
-import com.cges.parser.ExplicitParser;
 import com.cges.parser.GameParser;
-import com.cges.parser.ModuleParser;
 import com.google.common.base.Stopwatch;
 import com.google.common.collect.Sets;
 import com.google.gson.JsonParser;
@@ -21,6 +17,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Comparator;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -32,35 +29,25 @@ public final class Main {
   public static void main(String[] args) throws IOException {
     Stopwatch overall = Stopwatch.createStarted();
     ConcurrentGame<?> game;
-    switch (args[0]) {
-      case "game":
-        try (BufferedReader reader = Files.newBufferedReader(Path.of(args[1]))) {
-          game = GameParser.parse(reader.lines());
-        }
-        break;
-      case "explicit":
-        try (BufferedReader reader = Files.newBufferedReader(Path.of(args[1]))) {
-          game = ExplicitParser.parse(JsonParser.parseReader(reader).getAsJsonObject());
-        }
-        break;
-      case "module":
-        try (BufferedReader reader = Files.newBufferedReader(Path.of(args[1]))) {
-          game = ModuleParser.parse(JsonParser.parseReader(reader).getAsJsonObject());
-        }
-        break;
-      default:
-        throw new IllegalArgumentException(args[0]);
+    if ("game".equals(args[0])) {
+      try (BufferedReader reader = Files.newBufferedReader(Path.of(args[1]))) {
+        game = GameParser.parseExplicit(reader.lines());
+      }
+    } else {
+      try (BufferedReader reader = Files.newBufferedReader(Path.of(args[0]))) {
+        game = GameParser.parseExplicit(JsonParser.parseReader(reader).getAsJsonObject());
+      }
     }
-    analyse(game).forEach(solution -> System.out.printf("Found NE for %s:%n%s%n",
+    var list = analyse(game).peek(solution -> System.out.printf("Found NE for %s:%n%s%n",
         Formatter.format(solution.assignment(), game),
-        solution.strategy()));
+        solution.strategy())).collect(Collectors.toList());
     System.out.println("Overall: " + overall);
+    list.sort(Comparator.comparingLong(solution -> game.agents().stream().map(solution.assignment()::isLoser).count()));
+    list.stream().map(solution -> Formatter.format(solution.assignment(), game)).forEach(System.out::println);
   }
 
   private static <S> Stream<GameSolution<S>> analyse(ConcurrentGame<S> game) {
-    Stopwatch suspectStopwatch = Stopwatch.createStarted();
-    var suspectGame = SuspectGame.create(new FormulaHistoryGame<>(game));
-    System.out.printf("Suspect: %s, %d states%n", suspectStopwatch, suspectGame.eveStates().size());
+    var suspectGame = new SuspectGame<>(new FormulaHistoryGame<>(game));
 
     Set<Agent> undefinedAgents = game.agents().stream()
         .filter(a -> a.payoff().equals(Agent.Payoff.UNDEFINED))
@@ -68,21 +55,11 @@ public final class Main {
     return Sets.powerSet(undefinedAgents).stream()
         .map(PayoffAssignment::new)
         .peek(p -> System.out.printf("Processing: %s%n", Formatter.format(p, game)))
-        .<Optional<GameSolution<S>>>map(payoff -> {
-          Stopwatch winningStopwatch = Stopwatch.createStarted();
-          var suspectSolution = SuspectSolver.computeReachableWinningStates(suspectGame, payoff);
-          System.out.println("Winning: " + winningStopwatch);
-
+        .map(payoff -> {
           Stopwatch solutionStopwatch = Stopwatch.createStarted();
-          var runGraph = RunGraph.create(suspectGame.historyGame(), payoff, suspectSolution::isWinning);
-          var lasso = RunGraphSccSolver.solve(runGraph);
+          var strategy = RunGraphSccSolver.solve(new RunGraph<>(suspectGame, payoff));
           System.out.println("Solution: " + solutionStopwatch);
-          if (lasso.isPresent()) {
-            var strategy = StrategyMapper.createStrategy(suspectGame, suspectSolution, lasso.get());
-            return Optional.of(new GameSolution<>(payoff, strategy));
-          } else {
-            return Optional.empty();
-          }
+          return strategy.map(s -> new GameSolution<>(payoff, s));
         }).flatMap(Optional::stream);
   }
 

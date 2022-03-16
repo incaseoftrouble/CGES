@@ -28,7 +28,6 @@ public class AcceptingLasso<S> {
       }
     }
     checkArgument(inLoop);
-    checkArgument(loopStates.stream().anyMatch(RunState::accepting));
 
     this.transientStates = List.copyOf(transientStates);
     this.loopStates = List.copyOf(loopStates);

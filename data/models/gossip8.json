@@ -1,12 +1,15 @@
 {
-  "name": "gossip6",
+  "name": "gossip8",
+  "type": "module",
   "ap": [
     "g1",
     "g2",
     "g3",
     "g4",
     "g5",
-    "g6"
+    "g6",
+    "g7",
+    "g8"
   ],
   "modules": {
     "A1": {
@@ -44,12 +47,12 @@
           "transitions": [
             {
               "action": "w",
-              "guard": "!g2 & !g3 & !g4 & !g5 & !g6",
+              "guard": "!g2 & !g3 & !g4 & !g5 & !g6 & !g7 & !g8",
               "to": "s2"
             },
             {
               "action": "g",
-              "guard": "g2 | g3 | g4 | g5 | g6",
+              "guard": "g2 | g3 | g4 | g5 | g6 | g7 | g8",
               "to": "s2"
             }
           ]
@@ -91,12 +94,12 @@
           "transitions": [
             {
               "action": "w",
-              "guard": "!g1 & !g3 & !g4 & !g5 & !g6",
+              "guard": "!g1 & !g3 & !g4 & !g5 & !g6 & !g7 & !g8",
               "to": "s2"
             },
             {
               "action": "g",
-              "guard": "g1 | g3 | g4 | g5 | g6",
+              "guard": "g1 | g3 | g4 | g5 | g6 | g7 | g8",
               "to": "s2"
             }
           ]
@@ -138,12 +141,12 @@
           "transitions": [
             {
               "action": "w",
-              "guard": "!g1 & !g2 & !g4 & !g5 & !g6",
+              "guard": "!g1 & !g2 & !g4 & !g5 & !g6 & !g7 & !g8",
               "to": "s2"
             },
             {
               "action": "g",
-              "guard": "g1 | g2 | g4 | g5 | g6",
+              "guard": "g1 | g2 | g4 | g5 | g6 | g7 | g8",
               "to": "s2"
             }
           ]
@@ -185,12 +188,12 @@
           "transitions": [
             {
               "action": "w",
-              "guard": "!g1 & !g2 & !g3 & !g5 & !g6",
+              "guard": "!g1 & !g2 & !g3 & !g5 & !g6 & !g7 & !g8",
               "to": "s2"
             },
             {
               "action": "g",
-              "guard": "g1 | g2 | g3 | g5 | g6",
+              "guard": "g1 | g2 | g3 | g5 | g6 | g7 | g8",
               "to": "s2"
             }
           ]
@@ -232,12 +235,12 @@
           "transitions": [
             {
               "action": "w",
-              "guard": "!g1 & !g2 & !g3 & !g4 & !g6",
+              "guard": "!g1 & !g2 & !g3 & !g4 & !g6 & !g7 & !g8",
               "to": "s2"
             },
             {
               "action": "g",
-              "guard": "g1 | g2 | g3 | g4 | g6",
+              "guard": "g1 | g2 | g3 | g4 | g6 | g7 | g8",
               "to": "s2"
             }
           ]
@@ -279,12 +282,106 @@
           "transitions": [
             {
               "action": "w",
-              "guard": "!g1 & !g2 & !g3 & !g4 & !g5",
+              "guard": "!g1 & !g2 & !g3 & !g4 & !g5 & !g7 & !g8",
               "to": "s2"
             },
             {
               "action": "g",
-              "guard": "g1 | g2 | g3 | g4 | g5",
+              "guard": "g1 | g2 | g3 | g4 | g5 | g7 | g8",
+              "to": "s2"
+            }
+          ]
+        }
+      }
+    },
+    "A7": {
+      "goal": "G F g7",
+      "payoff": "?",
+      "actions": [
+        "a",
+        "g",
+        "w"
+      ],
+      "labels": [
+        "g7"
+      ],
+      "initial": "s1",
+      "states": {
+        "s1": {
+          "labels": [],
+          "transitions": [
+            {
+              "action": "a",
+              "guard": "true",
+              "to": "s1"
+            },
+            {
+              "action": "g",
+              "guard": "true",
+              "to": "s2"
+            }
+          ]
+        },
+        "s2": {
+          "labels": [
+            "g7"
+          ],
+          "transitions": [
+            {
+              "action": "w",
+              "guard": "!g1 & !g2 & !g3 & !g4 & !g5 & !g6 & !g8",
+              "to": "s2"
+            },
+            {
+              "action": "g",
+              "guard": "g1 | g2 | g3 | g4 | g5 | g6 | g8",
+              "to": "s2"
+            }
+          ]
+        }
+      }
+    },
+    "A8": {
+      "goal": "G F g8",
+      "payoff": "?",
+      "actions": [
+        "a",
+        "g",
+        "w"
+      ],
+      "labels": [
+        "g8"
+      ],
+      "initial": "s1",
+      "states": {
+        "s1": {
+          "labels": [],
+          "transitions": [
+            {
+              "action": "a",
+              "guard": "true",
+              "to": "s1"
+            },
+            {
+              "action": "g",
+              "guard": "true",
+              "to": "s2"
+            }
+          ]
+        },
+        "s2": {
+          "labels": [
+            "g8"
+          ],
+          "transitions": [
+            {
+              "action": "w",
+              "guard": "!g1 & !g2 & !g3 & !g4 & !g5 & !g6 & !g7",
+              "to": "s2"
+            },
+            {
+              "action": "g",
+              "guard": "g1 | g2 | g3 | g4 | g5 | g6 | g7",
               "to": "s2"
             }
           ]

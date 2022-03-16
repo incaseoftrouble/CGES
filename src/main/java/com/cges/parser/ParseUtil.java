@@ -16,13 +16,13 @@ import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.ConsoleErrorListener;
 import org.antlr.v4.runtime.misc.ParseCancellationException;
-import owl.collections.ValuationSet;
+import owl.bdd.BddSet;
 import owl.ltl.parser.TokenErrorListener;
 
 public final class ParseUtil {
   private ParseUtil() {}
 
-  static ValuationSet parse(String formula, PropositionalParserVisitor<ValuationSet> visitor) {
+  static BddSet parse(String formula, PropositionalParserVisitor<BddSet> visitor) {
     try {
       PropositionalLexer lexer = new PropositionalLexer(CharStreams.fromString(formula));
       lexer.removeErrorListener(ConsoleErrorListener.INSTANCE);

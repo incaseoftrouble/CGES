@@ -15,16 +15,18 @@ import com.microsoft.z3.Model;
 import com.microsoft.z3.Solver;
 import com.microsoft.z3.Status;
 import com.microsoft.z3.Z3Exception;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
+import java.util.Queue;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 public final class RunGraphBmcSolver {
@@ -37,16 +39,28 @@ public final class RunGraphBmcSolver {
     // TODO Derive upper bound on depth from graph
     // TODO QBF or similar instead of bit encoding
 
-    Set<RunState<S>> acceptingStates = graph.states().stream().filter(RunState::accepting).collect(Collectors.toSet());
+    Set<RunState<S>> states = new HashSet<>(graph.initialStates());
+    Queue<RunState<S>> queue = new ArrayDeque<>(states);
+    while (!queue.isEmpty()) {
+      var state = queue.poll();
+      graph.successors(state).forEach(successor -> {
+        if (states.add(successor)) {
+          queue.add(successor);
+        }
+      });
+    }
+
+    // TODO
+    Set<RunState<S>> acceptingStates = Set.of(); // states.stream().filter(RunState::accepting).collect(Collectors.toSet());
     if (acceptingStates.isEmpty()) {
       return List.of();
     }
 
     // TODO Better bound on the largest loop -- most distant scc
-    int depth = graph.size();
+    int depth = states.size();
 
     @SuppressWarnings("NumericCastThatLosesPrecision")
-    int bits = (int) Math.ceil(StrictMath.log(graph.size()) / StrictMath.log(2));
+    int bits = (int) Math.ceil(StrictMath.log(states.size()) / StrictMath.log(2));
 
     try (Context ctx = new Context()) {
       BoolExpr[][] variables = new BoolExpr[depth + 1][bits];
@@ -56,7 +70,7 @@ public final class RunGraphBmcSolver {
         }
       }
 
-      List<RunState<S>> stateNumbering = List.copyOf(graph.states());
+      List<RunState<S>> stateNumbering = List.copyOf(states);
       @SuppressWarnings("unchecked")
       Map<RunState<S>, BoolExpr>[] stepStateExpressions = new Map[depth + 1];
       Arrays.setAll(stepStateExpressions, i -> new HashMap<>());
@@ -86,8 +100,8 @@ public final class RunGraphBmcSolver {
 
         int cutoff = k;
 
-        solver.add(ctx.mkAnd(graph.states().stream().map(state -> {
-          var successors = graph.transitions(state);
+        solver.add(ctx.mkAnd(states.stream().map(state -> {
+          var successors = graph.successors(state);
           return ctx.mkImplies(stepStateExpressions[cutoff - 1].get(state),
                   ctx.mkOr(successors.stream().map(stepStateExpressions[cutoff]::get).toArray(BoolExpr[]::new)));
         }).toArray(BoolExpr[]::new)).simplify());
@@ -145,13 +159,25 @@ public final class RunGraphBmcSolver {
 
   @SuppressWarnings("unchecked")
   public static <S> List<RunState<S>> checkBV(RunGraph<S> graph, int depth) {
-    Set<RunState<S>> acceptingStates = graph.states().stream().filter(RunState::accepting).collect(Collectors.toSet());
+    Set<RunState<S>> states = new HashSet<>(graph.initialStates());
+    Queue<RunState<S>> queue = new ArrayDeque<>(states);
+    while (!queue.isEmpty()) {
+      var state = queue.poll();
+      graph.successors(state).forEach(successor -> {
+        if (states.add(successor)) {
+          queue.add(successor);
+        }
+      });
+    }
+
+    // TODO
+    Set<RunState<S>> acceptingStates = Set.of(); // states.stream().filter(RunState::accepting).collect(Collectors.toSet());
     if (acceptingStates.isEmpty()) {
       return List.of();
     }
 
     @SuppressWarnings("NumericCastThatLosesPrecision")
-    int bits = (int) Math.ceil(StrictMath.log(graph.size()) / StrictMath.log(2));
+    int bits = (int) Math.ceil(StrictMath.log(states.size()) / StrictMath.log(2));
 
     try (Context ctx = new Context()) {
       BitVecExpr[] stepVariables = new BitVecExpr[depth + 1];
@@ -159,7 +185,7 @@ public final class RunGraphBmcSolver {
           stepVariables[step] = ctx.mkBVConst("t_%d".formatted(step), bits);
       }
 
-      List<RunState<S>> stateNumbering = List.copyOf(graph.states());
+      List<RunState<S>> stateNumbering = List.copyOf(states);
       @SuppressWarnings("unchecked")
       Map<RunState<S>, BoolExpr>[] stepStateExpressions = new Map[depth + 1];
       Arrays.setAll(stepStateExpressions, i -> new HashMap<>());
@@ -184,8 +210,8 @@ public final class RunGraphBmcSolver {
 
         int cutoff = k;
 
-        graph.states().forEach(state -> {
-          var successors = graph.transitions(state);
+        states.forEach(state -> {
+          var successors = graph.successors(state);
           solver.add(ctx.mkImplies(stepStateExpressions[cutoff - 1].get(state),
               ctx.mkOr(successors.stream().map(stepStateExpressions[cutoff]::get).toArray(BoolExpr[]::new))).simplify());
         });

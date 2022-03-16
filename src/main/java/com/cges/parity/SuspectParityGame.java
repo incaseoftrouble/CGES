@@ -5,11 +5,10 @@ import static com.google.common.base.Preconditions.checkArgument;
 import com.cges.algorithm.SuspectGame;
 import com.cges.algorithm.SuspectGame.EveState;
 import com.cges.model.Agent;
-import com.cges.model.ConcurrentGame;
-import com.google.common.collect.Iterables;
 import de.tum.in.naturals.bitset.BitSets;
 import java.util.BitSet;
-import java.util.Collection;
+import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -25,7 +24,7 @@ public final class SuspectParityGame<S> implements ParityGame<PriorityState<S>> 
   private final SuspectGame<S> suspectGame;
   private final PriorityState<S> initialState;
   private final Automaton<Object, ParityAcceptance> dpa;
-  private final Map<S, BitSet> labelCache;
+  private final Map<S, BitSet> gameStateLabelCache;
   private final int maximumPriority;
   private final Map<String, Integer> propositionIndex;
 
@@ -43,22 +42,17 @@ public final class SuspectParityGame<S> implements ParityGame<PriorityState<S>> 
     }
     this.maximumPriority = maximumPriority;
 
-    List<String> propositions = dpa.factory().atomicPropositions();
+    List<String> propositions = dpa.atomicPropositions();
     propositionIndex = IntStream.range(0, propositions.size())
         .boxed()
         .collect(Collectors.toMap(propositions::get, Function.identity()));
-    ConcurrentGame<S> concurrentGame = suspectGame.historyGame().concurrentGame();
-    labelCache = concurrentGame.states().collect(Collectors.toUnmodifiableMap(Function.identity(), state -> {
-      BitSet set = new BitSet();
-      concurrentGame.labels(state).stream().map(propositionIndex::get).filter(Objects::nonNull).forEach(set::set);
-      return set;
-    }));
+    gameStateLabelCache = new HashMap<>();
   }
 
   public static <S> SuspectParityGame<S>
   create(SuspectGame<S> suspectGame, EveState<S> eveState, Automaton<Object, ParityAcceptance> dpa) {
     checkArgument(dpa.acceptance().parity().equals(ParityAcceptance.Parity.MIN_EVEN));
-    return new SuspectParityGame<>(suspectGame, new PriorityState<S>(dpa.onlyInitialState(), eveState, 0), dpa);
+    return new SuspectParityGame<>(suspectGame, new PriorityState<>(dpa.initialState(), eveState, 0), dpa);
   }
 
   @Override
@@ -69,21 +63,26 @@ public final class SuspectParityGame<S> implements ParityGame<PriorityState<S>> 
   @Override
   public Stream<PriorityState<S>> successors(PriorityState<S> current) {
     if (current.isEve()) {
-      BitSet label = BitSets.copyOf(labelCache.get(current.eve().gameState()));
-      current.eve().suspects().stream().map(Agent::name).map(propositionIndex::get).filter(Objects::nonNull).forEach(label::set);
+      EveState<S> eveState = current.eve();
+      BitSet label = BitSets.copyOf(gameStateLabelCache.computeIfAbsent(eveState.gameState(), state -> {
+        BitSet set = new BitSet();
+        suspectGame.historyGame().concurrentGame().labels(state).stream()
+            .map(propositionIndex::get).filter(Objects::nonNull).forEach(set::set);
+        return set;
+      }));
+      eveState.suspects().stream().map(Agent::name).map(propositionIndex::get).filter(Objects::nonNull).forEach(label::set);
 
       assert dpa.edges(current.automatonState(), label).size() == 1;
       Edge<Object> automatonEdge = dpa.edge(current.automatonState(), label);
       assert automatonEdge != null;
-      int priority = automatonEdge.hasAcceptanceSets() ? maximumPriority - automatonEdge.smallestAcceptanceSet() : 0;
-      return suspectGame.successors(current.eve()).stream().map(successor -> {
-        Collection<EveState<S>> eveSuccessors = suspectGame.successors(successor);
-        return new PriorityState<S>(automatonEdge.successor(),
-            eveSuccessors.size() == 1 ? Iterables.getOnlyElement(eveSuccessors) : successor, priority);
+      int priority = maximumPriority - automatonEdge.colours().first().orElse(maximumPriority);
+      return suspectGame.successors(eveState).map(adam -> {
+        Iterator<EveState<S>> eveSuccessors = suspectGame.successors(adam).iterator();
+        var eveSuccessor = eveSuccessors.next();
+        return new PriorityState<>(automatonEdge.successor(), eveSuccessors.hasNext() ? adam : eveSuccessor, priority);
       });
     }
-    return suspectGame.successors(current.adam()).stream()
-        .map(successor -> new PriorityState<S>(current.automatonState(), successor, 0));
+    return suspectGame.successors(current.adam()).map(successor -> new PriorityState<>(current.automatonState(), successor, 0));
   }
 
   @Override

@@ -9,6 +9,7 @@ import com.cges.model.Transition;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.SetMultimap;
+import com.google.gson.JsonObject;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
@@ -29,7 +30,7 @@ public final class GameParser {
 
   private GameParser() {}
 
-  public static ConcurrentGame<State> parse(Stream<String> lines) {
+  public static ConcurrentGame<State> parseExplicit(Stream<String> lines) {
     Iterator<String> iterator = lines.iterator();
     checkArgument(iterator.next().equals("agent"));
     List<String[]> agentStrings = new ArrayList<>();
@@ -86,5 +87,14 @@ public final class GameParser {
     }
 
     return new ExplicitGame<>("empty", agents, propositions, initialState, states, transitions, state -> Set.of(state.name()));
+  }
+
+  public static ConcurrentGame<?> parseExplicit(JsonObject json) {
+    String type = json.getAsJsonPrimitive("type").getAsString();
+    return switch (type) {
+      case "module" -> ModuleParser.parse(json);
+      case "explicit" -> ExplicitParser.parse(json);
+      default -> throw new IllegalArgumentException("Unknown type " + type);
+    };
   }
 }

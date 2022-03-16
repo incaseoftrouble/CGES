@@ -1,10 +1,10 @@
 {
-  "name": "gossip4",
+  "name": "gossip3",
+  "type": "module",
   "ap": [
     "g1",
     "g2",
-    "g3",
-    "g4"
+    "g3"
   ],
   "modules": {
     "A1": {
@@ -42,13 +42,13 @@
           "transitions": [
             {
               "action": "w",
-              "guard": "!g2 & !g3 & !g4",
+              "guard": "!g2 & !g3",
               "to": "s2"
             },
             {
-              "action": "g",
-              "guard": "g2 | g3 | g4",
-              "to": "s2"
+              "action": "a",
+              "guard": "g2 | g3",
+              "to": "s1"
             }
           ]
         }
@@ -89,13 +89,13 @@
           "transitions": [
             {
               "action": "w",
-              "guard": "!g1 & !g3 & !g4",
+              "guard": "!g1 & !g3",
               "to": "s2"
             },
             {
-              "action": "g",
-              "guard": "g1 | g3 | g4",
-              "to": "s2"
+              "action": "a",
+              "guard": "g1 | g3",
+              "to": "s1"
             }
           ]
         }
@@ -136,60 +136,13 @@
           "transitions": [
             {
               "action": "w",
-              "guard": "!g1 & !g2 & !g4",
+              "guard": "!g1 & !g2",
               "to": "s2"
             },
-            {
-              "action": "g",
-              "guard": "g1 | g2 | g4",
-              "to": "s2"
-            }
-          ]
-        }
-      }
-    },
-    "A4": {
-      "goal": "G F g4",
-      "payoff": "?",
-      "actions": [
-        "a",
-        "g",
-        "w"
-      ],
-      "labels": [
-        "g4"
-      ],
-      "initial": "s1",
-      "states": {
-        "s1": {
-          "labels": [],
-          "transitions": [
             {
               "action": "a",
-              "guard": "true",
+              "guard": "g1 | g2",
               "to": "s1"
-            },
-            {
-              "action": "g",
-              "guard": "true",
-              "to": "s2"
-            }
-          ]
-        },
-        "s2": {
-          "labels": [
-            "g4"
-          ],
-          "transitions": [
-            {
-              "action": "w",
-              "guard": "!g1 & !g2 & !g3",
-              "to": "s2"
-            },
-            {
-              "action": "g",
-              "guard": "g1 | g2 | g3",
-              "to": "s2"
             }
           ]
         }

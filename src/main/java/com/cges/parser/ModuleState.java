@@ -41,10 +41,12 @@ public final class ModuleState<S> implements DotFormatted {
 
   @Override
   public boolean equals(Object obj) {
-    return this == obj
-        || (obj instanceof ModuleState<?> that
-        && hashCode == that.hashCode
-        && Arrays.equals(states, that.states));
+    assert obj instanceof ModuleState<?> that && agentIndices.equals(that.agentIndices);
+    if (this == obj) {
+      return true;
+    }
+    ModuleState<?> that = (ModuleState<?>) obj;
+    return hashCode == that.hashCode && Arrays.equals(states, that.states);
   }
 
   @Override

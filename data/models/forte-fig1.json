@@ -1,5 +1,6 @@
 {
   "name": "example",
+  "type": "explicit",
   "ap": [
     "s1",
     "s2"
