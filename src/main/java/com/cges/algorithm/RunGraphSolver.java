@@ -1,15 +1,20 @@
 package com.cges.algorithm;
 
 import com.cges.graph.RunGraph;
+import com.cges.graph.RunGraph.RunState;
 import com.cges.model.AcceptingLasso;
 import com.cges.model.EquilibriumStrategy;
 import com.cges.model.Move;
 import com.cges.model.Transition;
+import java.util.ArrayDeque;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Queue;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 public final class RunGraphSolver {
@@ -18,12 +23,12 @@ public final class RunGraphSolver {
   private static <S> boolean validate(EquilibriumStrategy<S> strategy, RunGraph<S> graph) {
     var lasso = strategy.lasso();
     assert graph.initialStates().contains(lasso.states(true).iterator().next());
-    List<RunGraph.RunState<S>> loopStates = lasso.loopStates(true).toList();
+    List<RunState<S>> loopStates = lasso.loopStates(true).toList();
     assert loopStates.size() >= 2;
     boolean isAccepting = false;
     for (int i = 0; i < loopStates.size() - 1; i++) {
-      RunGraph.RunState<S> current = loopStates.get(i);
-      RunGraph.RunState<S> successor = loopStates.get(i + 1);
+      RunState<S> current = loopStates.get(i);
+      RunState<S> successor = loopStates.get(i + 1);
       var historySuccessor = graph.suspectGame().historyGame()
           .transition(current.historyState(), strategy.moves().get(current))
           .map(Transition::destination)
@@ -43,21 +48,32 @@ public final class RunGraphSolver {
   }
 
   public static <S> Optional<EquilibriumStrategy<S>> solve(RunGraph<S> graph) {
+    Set<RunState<S>> states = new HashSet<>(graph.initialStates());
+    Queue<RunState<S>> queue = new ArrayDeque<>(states);
+    while (!queue.isEmpty()) {
+      graph.successors(queue.poll()).forEach(s -> {
+        if (states.add(s)) {
+          queue.add(s);
+        }
+      });
+    }
+    System.out.println(states.size());
+
     var path = RunGraphSccSolver.searchShort(graph);
     if (path.isEmpty()) {
       return Optional.empty();
     }
 
     AcceptingLasso<S> lasso = new AcceptingLasso<>(path);
-    Iterator<RunGraph.RunState<S>> iterator = lasso.states(true).iterator();
+    Iterator<RunState<S>> iterator = lasso.states(true).iterator();
     var current = iterator.next();
     var suspectGame = graph.suspectGame();
     assert current.historyState().equals(suspectGame.initialState().historyState());
     assert iterator.hasNext();
 
     // Construct the sequence of moves to obtain the lasso
-    Map<RunGraph.RunState<S>, Move> runGraphMoves = new HashMap<>();
-    Map<RunGraph.RunState<S>, DeviationSolver.PunishmentStrategy<S>> punishmentStrategy = new HashMap<>();
+    Map<RunState<S>, Move> runGraphMoves = new HashMap<>();
+    Map<RunState<S>, DeviationSolver.PunishmentStrategy<S>> punishmentStrategy = new HashMap<>();
     while (iterator.hasNext()) {
       var next = iterator.next();
       // TODO Bit ugly, could maybe store this information when constructing the lasso

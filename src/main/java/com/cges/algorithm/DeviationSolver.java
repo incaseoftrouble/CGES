@@ -12,6 +12,7 @@ import com.cges.model.PayoffAssignment;
 import com.cges.parity.OinkGameSolver;
 import com.cges.parity.Player;
 import com.cges.parity.PriorityState;
+import com.cges.parity.Solution;
 import com.cges.parity.SuspectParityGame;
 import java.util.ArrayDeque;
 import java.util.EnumSet;
@@ -59,7 +60,9 @@ public final class DeviationSolver<S> {
   private final Map<Agent, Literal> agentLiterals;
   private final List<String> atomicPropositions;
   private final Set<Agent> losingAgents;
-  private final Map<HistoryState<S>, PunishmentStrategy<S>> cache = new HashMap<>();
+  private final Map<HistoryState<S>, Boolean> isWinning;
+  private final Map<HistoryState<S>, PriorityState<S>> initialStates;
+  private final Map<PriorityState<S>, PriorityState<S>> strategy;
 
   @SuppressWarnings("unchecked")
   private final Function<LabelledFormula, Automaton<Object, ParityAcceptance>> dpaCachingFunction = formula ->
@@ -78,90 +81,109 @@ public final class DeviationSolver<S> {
     assert Set.copyOf(atomicPropositions).size() == atomicPropositions.size();
 
     // TODO Properly do the cache -- it should be possible to solve the complete history game through the initial state only
-    doSolve(historyGame.initialState());
-  }
+    var historyState = historyGame.initialState();
 
-
-  public Optional<PunishmentStrategy<S>> solve(HistoryState<S> historyState) {
-    assert cache.containsKey(historyState) || (SimplifierRepository.SYNTACTIC_FAIRNESS.apply(Disjunction.of(losingAgents.stream()
-        .map(a -> Conjunction.of(GOperator.of(agentLiterals.get(a)), historyState.goal(a)))).not()) instanceof BooleanConstant);
-    if (cache.containsKey(historyState)) {
-      PunishmentStrategy<S> strategy = cache.get(historyState);
-      assert doSolve(historyState).isPresent() == (strategy != null);
-      return Optional.ofNullable(strategy);
-    }
-    return doSolve(historyState);
-  }
-
-  private Optional<PunishmentStrategy<S>> doSolve(HistoryState<S> historyState) {
+    EveState<S> eveState = new EveState<>(historyState, losingAgents);
     LabelledFormula eveGoal = LabelledFormula.of(Disjunction.of(losingAgents.stream()
         .map(a -> Conjunction.of(GOperator.of(agentLiterals.get(a)), historyState.goal(a)))).not(), atomicPropositions);
 
-    EveState<S> eveState = new EveState<>(historyState, losingAgents);
-
     var goal = SimplifierRepository.SYNTACTIC_FAIRNESS.apply(eveGoal);
-    if (goal.formula() instanceof BooleanConstant bool) {
-      if (bool.value) {
-        PriorityState<S> state = new PriorityState<>(null, eveState, 0);
-        Strategy<S> strategy = new Strategy<>(state, Map.of(state, state));
-        cache.put(historyState, strategy);
-        return Optional.of(strategy);
+    if (goal.formula() instanceof BooleanConstant) {
+      isWinning = Map.of();
+      strategy = Map.of();
+      initialStates = Map.of();
+    } else {
+      var gameSolution = solveParityGame(eveState, goal);
+      var parityGame = gameSolution.parityGame();
+      var paritySolution = gameSolution.solution();
+
+      Set<PriorityState<S>> solvedTopLevelEveStates = parityGame.states().stream()
+          .filter(p -> p.isEve() && p.eve().suspects().equals(losingAgents))
+          .collect(Collectors.toSet());
+      Queue<PriorityState<S>> queue = new ArrayDeque<>();
+      solvedTopLevelEveStates.stream().filter(p -> paritySolution.winner(p) == Player.ODD).forEach(queue::add);
+      Set<PriorityState<S>> reached = new HashSet<>();
+      Map<PriorityState<S>, PriorityState<S>> strategy = new HashMap<>();
+      while (!queue.isEmpty()) {
+        PriorityState<S> next = queue.poll();
+        assert paritySolution.winner(next) == Player.ODD;
+        Stream<PriorityState<S>> successors;
+        if (parityGame.owner(next) == Player.EVEN) {
+          successors = parityGame.successors(next);
+        } else {
+          PriorityState<S> successor = paritySolution.oddStrategy().get(next);
+          strategy.put(next, successor);
+          successors = Stream.of(successor);
+        }
+        successors.forEach(successor -> {
+          if (reached.add(successor)) {
+            queue.add(successor);
+          }
+        });
       }
-      cache.put(historyState, null);
-      return Optional.empty();
+
+      this.strategy = Map.copyOf(strategy);
+      Map<HistoryState<S>, Boolean> isWinning = new HashMap<>();
+
+      Map<HistoryState<S>, PriorityState<S>> initialStates = new HashMap<>();
+      for (PriorityState<S> priorityState : solvedTopLevelEveStates) {
+        HistoryState<S> gameHistoryState = priorityState.eve().historyState();
+        boolean stateWinning = paritySolution.winner(priorityState) == Player.ODD;
+        isWinning.put(gameHistoryState, stateWinning);
+        if (stateWinning) {
+          initialStates.put(gameHistoryState, priorityState);
+        }
+      }
+      this.initialStates = Map.copyOf(initialStates);
+      this.isWinning = Map.copyOf(isWinning);
+    }
+  }
+
+  private LabelledFormula eveGoal(HistoryState<S> historyState) {
+    return LabelledFormula.of(Disjunction.of(losingAgents.stream()
+        .map(a -> Conjunction.of(GOperator.of(agentLiterals.get(a)), historyState.goal(a)))).not(), atomicPropositions);
+  }
+
+  private Optional<PunishmentStrategy<S>> doSolve(HistoryState<S> historyState) {
+    Boolean winning = this.isWinning.get(historyState);
+    if (winning == null) {
+      LabelledFormula eveGoal = eveGoal(historyState);
+      var goal = SimplifierRepository.SYNTACTIC_FAIRNESS.apply(eveGoal).formula();
+      assert goal instanceof BooleanConstant;
+      boolean value = ((BooleanConstant) goal).value;
+      if (value) {
+        PriorityState<S> state = new PriorityState<>(null, new EveState<>(historyState, losingAgents), 1);
+        return Optional.of(new Strategy<>(state, Map.of(state, state)));
+      }
+    } else {
+      if (winning) {
+        return Optional.of(new Strategy<>(initialStates.get(historyState), strategy));
+      }
     }
 
+    return Optional.empty();
+  }
+
+  public Optional<PunishmentStrategy<S>> solve(HistoryState<S> historyState) {
+    var solution = doSolve(historyState);
+    assert computeWinning(historyState) == solution.isPresent();
+    return solution;
+  }
+
+  private boolean computeWinning(HistoryState<S> historyState) {
+    var solution = solveParityGame(new EveState<>(historyState, losingAgents), eveGoal(historyState));
+    return solution.solution().winner(solution.parityGame().initialState()) == Player.ODD;
+  }
+
+  record ParitySolution<S>(SuspectParityGame<S> parityGame, Solution<PriorityState<S>> solution) {}
+
+  private ParitySolution<S> solveParityGame(EveState<S> eveState, LabelledFormula goal) {
     var shifted = LiteralMapper.shiftLiterals(goal);
     var automaton = dpaCachingFunction.apply(shifted.formula);
-    if (automaton.states().isEmpty()) {
-      cache.put(historyState, null);
-      return Optional.empty();
-    }
+    assert !automaton.states().isEmpty();
     var parityGame = SuspectParityGame.create(suspectGame, eveState, automaton);
     var paritySolution = solver.solve(parityGame);
-
-    Set<PriorityState<S>> solvedTopLevelEveStates = parityGame.states().stream()
-        .filter(p -> p.isEve() && p.eve().suspects().equals(losingAgents))
-        .collect(Collectors.toSet());
-    System.out.println(solvedTopLevelEveStates);
-    Queue<PriorityState<S>> queue = new ArrayDeque<>();
-    solvedTopLevelEveStates.stream().filter(p -> paritySolution.winner(p) == Player.ODD).forEach(queue::add);
-    Set<PriorityState<S>> reached = new HashSet<>();
-    Map<PriorityState<S>, PriorityState<S>> strategy = new HashMap<>();
-    while (!queue.isEmpty()) {
-      PriorityState<S> next = queue.poll();
-      assert paritySolution.winner(next) == Player.ODD;
-      Stream<PriorityState<S>> successors;
-      if (parityGame.owner(next) == Player.EVEN) {
-        successors = parityGame.successors(next);
-      } else {
-        PriorityState<S> successor = paritySolution.oddStrategy().get(next);
-        strategy.put(next, successor);
-        successors = Stream.of(successor);
-      }
-      successors.forEach(successor -> {
-        if (reached.add(successor)) {
-          queue.add(successor);
-        }
-      });
-    }
-
-    var strategyCopy = Map.copyOf(strategy);
-    for (PriorityState<S> priorityState : solvedTopLevelEveStates) {
-      HistoryState<S> gameHistoryState = priorityState.eve().historyState();
-      if (paritySolution.winner(priorityState) == Player.ODD) {
-        assert !cache.containsKey(gameHistoryState) || cache.get(gameHistoryState) != null;
-        cache.putIfAbsent(gameHistoryState, new Strategy<>(priorityState, strategyCopy));
-      } else {
-        assert !cache.containsKey(gameHistoryState) || cache.get(gameHistoryState) == null;
-        cache.putIfAbsent(gameHistoryState, null);
-      }
-    }
-
-    if (paritySolution.winner(parityGame.initialState()) == Player.EVEN) {
-      return Optional.empty();
-    }
-    return Optional.of(new Strategy<>(parityGame.initialState(), strategyCopy));
+    return new ParitySolution<>(parityGame, paritySolution);
   }
 
   public interface PunishmentStrategy<S> {

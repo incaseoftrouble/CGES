@@ -100,15 +100,17 @@ public final class DotWriter {
 
       SuspectGame.EveState<S> eveState = entry.getKey();
       game.successors(eveState).forEach(adamState -> {
-        var compliantTransition = game.historyGame().transition(eveState.historyState(), adamState.move()).orElseThrow();
-        game.successors(adamState).forEach(eveSuccessor -> {
-          if (eveSuccessor.historyState().equals(compliantTransition.destination())) {
-            assert compliantTransition.move().equals(adamState.move());
-            compliantMoves.put(eveSuccessor, compliantTransition.move());
-          } else {
-            deviatingMovesBySuccessor.put(eveSuccessor, adamState.move());
-          }
-        });
+        for (Move move : adamState.moves()) {
+          var compliantTransition = game.historyGame().transition(eveState.historyState(), move).orElseThrow();
+          game.successors(adamState).forEach(eveSuccessor -> {
+            if (eveSuccessor.historyState().equals(compliantTransition.destination())) {
+              assert compliantTransition.move().equals(adamState.moves());
+              compliantMoves.put(eveSuccessor, compliantTransition.move());
+            } else {
+              deviatingMovesBySuccessor.put(eveSuccessor, move);
+            }
+          });
+        }
       });
       assert !compliantMoves.isEmpty();
 
