@@ -8,6 +8,7 @@ import com.cges.model.Action;
 import com.cges.model.Agent;
 import com.cges.model.ConcurrentGame;
 import com.google.common.collect.Sets;
+import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import de.tum.in.naturals.Indices;
@@ -76,10 +77,13 @@ public final class ModuleParser {
 
         Map<ModuleTransition<State>, BddSet> stateTransitions = new HashMap<>();
         transitions.put(state, stateTransitions);
-        for (JsonElement transitionData : stateData.getAsJsonArray("transitions")) {
+        JsonArray modelTransitions = stateData.getAsJsonArray("transitions");
+        for (JsonElement transitionData : modelTransitions) {
           JsonObject transition = transitionData.getAsJsonObject();
           State target = new State(transition.getAsJsonPrimitive("to").getAsString());
-          BddSet valuation = ParseUtil.parse(transition.getAsJsonPrimitive("guard").getAsString(), visitor);
+          BddSet valuation = transition.has("guard")
+              ? ParseUtil.parse(transition.getAsJsonPrimitive("guard").getAsString(), visitor)
+              : factory.of(true);
           String actionName = transition.getAsJsonPrimitive("action").getAsString();
           (actionName.equals("*") ? agent.actions() : List.of(agent.action(actionName))).forEach(action ->
               stateTransitions.merge(new ModuleTransition<>(action, target), valuation, BddSet::union)
@@ -101,9 +105,9 @@ public final class ModuleParser {
 
       for (var transitionEntry : transitions.entrySet()) {
         for (var transition : transitionEntry.getValue().keySet()) {
-            checkArgument(stateLabels.containsKey(transition.destination()),
-                "Transition in state %s of module %s under action %s leads to undefined state %s",
-                transitionEntry.getKey().name(), moduleName, transition.action().name(), transition.destination().name());
+          checkArgument(stateLabels.containsKey(transition.destination()),
+              "Transition in state %s of module %s under action %s leads to undefined state %s",
+              transitionEntry.getKey().name(), moduleName, transition.action().name(), transition.destination().name());
         }
       }
       modules.add(new Module<>(agent, initialState, stateLabels, transitions));

@@ -1,0 +1,2631 @@
+{
+  "name": "gridworld10",
+  "type": "module",
+  "ap": [
+    "x00",
+    "x01",
+    "x02",
+    "x03",
+    "y00",
+    "y01",
+    "y02",
+    "y03",
+    "x10",
+    "x11",
+    "x12",
+    "x13",
+    "y10",
+    "y11",
+    "y12",
+    "y13"
+  ],
+  "goal": "G !((x03<->x13)&(x02<->x12)&(x01<->x11)&(x00<->x10) & (y03<->y13)&(y02<->y12)&(y01<->y11)&(y00<->y10))",
+  "modules": {
+    "A1": {
+      "goal": "F (x03 & !x02 & !x01 & x00 & y03 & !y02 & !y01 & y00)",
+      "payoff": "?",
+      "actions": [
+        "r",
+        "l",
+        "u",
+        "d"
+      ],
+      "labels": [
+        "x00",
+        "x01",
+        "x02",
+        "x03",
+        "y00",
+        "y01",
+        "y02",
+        "y03"
+      ],
+      "initial": "s00",
+      "states": {
+        "s00": {
+          "labels": [],
+          "transitions": [
+            {
+              "action": "r",
+              "guard": "true"
+              "to": "s01"
+            }
+          ]
+        },
+        "s01": {
+          "labels": [
+            "y00"
+          ],
+          "transitions": [
+            {
+              "action": "l",
+              "guard": "true"
+              "to": "s00"
+            }
+          ]
+        },
+        "s04": {
+          "labels": [
+            "y02"
+          ],
+          "transitions": [
+            {
+              "action": "d",
+              "guard": "true"
+              "to": "s014"
+            }
+          ]
+        },
+        "s07": {
+          "labels": [
+            "y02",
+            "y01",
+            "y00"
+          ],
+          "transitions": []
+        },
+        "s013": {
+          "labels": [
+            "x00",
+            "y01",
+            "y00"
+          ],
+          "transitions": [
+            {
+              "action": "r",
+              "guard": "true"
+              "to": "s014"
+            },
+            {
+              "action": "d",
+              "guard": "true"
+              "to": "s023"
+            }
+          ]
+        },
+        "s014": {
+          "labels": [
+            "x00",
+            "y02"
+          ],
+          "transitions": [
+            {
+              "action": "l",
+              "guard": "true"
+              "to": "s013"
+            },
+            {
+              "action": "u",
+              "guard": "true"
+              "to": "s04"
+            },
+            {
+              "action": "d",
+              "guard": "true"
+              "to": "s024"
+            }
+          ]
+        },
+        "s016": {
+          "labels": [
+            "x00",
+            "y02",
+            "y01"
+          ],
+          "transitions": []
+        },
+        "s018": {
+          "labels": [
+            "x00",
+            "y03"
+          ],
+          "transitions": [
+            {
+              "action": "d",
+              "guard": "true"
+              "to": "s028"
+            }
+          ]
+        },
+        "s020": {
+          "labels": [
+            "x01"
+          ],
+          "transitions": [
+            {
+              "action": "r",
+              "guard": "true"
+              "to": "s021"
+            },
+            {
+              "action": "d",
+              "guard": "true"
+              "to": "s030"
+            }
+          ]
+        },
+        "s021": {
+          "labels": [
+            "x01",
+            "y00"
+          ],
+          "transitions": [
+            {
+              "action": "l",
+              "guard": "true"
+              "to": "s020"
+            }
+          ]
+        },
+        "s023": {
+          "labels": [
+            "x01",
+            "y01",
+            "y00"
+          ],
+          "transitions": [
+            {
+              "action": "r",
+              "guard": "true"
+              "to": "s024"
+            },
+            {
+              "action": "u",
+              "guard": "true"
+              "to": "s013"
+            },
+            {
+              "action": "d",
+              "guard": "true"
+              "to": "s033"
+            }
+          ]
+        },
+        "s024": {
+          "labels": [
+            "x01",
+            "y02"
+          ],
+          "transitions": [
+            {
+              "action": "r",
+              "guard": "true"
+              "to": "s025"
+            },
+            {
+              "action": "l",
+              "guard": "true"
+              "to": "s023"
+            },
+            {
+              "action": "u",
+              "guard": "true"
+              "to": "s014"
+            },
+            {
+              "action": "d",
+              "guard": "true"
+              "to": "s034"
+            }
+          ]
+        },
+        "s025": {
+          "labels": [
+            "x01",
+            "y02",
+            "y00"
+          ],
+          "transitions": [
+            {
+              "action": "l",
+              "guard": "true"
+              "to": "s024"
+            },
+            {
+              "action": "d",
+              "guard": "true"
+              "to": "s035"
+            }
+          ]
+        },
+        "s027": {
+          "labels": [
+            "x01",
+            "y02",
+            "y01",
+            "y00"
+          ],
+          "transitions": [
+            {
+              "action": "r",
+              "guard": "true"
+              "to": "s028"
+            },
+            {
+              "action": "d",
+              "guard": "true"
+              "to": "s037"
+            }
+          ]
+        },
+        "s028": {
+          "labels": [
+            "x01",
+            "y03"
+          ],
+          "transitions": [
+            {
+              "action": "r",
+              "guard": "true"
+              "to": "s029"
+            },
+            {
+              "action": "l",
+              "guard": "true"
+              "to": "s027"
+            },
+            {
+              "action": "u",
+              "guard": "true"
+              "to": "s018"
+            },
+            {
+              "action": "d",
+              "guard": "true"
+              "to": "s038"
+            }
+          ]
+        },
+        "s029": {
+          "labels": [
+            "x01",
+            "y03",
+            "y00"
+          ],
+          "transitions": [
+            {
+              "action": "l",
+              "guard": "true"
+              "to": "s028"
+            },
+            {
+              "action": "d",
+              "guard": "true"
+              "to": "s039"
+            }
+          ]
+        },
+        "s030": {
+          "labels": [
+            "x01",
+            "x00"
+          ],
+          "transitions": [
+            {
+              "action": "u",
+              "guard": "true"
+              "to": "s020"
+            },
+            {
+              "action": "d",
+              "guard": "true"
+              "to": "s040"
+            }
+          ]
+        },
+        "s032": {
+          "labels": [
+            "x01",
+            "x00",
+            "y01"
+          ],
+          "transitions": [
+            {
+              "action": "r",
+              "guard": "true"
+              "to": "s033"
+            }
+          ]
+        },
+        "s033": {
+          "labels": [
+            "x01",
+            "x00",
+            "y01",
+            "y00"
+          ],
+          "transitions": [
+            {
+              "action": "r",
+              "guard": "true"
+              "to": "s034"
+            },
+            {
+              "action": "l",
+              "guard": "true"
+              "to": "s032"
+            },
+            {
+              "action": "u",
+              "guard": "true"
+              "to": "s023"
+            }
+          ]
+        },
+        "s034": {
+          "labels": [
+            "x01",
+            "x00",
+            "y02"
+          ],
+          "transitions": [
+            {
+              "action": "r",
+              "guard": "true"
+              "to": "s035"
+            },
+            {
+              "action": "l",
+              "guard": "true"
+              "to": "s033"
+            },
+            {
+              "action": "u",
+              "guard": "true"
+              "to": "s024"
+            }
+          ]
+        },
+        "s035": {
+          "labels": [
+            "x01",
+            "x00",
+            "y02",
+            "y00"
+          ],
+          "transitions": [
+            {
+              "action": "r",
+              "guard": "true"
+              "to": "s036"
+            },
+            {
+              "action": "l",
+              "guard": "true"
+              "to": "s034"
+            },
+            {
+              "action": "u",
+              "guard": "true"
+              "to": "s025"
+            }
+          ]
+        },
+        "s036": {
+          "labels": [
+            "x01",
+            "x00",
+            "y02",
+            "y01"
+          ],
+          "transitions": [
+            {
+              "action": "r",
+              "guard": "true"
+              "to": "s037"
+            },
+            {
+              "action": "l",
+              "guard": "true"
+              "to": "s035"
+            },
+            {
+              "action": "d",
+              "guard": "true"
+              "to": "s046"
+            }
+          ]
+        },
+        "s037": {
+          "labels": [
+            "x01",
+            "x00",
+            "y02",
+            "y01",
+            "y00"
+          ],
+          "transitions": [
+            {
+              "action": "r",
+              "guard": "true"
+              "to": "s038"
+            },
+            {
+              "action": "l",
+              "guard": "true"
+              "to": "s036"
+            },
+            {
+              "action": "u",
+              "guard": "true"
+              "to": "s027"
+            }
+          ]
+        },
+        "s038": {
+          "labels": [
+            "x01",
+            "x00",
+            "y03"
+          ],
+          "transitions": [
+            {
+              "action": "r",
+              "guard": "true"
+              "to": "s039"
+            },
+            {
+              "action": "l",
+              "guard": "true"
+              "to": "s037"
+            },
+            {
+              "action": "u",
+              "guard": "true"
+              "to": "s028"
+            }
+          ]
+        },
+        "s039": {
+          "labels": [
+            "x01",
+            "x00",
+            "y03",
+            "y00"
+          ],
+          "transitions": [
+            {
+              "action": "l",
+              "guard": "true"
+              "to": "s038"
+            },
+            {
+              "action": "u",
+              "guard": "true"
+              "to": "s029"
+            },
+            {
+              "action": "d",
+              "guard": "true"
+              "to": "s049"
+            }
+          ]
+        },
+        "s040": {
+          "labels": [
+            "x02"
+          ],
+          "transitions": [
+            {
+              "action": "r",
+              "guard": "true"
+              "to": "s041"
+            },
+            {
+              "action": "u",
+              "guard": "true"
+              "to": "s030"
+            }
+          ]
+        },
+        "s041": {
+          "labels": [
+            "x02",
+            "y00"
+          ],
+          "transitions": [
+            {
+              "action": "l",
+              "guard": "true"
+              "to": "s040"
+            }
+          ]
+        },
+        "s046": {
+          "labels": [
+            "x02",
+            "y02",
+            "y01"
+          ],
+          "transitions": [
+            {
+              "action": "u",
+              "guard": "true"
+              "to": "s036"
+            },
+            {
+              "action": "d",
+              "guard": "true"
+              "to": "s056"
+            }
+          ]
+        },
+        "s049": {
+          "labels": [
+            "x02",
+            "y03",
+            "y00"
+          ],
+          "transitions": [
+            {
+              "action": "u",
+              "guard": "true"
+              "to": "s039"
+            },
+            {
+              "action": "d",
+              "guard": "true"
+              "to": "s059"
+            }
+          ]
+        },
+        "s052": {
+          "labels": [
+            "x02",
+            "x00",
+            "y01"
+          ],
+          "transitions": [
+            {
+              "action": "r",
+              "guard": "true"
+              "to": "s053"
+            }
+          ]
+        },
+        "s053": {
+          "labels": [
+            "x02",
+            "x00",
+            "y01",
+            "y00"
+          ],
+          "transitions": [
+            {
+              "action": "l",
+              "guard": "true"
+              "to": "s052"
+            },
+            {
+              "action": "d",
+              "guard": "true"
+              "to": "s063"
+            }
+          ]
+        },
+        "s055": {
+          "labels": [
+            "x02",
+            "x00",
+            "y02",
+            "y00"
+          ],
+          "transitions": [
+            {
+              "action": "r",
+              "guard": "true"
+              "to": "s056"
+            },
+            {
+              "action": "d",
+              "guard": "true"
+              "to": "s065"
+            }
+          ]
+        },
+        "s056": {
+          "labels": [
+            "x02",
+            "x00",
+            "y02",
+            "y01"
+          ],
+          "transitions": [
+            {
+              "action": "r",
+              "guard": "true"
+              "to": "s057"
+            },
+            {
+              "action": "l",
+              "guard": "true"
+              "to": "s055"
+            },
+            {
+              "action": "u",
+              "guard": "true"
+              "to": "s046"
+            }
+          ]
+        },
+        "s057": {
+          "labels": [
+            "x02",
+            "x00",
+            "y02",
+            "y01",
+            "y00"
+          ],
+          "transitions": [
+            {
+              "action": "r",
+              "guard": "true"
+              "to": "s058"
+            },
+            {
+              "action": "l",
+              "guard": "true"
+              "to": "s056"
+            }
+          ]
+        },
+        "s058": {
+          "labels": [
+            "x02",
+            "x00",
+            "y03"
+          ],
+          "transitions": [
+            {
+              "action": "r",
+              "guard": "true"
+              "to": "s059"
+            },
+            {
+              "action": "l",
+              "guard": "true"
+              "to": "s057"
+            },
+            {
+              "action": "d",
+              "guard": "true"
+              "to": "s068"
+            }
+          ]
+        },
+        "s059": {
+          "labels": [
+            "x02",
+            "x00",
+            "y03",
+            "y00"
+          ],
+          "transitions": [
+            {
+              "action": "l",
+              "guard": "true"
+              "to": "s058"
+            },
+            {
+              "action": "u",
+              "guard": "true"
+              "to": "s049"
+            },
+            {
+              "action": "d",
+              "guard": "true"
+              "to": "s069"
+            }
+          ]
+        },
+        "s060": {
+          "labels": [
+            "x02",
+            "x01"
+          ],
+          "transitions": [
+            {
+              "action": "d",
+              "guard": "true"
+              "to": "s070"
+            }
+          ]
+        },
+        "s063": {
+          "labels": [
+            "x02",
+            "x01",
+            "y01",
+            "y00"
+          ],
+          "transitions": [
+            {
+              "action": "u",
+              "guard": "true"
+              "to": "s053"
+            },
+            {
+              "action": "d",
+              "guard": "true"
+              "to": "s073"
+            }
+          ]
+        },
+        "s065": {
+          "labels": [
+            "x02",
+            "x01",
+            "y02",
+            "y00"
+          ],
+          "transitions": [
+            {
+              "action": "u",
+              "guard": "true"
+              "to": "s055"
+            },
+            {
+              "action": "d",
+              "guard": "true"
+              "to": "s075"
+            }
+          ]
+        },
+        "s068": {
+          "labels": [
+            "x02",
+            "x01",
+            "y03"
+          ],
+          "transitions": [
+            {
+              "action": "r",
+              "guard": "true"
+              "to": "s069"
+            },
+            {
+              "action": "u",
+              "guard": "true"
+              "to": "s058"
+            },
+            {
+              "action": "d",
+              "guard": "true"
+              "to": "s078"
+            }
+          ]
+        },
+        "s069": {
+          "labels": [
+            "x02",
+            "x01",
+            "y03",
+            "y00"
+          ],
+          "transitions": [
+            {
+              "action": "l",
+              "guard": "true"
+              "to": "s068"
+            },
+            {
+              "action": "u",
+              "guard": "true"
+              "to": "s059"
+            }
+          ]
+        },
+        "s070": {
+          "labels": [
+            "x02",
+            "x01",
+            "x00"
+          ],
+          "transitions": [
+            {
+              "action": "r",
+              "guard": "true"
+              "to": "s071"
+            },
+            {
+              "action": "u",
+              "guard": "true"
+              "to": "s060"
+            },
+            {
+              "action": "d",
+              "guard": "true"
+              "to": "s080"
+            }
+          ]
+        },
+        "s071": {
+          "labels": [
+            "x02",
+            "x01",
+            "x00",
+            "y00"
+          ],
+          "transitions": [
+            {
+              "action": "r",
+              "guard": "true"
+              "to": "s072"
+            },
+            {
+              "action": "l",
+              "guard": "true"
+              "to": "s070"
+            },
+            {
+              "action": "d",
+              "guard": "true"
+              "to": "s081"
+            }
+          ]
+        },
+        "s072": {
+          "labels": [
+            "x02",
+            "x01",
+            "x00",
+            "y01"
+          ],
+          "transitions": [
+            {
+              "action": "r",
+              "guard": "true"
+              "to": "s073"
+            },
+            {
+              "action": "l",
+              "guard": "true"
+              "to": "s071"
+            },
+            {
+              "action": "d",
+              "guard": "true"
+              "to": "s082"
+            }
+          ]
+        },
+        "s073": {
+          "labels": [
+            "x02",
+            "x01",
+            "x00",
+            "y01",
+            "y00"
+          ],
+          "transitions": [
+            {
+              "action": "r",
+              "guard": "true"
+              "to": "s074"
+            },
+            {
+              "action": "l",
+              "guard": "true"
+              "to": "s072"
+            },
+            {
+              "action": "u",
+              "guard": "true"
+              "to": "s063"
+            },
+            {
+              "action": "d",
+              "guard": "true"
+              "to": "s083"
+            }
+          ]
+        },
+        "s074": {
+          "labels": [
+            "x02",
+            "x01",
+            "x00",
+            "y02"
+          ],
+          "transitions": [
+            {
+              "action": "r",
+              "guard": "true"
+              "to": "s075"
+            },
+            {
+              "action": "l",
+              "guard": "true"
+              "to": "s073"
+            },
+            {
+              "action": "d",
+              "guard": "true"
+              "to": "s084"
+            }
+          ]
+        },
+        "s075": {
+          "labels": [
+            "x02",
+            "x01",
+            "x00",
+            "y02",
+            "y00"
+          ],
+          "transitions": [
+            {
+              "action": "l",
+              "guard": "true"
+              "to": "s074"
+            },
+            {
+              "action": "u",
+              "guard": "true"
+              "to": "s065"
+            },
+            {
+              "action": "d",
+              "guard": "true"
+              "to": "s085"
+            }
+          ]
+        },
+        "s077": {
+          "labels": [
+            "x02",
+            "x01",
+            "x00",
+            "y02",
+            "y01",
+            "y00"
+          ],
+          "transitions": [
+            {
+              "action": "r",
+              "guard": "true"
+              "to": "s078"
+            }
+          ]
+        },
+        "s078": {
+          "labels": [
+            "x02",
+            "x01",
+            "x00",
+            "y03"
+          ],
+          "transitions": [
+            {
+              "action": "l",
+              "guard": "true"
+              "to": "s077"
+            },
+            {
+              "action": "u",
+              "guard": "true"
+              "to": "s068"
+            }
+          ]
+        },
+        "s080": {
+          "labels": [
+            "x03"
+          ],
+          "transitions": [
+            {
+              "action": "r",
+              "guard": "true"
+              "to": "s081"
+            },
+            {
+              "action": "u",
+              "guard": "true"
+              "to": "s070"
+            },
+            {
+              "action": "d",
+              "guard": "true"
+              "to": "s090"
+            }
+          ]
+        },
+        "s081": {
+          "labels": [
+            "x03",
+            "y00"
+          ],
+          "transitions": [
+            {
+              "action": "r",
+              "guard": "true"
+              "to": "s082"
+            },
+            {
+              "action": "l",
+              "guard": "true"
+              "to": "s080"
+            },
+            {
+              "action": "u",
+              "guard": "true"
+              "to": "s071"
+            },
+            {
+              "action": "d",
+              "guard": "true"
+              "to": "s091"
+            }
+          ]
+        },
+        "s082": {
+          "labels": [
+            "x03",
+            "y01"
+          ],
+          "transitions": [
+            {
+              "action": "r",
+              "guard": "true"
+              "to": "s083"
+            },
+            {
+              "action": "l",
+              "guard": "true"
+              "to": "s081"
+            },
+            {
+              "action": "u",
+              "guard": "true"
+              "to": "s072"
+            }
+          ]
+        },
+        "s083": {
+          "labels": [
+            "x03",
+            "y01",
+            "y00"
+          ],
+          "transitions": [
+            {
+              "action": "r",
+              "guard": "true"
+              "to": "s084"
+            },
+            {
+              "action": "l",
+              "guard": "true"
+              "to": "s082"
+            },
+            {
+              "action": "u",
+              "guard": "true"
+              "to": "s073"
+            },
+            {
+              "action": "d",
+              "guard": "true"
+              "to": "s093"
+            }
+          ]
+        },
+        "s084": {
+          "labels": [
+            "x03",
+            "y02"
+          ],
+          "transitions": [
+            {
+              "action": "r",
+              "guard": "true"
+              "to": "s085"
+            },
+            {
+              "action": "l",
+              "guard": "true"
+              "to": "s083"
+            },
+            {
+              "action": "u",
+              "guard": "true"
+              "to": "s074"
+            }
+          ]
+        },
+        "s085": {
+          "labels": [
+            "x03",
+            "y02",
+            "y00"
+          ],
+          "transitions": [
+            {
+              "action": "r",
+              "guard": "true"
+              "to": "s086"
+            },
+            {
+              "action": "l",
+              "guard": "true"
+              "to": "s084"
+            },
+            {
+              "action": "u",
+              "guard": "true"
+              "to": "s075"
+            },
+            {
+              "action": "d",
+              "guard": "true"
+              "to": "s095"
+            }
+          ]
+        },
+        "s086": {
+          "labels": [
+            "x03",
+            "y02",
+            "y01"
+          ],
+          "transitions": [
+            {
+              "action": "l",
+              "guard": "true"
+              "to": "s085"
+            },
+            {
+              "action": "d",
+              "guard": "true"
+              "to": "s096"
+            }
+          ]
+        },
+        "s090": {
+          "labels": [
+            "x03",
+            "x00"
+          ],
+          "transitions": [
+            {
+              "action": "r",
+              "guard": "true"
+              "to": "s091"
+            },
+            {
+              "action": "u",
+              "guard": "true"
+              "to": "s080"
+            }
+          ]
+        },
+        "s091": {
+          "labels": [
+            "x03",
+            "x00",
+            "y00"
+          ],
+          "transitions": [
+            {
+              "action": "l",
+              "guard": "true"
+              "to": "s090"
+            },
+            {
+              "action": "u",
+              "guard": "true"
+              "to": "s081"
+            }
+          ]
+        },
+        "s093": {
+          "labels": [
+            "x03",
+            "x00",
+            "y01",
+            "y00"
+          ],
+          "transitions": [
+            {
+              "action": "u",
+              "guard": "true"
+              "to": "s083"
+            }
+          ]
+        },
+        "s095": {
+          "labels": [
+            "x03",
+            "x00",
+            "y02",
+            "y00"
+          ],
+          "transitions": [
+            {
+              "action": "r",
+              "guard": "true"
+              "to": "s096"
+            },
+            {
+              "action": "u",
+              "guard": "true"
+              "to": "s085"
+            }
+          ]
+        },
+        "s096": {
+          "labels": [
+            "x03",
+            "x00",
+            "y02",
+            "y01"
+          ],
+          "transitions": [
+            {
+              "action": "l",
+              "guard": "true"
+              "to": "s095"
+            },
+            {
+              "action": "u",
+              "guard": "true"
+              "to": "s086"
+            }
+          ]
+        },
+        "s098": {
+          "labels": [
+            "x03",
+            "x00",
+            "y03"
+          ],
+          "transitions": [
+            {
+              "action": "r",
+              "guard": "true"
+              "to": "s099"
+            }
+          ]
+        },
+        "s099": {
+          "labels": [
+            "x03",
+            "x00",
+            "y03",
+            "y00"
+          ],
+          "transitions": [
+            {
+              "action": "l",
+              "guard": "true"
+              "to": "s098"
+            }
+          ]
+        }
+      }
+    },
+    "A2": {
+      "goal": "F (!x13 & !x12 & !x11 & !x10 & !y13 & !y12 & !y11 & !y10)",
+      "payoff": "?",
+      "actions": [
+        "r",
+        "l",
+        "u",
+        "d"
+      ],
+      "labels": [
+        "x10",
+        "x11",
+        "x12",
+        "x13",
+        "y10",
+        "y11",
+        "y12",
+        "y13"
+      ],
+      "initial": "s199",
+      "states": {
+        "s10": {
+          "labels": [],
+          "transitions": [
+            {
+              "action": "r",
+              "guard": "true"
+              "to": "s11"
+            }
+          ]
+        },
+        "s11": {
+          "labels": [
+            "y10"
+          ],
+          "transitions": [
+            {
+              "action": "l",
+              "guard": "true"
+              "to": "s10"
+            }
+          ]
+        },
+        "s14": {
+          "labels": [
+            "y12"
+          ],
+          "transitions": [
+            {
+              "action": "d",
+              "guard": "true"
+              "to": "s114"
+            }
+          ]
+        },
+        "s17": {
+          "labels": [
+            "y12",
+            "y11",
+            "y10"
+          ],
+          "transitions": []
+        },
+        "s113": {
+          "labels": [
+            "x10",
+            "y11",
+            "y10"
+          ],
+          "transitions": [
+            {
+              "action": "r",
+              "guard": "true"
+              "to": "s114"
+            },
+            {
+              "action": "d",
+              "guard": "true"
+              "to": "s123"
+            }
+          ]
+        },
+        "s114": {
+          "labels": [
+            "x10",
+            "y12"
+          ],
+          "transitions": [
+            {
+              "action": "l",
+              "guard": "true"
+              "to": "s113"
+            },
+            {
+              "action": "u",
+              "guard": "true"
+              "to": "s14"
+            },
+            {
+              "action": "d",
+              "guard": "true"
+              "to": "s124"
+            }
+          ]
+        },
+        "s116": {
+          "labels": [
+            "x10",
+            "y12",
+            "y11"
+          ],
+          "transitions": []
+        },
+        "s118": {
+          "labels": [
+            "x10",
+            "y13"
+          ],
+          "transitions": [
+            {
+              "action": "d",
+              "guard": "true"
+              "to": "s128"
+            }
+          ]
+        },
+        "s120": {
+          "labels": [
+            "x11"
+          ],
+          "transitions": [
+            {
+              "action": "r",
+              "guard": "true"
+              "to": "s121"
+            },
+            {
+              "action": "d",
+              "guard": "true"
+              "to": "s130"
+            }
+          ]
+        },
+        "s121": {
+          "labels": [
+            "x11",
+            "y10"
+          ],
+          "transitions": [
+            {
+              "action": "l",
+              "guard": "true"
+              "to": "s120"
+            }
+          ]
+        },
+        "s123": {
+          "labels": [
+            "x11",
+            "y11",
+            "y10"
+          ],
+          "transitions": [
+            {
+              "action": "r",
+              "guard": "true"
+              "to": "s124"
+            },
+            {
+              "action": "u",
+              "guard": "true"
+              "to": "s113"
+            },
+            {
+              "action": "d",
+              "guard": "true"
+              "to": "s133"
+            }
+          ]
+        },
+        "s124": {
+          "labels": [
+            "x11",
+            "y12"
+          ],
+          "transitions": [
+            {
+              "action": "r",
+              "guard": "true"
+              "to": "s125"
+            },
+            {
+              "action": "l",
+              "guard": "true"
+              "to": "s123"
+            },
+            {
+              "action": "u",
+              "guard": "true"
+              "to": "s114"
+            },
+            {
+              "action": "d",
+              "guard": "true"
+              "to": "s134"
+            }
+          ]
+        },
+        "s125": {
+          "labels": [
+            "x11",
+            "y12",
+            "y10"
+          ],
+          "transitions": [
+            {
+              "action": "l",
+              "guard": "true"
+              "to": "s124"
+            },
+            {
+              "action": "d",
+              "guard": "true"
+              "to": "s135"
+            }
+          ]
+        },
+        "s127": {
+          "labels": [
+            "x11",
+            "y12",
+            "y11",
+            "y10"
+          ],
+          "transitions": [
+            {
+              "action": "r",
+              "guard": "true"
+              "to": "s128"
+            },
+            {
+              "action": "d",
+              "guard": "true"
+              "to": "s137"
+            }
+          ]
+        },
+        "s128": {
+          "labels": [
+            "x11",
+            "y13"
+          ],
+          "transitions": [
+            {
+              "action": "r",
+              "guard": "true"
+              "to": "s129"
+            },
+            {
+              "action": "l",
+              "guard": "true"
+              "to": "s127"
+            },
+            {
+              "action": "u",
+              "guard": "true"
+              "to": "s118"
+            },
+            {
+              "action": "d",
+              "guard": "true"
+              "to": "s138"
+            }
+          ]
+        },
+        "s129": {
+          "labels": [
+            "x11",
+            "y13",
+            "y10"
+          ],
+          "transitions": [
+            {
+              "action": "l",
+              "guard": "true"
+              "to": "s128"
+            },
+            {
+              "action": "d",
+              "guard": "true"
+              "to": "s139"
+            }
+          ]
+        },
+        "s130": {
+          "labels": [
+            "x11",
+            "x10"
+          ],
+          "transitions": [
+            {
+              "action": "u",
+              "guard": "true"
+              "to": "s120"
+            },
+            {
+              "action": "d",
+              "guard": "true"
+              "to": "s140"
+            }
+          ]
+        },
+        "s132": {
+          "labels": [
+            "x11",
+            "x10",
+            "y11"
+          ],
+          "transitions": [
+            {
+              "action": "r",
+              "guard": "true"
+              "to": "s133"
+            }
+          ]
+        },
+        "s133": {
+          "labels": [
+            "x11",
+            "x10",
+            "y11",
+            "y10"
+          ],
+          "transitions": [
+            {
+              "action": "r",
+              "guard": "true"
+              "to": "s134"
+            },
+            {
+              "action": "l",
+              "guard": "true"
+              "to": "s132"
+            },
+            {
+              "action": "u",
+              "guard": "true"
+              "to": "s123"
+            }
+          ]
+        },
+        "s134": {
+          "labels": [
+            "x11",
+            "x10",
+            "y12"
+          ],
+          "transitions": [
+            {
+              "action": "r",
+              "guard": "true"
+              "to": "s135"
+            },
+            {
+              "action": "l",
+              "guard": "true"
+              "to": "s133"
+            },
+            {
+              "action": "u",
+              "guard": "true"
+              "to": "s124"
+            }
+          ]
+        },
+        "s135": {
+          "labels": [
+            "x11",
+            "x10",
+            "y12",
+            "y10"
+          ],
+          "transitions": [
+            {
+              "action": "r",
+              "guard": "true"
+              "to": "s136"
+            },
+            {
+              "action": "l",
+              "guard": "true"
+              "to": "s134"
+            },
+            {
+              "action": "u",
+              "guard": "true"
+              "to": "s125"
+            }
+          ]
+        },
+        "s136": {
+          "labels": [
+            "x11",
+            "x10",
+            "y12",
+            "y11"
+          ],
+          "transitions": [
+            {
+              "action": "r",
+              "guard": "true"
+              "to": "s137"
+            },
+            {
+              "action": "l",
+              "guard": "true"
+              "to": "s135"
+            },
+            {
+              "action": "d",
+              "guard": "true"
+              "to": "s146"
+            }
+          ]
+        },
+        "s137": {
+          "labels": [
+            "x11",
+            "x10",
+            "y12",
+            "y11",
+            "y10"
+          ],
+          "transitions": [
+            {
+              "action": "r",
+              "guard": "true"
+              "to": "s138"
+            },
+            {
+              "action": "l",
+              "guard": "true"
+              "to": "s136"
+            },
+            {
+              "action": "u",
+              "guard": "true"
+              "to": "s127"
+            }
+          ]
+        },
+        "s138": {
+          "labels": [
+            "x11",
+            "x10",
+            "y13"
+          ],
+          "transitions": [
+            {
+              "action": "r",
+              "guard": "true"
+              "to": "s139"
+            },
+            {
+              "action": "l",
+              "guard": "true"
+              "to": "s137"
+            },
+            {
+              "action": "u",
+              "guard": "true"
+              "to": "s128"
+            }
+          ]
+        },
+        "s139": {
+          "labels": [
+            "x11",
+            "x10",
+            "y13",
+            "y10"
+          ],
+          "transitions": [
+            {
+              "action": "l",
+              "guard": "true"
+              "to": "s138"
+            },
+            {
+              "action": "u",
+              "guard": "true"
+              "to": "s129"
+            },
+            {
+              "action": "d",
+              "guard": "true"
+              "to": "s149"
+            }
+          ]
+        },
+        "s140": {
+          "labels": [
+            "x12"
+          ],
+          "transitions": [
+            {
+              "action": "r",
+              "guard": "true"
+              "to": "s141"
+            },
+            {
+              "action": "u",
+              "guard": "true"
+              "to": "s130"
+            }
+          ]
+        },
+        "s141": {
+          "labels": [
+            "x12",
+            "y10"
+          ],
+          "transitions": [
+            {
+              "action": "l",
+              "guard": "true"
+              "to": "s140"
+            }
+          ]
+        },
+        "s146": {
+          "labels": [
+            "x12",
+            "y12",
+            "y11"
+          ],
+          "transitions": [
+            {
+              "action": "u",
+              "guard": "true"
+              "to": "s136"
+            },
+            {
+              "action": "d",
+              "guard": "true"
+              "to": "s156"
+            }
+          ]
+        },
+        "s149": {
+          "labels": [
+            "x12",
+            "y13",
+            "y10"
+          ],
+          "transitions": [
+            {
+              "action": "u",
+              "guard": "true"
+              "to": "s139"
+            },
+            {
+              "action": "d",
+              "guard": "true"
+              "to": "s159"
+            }
+          ]
+        },
+        "s152": {
+          "labels": [
+            "x12",
+            "x10",
+            "y11"
+          ],
+          "transitions": [
+            {
+              "action": "r",
+              "guard": "true"
+              "to": "s153"
+            }
+          ]
+        },
+        "s153": {
+          "labels": [
+            "x12",
+            "x10",
+            "y11",
+            "y10"
+          ],
+          "transitions": [
+            {
+              "action": "l",
+              "guard": "true"
+              "to": "s152"
+            },
+            {
+              "action": "d",
+              "guard": "true"
+              "to": "s163"
+            }
+          ]
+        },
+        "s155": {
+          "labels": [
+            "x12",
+            "x10",
+            "y12",
+            "y10"
+          ],
+          "transitions": [
+            {
+              "action": "r",
+              "guard": "true"
+              "to": "s156"
+            },
+            {
+              "action": "d",
+              "guard": "true"
+              "to": "s165"
+            }
+          ]
+        },
+        "s156": {
+          "labels": [
+            "x12",
+            "x10",
+            "y12",
+            "y11"
+          ],
+          "transitions": [
+            {
+              "action": "r",
+              "guard": "true"
+              "to": "s157"
+            },
+            {
+              "action": "l",
+              "guard": "true"
+              "to": "s155"
+            },
+            {
+              "action": "u",
+              "guard": "true"
+              "to": "s146"
+            }
+          ]
+        },
+        "s157": {
+          "labels": [
+            "x12",
+            "x10",
+            "y12",
+            "y11",
+            "y10"
+          ],
+          "transitions": [
+            {
+              "action": "r",
+              "guard": "true"
+              "to": "s158"
+            },
+            {
+              "action": "l",
+              "guard": "true"
+              "to": "s156"
+            }
+          ]
+        },
+        "s158": {
+          "labels": [
+            "x12",
+            "x10",
+            "y13"
+          ],
+          "transitions": [
+            {
+              "action": "r",
+              "guard": "true"
+              "to": "s159"
+            },
+            {
+              "action": "l",
+              "guard": "true"
+              "to": "s157"
+            },
+            {
+              "action": "d",
+              "guard": "true"
+              "to": "s168"
+            }
+          ]
+        },
+        "s159": {
+          "labels": [
+            "x12",
+            "x10",
+            "y13",
+            "y10"
+          ],
+          "transitions": [
+            {
+              "action": "l",
+              "guard": "true"
+              "to": "s158"
+            },
+            {
+              "action": "u",
+              "guard": "true"
+              "to": "s149"
+            },
+            {
+              "action": "d",
+              "guard": "true"
+              "to": "s169"
+            }
+          ]
+        },
+        "s160": {
+          "labels": [
+            "x12",
+            "x11"
+          ],
+          "transitions": [
+            {
+              "action": "d",
+              "guard": "true"
+              "to": "s170"
+            }
+          ]
+        },
+        "s163": {
+          "labels": [
+            "x12",
+            "x11",
+            "y11",
+            "y10"
+          ],
+          "transitions": [
+            {
+              "action": "u",
+              "guard": "true"
+              "to": "s153"
+            },
+            {
+              "action": "d",
+              "guard": "true"
+              "to": "s173"
+            }
+          ]
+        },
+        "s165": {
+          "labels": [
+            "x12",
+            "x11",
+            "y12",
+            "y10"
+          ],
+          "transitions": [
+            {
+              "action": "u",
+              "guard": "true"
+              "to": "s155"
+            },
+            {
+              "action": "d",
+              "guard": "true"
+              "to": "s175"
+            }
+          ]
+        },
+        "s168": {
+          "labels": [
+            "x12",
+            "x11",
+            "y13"
+          ],
+          "transitions": [
+            {
+              "action": "r",
+              "guard": "true"
+              "to": "s169"
+            },
+            {
+              "action": "u",
+              "guard": "true"
+              "to": "s158"
+            },
+            {
+              "action": "d",
+              "guard": "true"
+              "to": "s178"
+            }
+          ]
+        },
+        "s169": {
+          "labels": [
+            "x12",
+            "x11",
+            "y13",
+            "y10"
+          ],
+          "transitions": [
+            {
+              "action": "l",
+              "guard": "true"
+              "to": "s168"
+            },
+            {
+              "action": "u",
+              "guard": "true"
+              "to": "s159"
+            }
+          ]
+        },
+        "s170": {
+          "labels": [
+            "x12",
+            "x11",
+            "x10"
+          ],
+          "transitions": [
+            {
+              "action": "r",
+              "guard": "true"
+              "to": "s171"
+            },
+            {
+              "action": "u",
+              "guard": "true"
+              "to": "s160"
+            },
+            {
+              "action": "d",
+              "guard": "true"
+              "to": "s180"
+            }
+          ]
+        },
+        "s171": {
+          "labels": [
+            "x12",
+            "x11",
+            "x10",
+            "y10"
+          ],
+          "transitions": [
+            {
+              "action": "r",
+              "guard": "true"
+              "to": "s172"
+            },
+            {
+              "action": "l",
+              "guard": "true"
+              "to": "s170"
+            },
+            {
+              "action": "d",
+              "guard": "true"
+              "to": "s181"
+            }
+          ]
+        },
+        "s172": {
+          "labels": [
+            "x12",
+            "x11",
+            "x10",
+            "y11"
+          ],
+          "transitions": [
+            {
+              "action": "r",
+              "guard": "true"
+              "to": "s173"
+            },
+            {
+              "action": "l",
+              "guard": "true"
+              "to": "s171"
+            },
+            {
+              "action": "d",
+              "guard": "true"
+              "to": "s182"
+            }
+          ]
+        },
+        "s173": {
+          "labels": [
+            "x12",
+            "x11",
+            "x10",
+            "y11",
+            "y10"
+          ],
+          "transitions": [
+            {
+              "action": "r",
+              "guard": "true"
+              "to": "s174"
+            },
+            {
+              "action": "l",
+              "guard": "true"
+              "to": "s172"
+            },
+            {
+              "action": "u",
+              "guard": "true"
+              "to": "s163"
+            },
+            {
+              "action": "d",
+              "guard": "true"
+              "to": "s183"
+            }
+          ]
+        },
+        "s174": {
+          "labels": [
+            "x12",
+            "x11",
+            "x10",
+            "y12"
+          ],
+          "transitions": [
+            {
+              "action": "r",
+              "guard": "true"
+              "to": "s175"
+            },
+            {
+              "action": "l",
+              "guard": "true"
+              "to": "s173"
+            },
+            {
+              "action": "d",
+              "guard": "true"
+              "to": "s184"
+            }
+          ]
+        },
+        "s175": {
+          "labels": [
+            "x12",
+            "x11",
+            "x10",
+            "y12",
+            "y10"
+          ],
+          "transitions": [
+            {
+              "action": "l",
+              "guard": "true"
+              "to": "s174"
+            },
+            {
+              "action": "u",
+              "guard": "true"
+              "to": "s165"
+            },
+            {
+              "action": "d",
+              "guard": "true"
+              "to": "s185"
+            }
+          ]
+        },
+        "s177": {
+          "labels": [
+            "x12",
+            "x11",
+            "x10",
+            "y12",
+            "y11",
+            "y10"
+          ],
+          "transitions": [
+            {
+              "action": "r",
+              "guard": "true"
+              "to": "s178"
+            }
+          ]
+        },
+        "s178": {
+          "labels": [
+            "x12",
+            "x11",
+            "x10",
+            "y13"
+          ],
+          "transitions": [
+            {
+              "action": "l",
+              "guard": "true"
+              "to": "s177"
+            },
+            {
+              "action": "u",
+              "guard": "true"
+              "to": "s168"
+            }
+          ]
+        },
+        "s180": {
+          "labels": [
+            "x13"
+          ],
+          "transitions": [
+            {
+              "action": "r",
+              "guard": "true"
+              "to": "s181"
+            },
+            {
+              "action": "u",
+              "guard": "true"
+              "to": "s170"
+            },
+            {
+              "action": "d",
+              "guard": "true"
+              "to": "s190"
+            }
+          ]
+        },
+        "s181": {
+          "labels": [
+            "x13",
+            "y10"
+          ],
+          "transitions": [
+            {
+              "action": "r",
+              "guard": "true"
+              "to": "s182"
+            },
+            {
+              "action": "l",
+              "guard": "true"
+              "to": "s180"
+            },
+            {
+              "action": "u",
+              "guard": "true"
+              "to": "s171"
+            },
+            {
+              "action": "d",
+              "guard": "true"
+              "to": "s191"
+            }
+          ]
+        },
+        "s182": {
+          "labels": [
+            "x13",
+            "y11"
+          ],
+          "transitions": [
+            {
+              "action": "r",
+              "guard": "true"
+              "to": "s183"
+            },
+            {
+              "action": "l",
+              "guard": "true"
+              "to": "s181"
+            },
+            {
+              "action": "u",
+              "guard": "true"
+              "to": "s172"
+            }
+          ]
+        },
+        "s183": {
+          "labels": [
+            "x13",
+            "y11",
+            "y10"
+          ],
+          "transitions": [
+            {
+              "action": "r",
+              "guard": "true"
+              "to": "s184"
+            },
+            {
+              "action": "l",
+              "guard": "true"
+              "to": "s182"
+            },
+            {
+              "action": "u",
+              "guard": "true"
+              "to": "s173"
+            },
+            {
+              "action": "d",
+              "guard": "true"
+              "to": "s193"
+            }
+          ]
+        },
+        "s184": {
+          "labels": [
+            "x13",
+            "y12"
+          ],
+          "transitions": [
+            {
+              "action": "r",
+              "guard": "true"
+              "to": "s185"
+            },
+            {
+              "action": "l",
+              "guard": "true"
+              "to": "s183"
+            },
+            {
+              "action": "u",
+              "guard": "true"
+              "to": "s174"
+            }
+          ]
+        },
+        "s185": {
+          "labels": [
+            "x13",
+            "y12",
+            "y10"
+          ],
+          "transitions": [
+            {
+              "action": "r",
+              "guard": "true"
+              "to": "s186"
+            },
+            {
+              "action": "l",
+              "guard": "true"
+              "to": "s184"
+            },
+            {
+              "action": "u",
+              "guard": "true"
+              "to": "s175"
+            },
+            {
+              "action": "d",
+              "guard": "true"
+              "to": "s195"
+            }
+          ]
+        },
+        "s186": {
+          "labels": [
+            "x13",
+            "y12",
+            "y11"
+          ],
+          "transitions": [
+            {
+              "action": "l",
+              "guard": "true"
+              "to": "s185"
+            },
+            {
+              "action": "d",
+              "guard": "true"
+              "to": "s196"
+            }
+          ]
+        },
+        "s190": {
+          "labels": [
+            "x13",
+            "x10"
+          ],
+          "transitions": [
+            {
+              "action": "r",
+              "guard": "true"
+              "to": "s191"
+            },
+            {
+              "action": "u",
+              "guard": "true"
+              "to": "s180"
+            }
+          ]
+        },
+        "s191": {
+          "labels": [
+            "x13",
+            "x10",
+            "y10"
+          ],
+          "transitions": [
+            {
+              "action": "l",
+              "guard": "true"
+              "to": "s190"
+            },
+            {
+              "action": "u",
+              "guard": "true"
+              "to": "s181"
+            }
+          ]
+        },
+        "s193": {
+          "labels": [
+            "x13",
+            "x10",
+            "y11",
+            "y10"
+          ],
+          "transitions": [
+            {
+              "action": "u",
+              "guard": "true"
+              "to": "s183"
+            }
+          ]
+        },
+        "s195": {
+          "labels": [
+            "x13",
+            "x10",
+            "y12",
+            "y10"
+          ],
+          "transitions": [
+            {
+              "action": "r",
+              "guard": "true"
+              "to": "s196"
+            },
+            {
+              "action": "u",
+              "guard": "true"
+              "to": "s185"
+            }
+          ]
+        },
+        "s196": {
+          "labels": [
+            "x13",
+            "x10",
+            "y12",
+            "y11"
+          ],
+          "transitions": [
+            {
+              "action": "l",
+              "guard": "true"
+              "to": "s195"
+            },
+            {
+              "action": "u",
+              "guard": "true"
+              "to": "s186"
+            }
+          ]
+        },
+        "s198": {
+          "labels": [
+            "x13",
+            "x10",
+            "y13"
+          ],
+          "transitions": [
+            {
+              "action": "r",
+              "guard": "true"
+              "to": "s199"
+            }
+          ]
+        },
+        "s199": {
+          "labels": [
+            "x13",
+            "x10",
+            "y13",
+            "y10"
+          ],
+          "transitions": [
+            {
+              "action": "l",
+              "guard": "true"
+              "to": "s198"
+            }
+          ]
+        }
+      }
+    }
+  }
+}

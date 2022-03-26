@@ -62,7 +62,7 @@ public final class Main {
               boolean payoff = entry.getValue().getAsBoolean();
               expectedResult.put(agent, payoff);
             }
-            checkArgument(expectedResult.keySet().equals(game.agents()), "Invalid valdation specification");
+            checkArgument(expectedResult.keySet().equals(game.agents()), "Invalid validation specification");
             validationSet.add(expectedResult);
           }
         }
