@@ -22,6 +22,7 @@ import java.util.Map;
 import java.util.Queue;
 import java.util.Set;
 import java.util.stream.Collectors;
+import owl.ltl.LabelledFormula;
 
 public class ModuleGame<S> implements ConcurrentGame<ModuleState<S>> {
   private static <S> BitSet label(ModuleState<S> state, List<Module<S>> modules) {
@@ -36,15 +37,17 @@ public class ModuleGame<S> implements ConcurrentGame<ModuleState<S>> {
   private final Set<Agent> agents;
   private final Map<Agent, Integer> agentIndices;
   private final List<Module<S>> modules;
+  private final LabelledFormula goal;
   private final ModuleState<S> initialState;
   private final Set<ModuleState<S>> states;
   private final Map<ModuleState<S>, Set<Transition<ModuleState<S>>>> transitions;
 
-  public ModuleGame(String name, List<String> propositions, Collection<Module<S>> modules) {
+  public ModuleGame(String name, List<String> propositions, Collection<Module<S>> modules, LabelledFormula goal) {
     this.name = name;
     this.propositions = List.copyOf(propositions);
 
     this.modules = List.copyOf(modules);
+    this.goal = goal;
     this.agents = this.modules.stream().map(Module::agent).collect(Collectors.toUnmodifiableSet());
     Map<Agent, Integer> agentIndices = new HashMap<>();
     Indices.forEachIndexed(this.modules, (index, module) -> agentIndices.put(module.agent(), index));
@@ -118,6 +121,15 @@ public class ModuleGame<S> implements ConcurrentGame<ModuleState<S>> {
   @Override
   public Set<String> labels(ModuleState<S> state) {
     return NatBitSets.asSet(label(state, modules)).intStream().mapToObj(propositions::get).collect(Collectors.toSet());
+  }
+
+  @Override
+  public LabelledFormula goal() {
+    return goal;
+  }
+
+  public Collection<Module<S>> modules() {
+    return modules;
   }
 
   private static final class ModuleMove implements Move, DotFormatted {

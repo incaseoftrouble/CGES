@@ -47,12 +47,10 @@
           "transitions": [
             {
               "action": "r",
-              "guard": "true"
               "to": "s01"
             },
             {
               "action": "d",
-              "guard": "true"
               "to": "s010"
             }
           ]
@@ -64,12 +62,10 @@
           "transitions": [
             {
               "action": "r",
-              "guard": "true"
               "to": "s02"
             },
             {
               "action": "l",
-              "guard": "true"
               "to": "s00"
             }
           ]
@@ -81,17 +77,14 @@
           "transitions": [
             {
               "action": "r",
-              "guard": "true"
               "to": "s03"
             },
             {
               "action": "l",
-              "guard": "true"
               "to": "s01"
             },
             {
               "action": "d",
-              "guard": "true"
               "to": "s012"
             }
           ]
@@ -104,17 +97,14 @@
           "transitions": [
             {
               "action": "r",
-              "guard": "true"
               "to": "s04"
             },
             {
               "action": "l",
-              "guard": "true"
               "to": "s02"
             },
             {
               "action": "d",
-              "guard": "true"
               "to": "s013"
             }
           ]
@@ -126,12 +116,10 @@
           "transitions": [
             {
               "action": "l",
-              "guard": "true"
               "to": "s03"
             },
             {
               "action": "d",
-              "guard": "true"
               "to": "s014"
             }
           ]
@@ -144,7 +132,6 @@
           "transitions": [
             {
               "action": "d",
-              "guard": "true"
               "to": "s016"
             }
           ]
@@ -156,7 +143,6 @@
           "transitions": [
             {
               "action": "d",
-              "guard": "true"
               "to": "s018"
             }
           ]
@@ -168,12 +154,10 @@
           "transitions": [
             {
               "action": "u",
-              "guard": "true"
               "to": "s00"
             },
             {
               "action": "d",
-              "guard": "true"
               "to": "s020"
             }
           ]
@@ -186,17 +170,14 @@
           "transitions": [
             {
               "action": "r",
-              "guard": "true"
               "to": "s013"
             },
             {
               "action": "u",
-              "guard": "true"
               "to": "s02"
             },
             {
               "action": "d",
-              "guard": "true"
               "to": "s022"
             }
           ]
@@ -210,17 +191,14 @@
           "transitions": [
             {
               "action": "r",
-              "guard": "true"
               "to": "s014"
             },
             {
               "action": "l",
-              "guard": "true"
               "to": "s012"
             },
             {
               "action": "u",
-              "guard": "true"
               "to": "s03"
             }
           ]
@@ -233,22 +211,18 @@
           "transitions": [
             {
               "action": "r",
-              "guard": "true"
               "to": "s015"
             },
             {
               "action": "l",
-              "guard": "true"
               "to": "s013"
             },
             {
               "action": "u",
-              "guard": "true"
               "to": "s04"
             },
             {
               "action": "d",
-              "guard": "true"
               "to": "s024"
             }
           ]
@@ -262,17 +236,14 @@
           "transitions": [
             {
               "action": "r",
-              "guard": "true"
               "to": "s016"
             },
             {
               "action": "l",
-              "guard": "true"
               "to": "s014"
             },
             {
               "action": "d",
-              "guard": "true"
               "to": "s025"
             }
           ]
@@ -286,12 +257,10 @@
           "transitions": [
             {
               "action": "l",
-              "guard": "true"
               "to": "s015"
             },
             {
               "action": "u",
-              "guard": "true"
               "to": "s06"
             }
           ]
@@ -304,17 +273,14 @@
           "transitions": [
             {
               "action": "r",
-              "guard": "true"
               "to": "s019"
             },
             {
               "action": "u",
-              "guard": "true"
               "to": "s08"
             },
             {
               "action": "d",
-              "guard": "true"
               "to": "s028"
             }
           ]
@@ -328,12 +294,10 @@
           "transitions": [
             {
               "action": "l",
-              "guard": "true"
               "to": "s018"
             },
             {
               "action": "d",
-              "guard": "true"
               "to": "s029"
             }
           ]
@@ -345,12 +309,10 @@
           "transitions": [
             {
               "action": "r",
-              "guard": "true"
               "to": "s021"
             },
             {
               "action": "u",
-              "guard": "true"
               "to": "s010"
             }
           ]
@@ -363,17 +325,14 @@
           "transitions": [
             {
               "action": "r",
-              "guard": "true"
               "to": "s022"
             },
             {
               "action": "l",
-              "guard": "true"
               "to": "s020"
             },
             {
               "action": "d",
-              "guard": "true"
               "to": "s031"
             }
           ]
@@ -386,12 +345,10 @@
           "transitions": [
             {
               "action": "l",
-              "guard": "true"
               "to": "s021"
             },
             {
               "action": "u",
-              "guard": "true"
               "to": "s012"
             }
           ]
@@ -404,12 +361,10 @@
           "transitions": [
             {
               "action": "r",
-              "guard": "true"
               "to": "s025"
             },
             {
               "action": "u",
-              "guard": "true"
               "to": "s014"
             }
           ]
@@ -423,17 +378,14 @@
           "transitions": [
             {
               "action": "l",
-              "guard": "true"
               "to": "s024"
             },
             {
               "action": "u",
-              "guard": "true"
               "to": "s015"
             },
             {
               "action": "d",
-              "guard": "true"
               "to": "s035"
             }
           ]
@@ -448,12 +400,10 @@
           "transitions": [
             {
               "action": "r",
-              "guard": "true"
               "to": "s028"
             },
             {
               "action": "d",
-              "guard": "true"
               "to": "s037"
             }
           ]
@@ -466,22 +416,18 @@
           "transitions": [
             {
               "action": "r",
-              "guard": "true"
               "to": "s029"
             },
             {
               "action": "l",
-              "guard": "true"
               "to": "s027"
             },
             {
               "action": "u",
-              "guard": "true"
               "to": "s018"
             },
             {
               "action": "d",
-              "guard": "true"
               "to": "s038"
             }
           ]
@@ -495,17 +441,14 @@
           "transitions": [
             {
               "action": "l",
-              "guard": "true"
               "to": "s028"
             },
             {
               "action": "u",
-              "guard": "true"
               "to": "s019"
             },
             {
               "action": "d",
-              "guard": "true"
               "to": "s039"
             }
           ]
@@ -519,12 +462,10 @@
           "transitions": [
             {
               "action": "u",
-              "guard": "true"
               "to": "s021"
             },
             {
               "action": "d",
-              "guard": "true"
               "to": "s041"
             }
           ]
@@ -539,17 +480,14 @@
           "transitions": [
             {
               "action": "r",
-              "guard": "true"
               "to": "s036"
             },
             {
               "action": "u",
-              "guard": "true"
               "to": "s025"
             },
             {
               "action": "d",
-              "guard": "true"
               "to": "s045"
             }
           ]
@@ -564,17 +502,14 @@
           "transitions": [
             {
               "action": "r",
-              "guard": "true"
               "to": "s037"
             },
             {
               "action": "l",
-              "guard": "true"
               "to": "s035"
             },
             {
               "action": "d",
-              "guard": "true"
               "to": "s046"
             }
           ]
@@ -590,22 +525,18 @@
           "transitions": [
             {
               "action": "r",
-              "guard": "true"
               "to": "s038"
             },
             {
               "action": "l",
-              "guard": "true"
               "to": "s036"
             },
             {
               "action": "u",
-              "guard": "true"
               "to": "s027"
             },
             {
               "action": "d",
-              "guard": "true"
               "to": "s047"
             }
           ]
@@ -619,22 +550,18 @@
           "transitions": [
             {
               "action": "r",
-              "guard": "true"
               "to": "s039"
             },
             {
               "action": "l",
-              "guard": "true"
               "to": "s037"
             },
             {
               "action": "u",
-              "guard": "true"
               "to": "s028"
             },
             {
               "action": "d",
-              "guard": "true"
               "to": "s048"
             }
           ]
@@ -649,17 +576,14 @@
           "transitions": [
             {
               "action": "l",
-              "guard": "true"
               "to": "s038"
             },
             {
               "action": "u",
-              "guard": "true"
               "to": "s029"
             },
             {
               "action": "d",
-              "guard": "true"
               "to": "s049"
             }
           ]
@@ -672,17 +596,14 @@
           "transitions": [
             {
               "action": "r",
-              "guard": "true"
               "to": "s042"
             },
             {
               "action": "u",
-              "guard": "true"
               "to": "s031"
             },
             {
               "action": "d",
-              "guard": "true"
               "to": "s051"
             }
           ]
@@ -695,12 +616,10 @@
           "transitions": [
             {
               "action": "l",
-              "guard": "true"
               "to": "s041"
             },
             {
               "action": "d",
-              "guard": "true"
               "to": "s052"
             }
           ]
@@ -713,7 +632,6 @@
           "transitions": [
             {
               "action": "r",
-              "guard": "true"
               "to": "s045"
             }
           ]
@@ -727,17 +645,14 @@
           "transitions": [
             {
               "action": "r",
-              "guard": "true"
               "to": "s046"
             },
             {
               "action": "l",
-              "guard": "true"
               "to": "s044"
             },
             {
               "action": "u",
-              "guard": "true"
               "to": "s035"
             }
           ]
@@ -751,17 +666,14 @@
           "transitions": [
             {
               "action": "r",
-              "guard": "true"
               "to": "s047"
             },
             {
               "action": "l",
-              "guard": "true"
               "to": "s045"
             },
             {
               "action": "u",
-              "guard": "true"
               "to": "s036"
             }
           ]
@@ -776,17 +688,14 @@
           "transitions": [
             {
               "action": "r",
-              "guard": "true"
               "to": "s048"
             },
             {
               "action": "l",
-              "guard": "true"
               "to": "s046"
             },
             {
               "action": "u",
-              "guard": "true"
               "to": "s037"
             }
           ]
@@ -799,22 +708,18 @@
           "transitions": [
             {
               "action": "r",
-              "guard": "true"
               "to": "s049"
             },
             {
               "action": "l",
-              "guard": "true"
               "to": "s047"
             },
             {
               "action": "u",
-              "guard": "true"
               "to": "s038"
             },
             {
               "action": "d",
-              "guard": "true"
               "to": "s058"
             }
           ]
@@ -828,12 +733,10 @@
           "transitions": [
             {
               "action": "l",
-              "guard": "true"
               "to": "s048"
             },
             {
               "action": "u",
-              "guard": "true"
               "to": "s039"
             }
           ]
@@ -847,17 +750,14 @@
           "transitions": [
             {
               "action": "r",
-              "guard": "true"
               "to": "s052"
             },
             {
               "action": "u",
-              "guard": "true"
               "to": "s041"
             },
             {
               "action": "d",
-              "guard": "true"
               "to": "s061"
             }
           ]
@@ -871,17 +771,14 @@
           "transitions": [
             {
               "action": "r",
-              "guard": "true"
               "to": "s053"
             },
             {
               "action": "l",
-              "guard": "true"
               "to": "s051"
             },
             {
               "action": "u",
-              "guard": "true"
               "to": "s042"
             }
           ]
@@ -896,12 +793,10 @@
           "transitions": [
             {
               "action": "l",
-              "guard": "true"
               "to": "s052"
             },
             {
               "action": "d",
-              "guard": "true"
               "to": "s063"
             }
           ]
@@ -915,7 +810,6 @@
           "transitions": [
             {
               "action": "u",
-              "guard": "true"
               "to": "s048"
             }
           ]
@@ -928,12 +822,10 @@
           "transitions": [
             {
               "action": "r",
-              "guard": "true"
               "to": "s061"
             },
             {
               "action": "d",
-              "guard": "true"
               "to": "s070"
             }
           ]
@@ -947,12 +839,10 @@
           "transitions": [
             {
               "action": "l",
-              "guard": "true"
               "to": "s060"
             },
             {
               "action": "u",
-              "guard": "true"
               "to": "s051"
             }
           ]
@@ -967,17 +857,14 @@
           "transitions": [
             {
               "action": "r",
-              "guard": "true"
               "to": "s064"
             },
             {
               "action": "u",
-              "guard": "true"
               "to": "s053"
             },
             {
               "action": "d",
-              "guard": "true"
               "to": "s073"
             }
           ]
@@ -991,12 +878,10 @@
           "transitions": [
             {
               "action": "r",
-              "guard": "true"
               "to": "s065"
             },
             {
               "action": "l",
-              "guard": "true"
               "to": "s063"
             }
           ]
@@ -1011,12 +896,10 @@
           "transitions": [
             {
               "action": "r",
-              "guard": "true"
               "to": "s066"
             },
             {
               "action": "l",
-              "guard": "true"
               "to": "s064"
             }
           ]
@@ -1031,12 +914,10 @@
           "transitions": [
             {
               "action": "r",
-              "guard": "true"
               "to": "s067"
             },
             {
               "action": "l",
-              "guard": "true"
               "to": "s065"
             }
           ]
@@ -1052,7 +933,6 @@
           "transitions": [
             {
               "action": "l",
-              "guard": "true"
               "to": "s066"
             }
           ]
@@ -1067,7 +947,6 @@
           "transitions": [
             {
               "action": "d",
-              "guard": "true"
               "to": "s079"
             }
           ]
@@ -1081,7 +960,6 @@
           "transitions": [
             {
               "action": "u",
-              "guard": "true"
               "to": "s060"
             }
           ]
@@ -1096,7 +974,6 @@
           "transitions": [
             {
               "action": "r",
-              "guard": "true"
               "to": "s073"
             }
           ]
@@ -1112,17 +989,14 @@
           "transitions": [
             {
               "action": "l",
-              "guard": "true"
               "to": "s072"
             },
             {
               "action": "u",
-              "guard": "true"
               "to": "s063"
             },
             {
               "action": "d",
-              "guard": "true"
               "to": "s083"
             }
           ]
@@ -1138,7 +1012,6 @@
           "transitions": [
             {
               "action": "u",
-              "guard": "true"
               "to": "s069"
             }
           ]
@@ -1152,17 +1025,14 @@
           "transitions": [
             {
               "action": "r",
-              "guard": "true"
               "to": "s084"
             },
             {
               "action": "u",
-              "guard": "true"
               "to": "s073"
             },
             {
               "action": "d",
-              "guard": "true"
               "to": "s093"
             }
           ]
@@ -1175,12 +1045,10 @@
           "transitions": [
             {
               "action": "r",
-              "guard": "true"
               "to": "s085"
             },
             {
               "action": "l",
-              "guard": "true"
               "to": "s083"
             }
           ]
@@ -1194,17 +1062,14 @@
           "transitions": [
             {
               "action": "r",
-              "guard": "true"
               "to": "s086"
             },
             {
               "action": "l",
-              "guard": "true"
               "to": "s084"
             },
             {
               "action": "d",
-              "guard": "true"
               "to": "s095"
             }
           ]
@@ -1218,17 +1083,14 @@
           "transitions": [
             {
               "action": "r",
-              "guard": "true"
               "to": "s087"
             },
             {
               "action": "l",
-              "guard": "true"
               "to": "s085"
             },
             {
               "action": "d",
-              "guard": "true"
               "to": "s096"
             }
           ]
@@ -1243,12 +1105,10 @@
           "transitions": [
             {
               "action": "r",
-              "guard": "true"
               "to": "s088"
             },
             {
               "action": "l",
-              "guard": "true"
               "to": "s086"
             }
           ]
@@ -1261,7 +1121,6 @@
           "transitions": [
             {
               "action": "l",
-              "guard": "true"
               "to": "s087"
             }
           ]
@@ -1282,7 +1141,6 @@
           "transitions": [
             {
               "action": "r",
-              "guard": "true"
               "to": "s093"
             }
           ]
@@ -1297,12 +1155,10 @@
           "transitions": [
             {
               "action": "l",
-              "guard": "true"
               "to": "s092"
             },
             {
               "action": "u",
-              "guard": "true"
               "to": "s083"
             }
           ]
@@ -1317,12 +1173,10 @@
           "transitions": [
             {
               "action": "r",
-              "guard": "true"
               "to": "s096"
             },
             {
               "action": "u",
-              "guard": "true"
               "to": "s085"
             }
           ]
@@ -1337,24 +1191,13 @@
           "transitions": [
             {
               "action": "l",
-              "guard": "true"
               "to": "s095"
             },
             {
               "action": "u",
-              "guard": "true"
               "to": "s086"
             }
           ]
-        },
-        "s099": {
-          "labels": [
-            "x03",
-            "x00",
-            "y03",
-            "y00"
-          ],
-          "transitions": []
         }
       }
     },
@@ -1384,12 +1227,10 @@
           "transitions": [
             {
               "action": "r",
-              "guard": "true"
               "to": "s11"
             },
             {
               "action": "d",
-              "guard": "true"
               "to": "s110"
             }
           ]
@@ -1401,12 +1242,10 @@
           "transitions": [
             {
               "action": "r",
-              "guard": "true"
               "to": "s12"
             },
             {
               "action": "l",
-              "guard": "true"
               "to": "s10"
             }
           ]
@@ -1418,17 +1257,14 @@
           "transitions": [
             {
               "action": "r",
-              "guard": "true"
               "to": "s13"
             },
             {
               "action": "l",
-              "guard": "true"
               "to": "s11"
             },
             {
               "action": "d",
-              "guard": "true"
               "to": "s112"
             }
           ]
@@ -1441,17 +1277,14 @@
           "transitions": [
             {
               "action": "r",
-              "guard": "true"
               "to": "s14"
             },
             {
               "action": "l",
-              "guard": "true"
               "to": "s12"
             },
             {
               "action": "d",
-              "guard": "true"
               "to": "s113"
             }
           ]
@@ -1463,12 +1296,10 @@
           "transitions": [
             {
               "action": "l",
-              "guard": "true"
               "to": "s13"
             },
             {
               "action": "d",
-              "guard": "true"
               "to": "s114"
             }
           ]
@@ -1481,7 +1312,6 @@
           "transitions": [
             {
               "action": "d",
-              "guard": "true"
               "to": "s116"
             }
           ]
@@ -1493,7 +1323,6 @@
           "transitions": [
             {
               "action": "d",
-              "guard": "true"
               "to": "s118"
             }
           ]
@@ -1505,12 +1334,10 @@
           "transitions": [
             {
               "action": "u",
-              "guard": "true"
               "to": "s10"
             },
             {
               "action": "d",
-              "guard": "true"
               "to": "s120"
             }
           ]
@@ -1523,17 +1350,14 @@
           "transitions": [
             {
               "action": "r",
-              "guard": "true"
               "to": "s113"
             },
             {
               "action": "u",
-              "guard": "true"
               "to": "s12"
             },
             {
               "action": "d",
-              "guard": "true"
               "to": "s122"
             }
           ]
@@ -1547,17 +1371,14 @@
           "transitions": [
             {
               "action": "r",
-              "guard": "true"
               "to": "s114"
             },
             {
               "action": "l",
-              "guard": "true"
               "to": "s112"
             },
             {
               "action": "u",
-              "guard": "true"
               "to": "s13"
             }
           ]
@@ -1570,22 +1391,18 @@
           "transitions": [
             {
               "action": "r",
-              "guard": "true"
               "to": "s115"
             },
             {
               "action": "l",
-              "guard": "true"
               "to": "s113"
             },
             {
               "action": "u",
-              "guard": "true"
               "to": "s14"
             },
             {
               "action": "d",
-              "guard": "true"
               "to": "s124"
             }
           ]
@@ -1599,17 +1416,14 @@
           "transitions": [
             {
               "action": "r",
-              "guard": "true"
               "to": "s116"
             },
             {
               "action": "l",
-              "guard": "true"
               "to": "s114"
             },
             {
               "action": "d",
-              "guard": "true"
               "to": "s125"
             }
           ]
@@ -1623,12 +1437,10 @@
           "transitions": [
             {
               "action": "l",
-              "guard": "true"
               "to": "s115"
             },
             {
               "action": "u",
-              "guard": "true"
               "to": "s16"
             }
           ]
@@ -1641,17 +1453,14 @@
           "transitions": [
             {
               "action": "r",
-              "guard": "true"
               "to": "s119"
             },
             {
               "action": "u",
-              "guard": "true"
               "to": "s18"
             },
             {
               "action": "d",
-              "guard": "true"
               "to": "s128"
             }
           ]
@@ -1665,12 +1474,10 @@
           "transitions": [
             {
               "action": "l",
-              "guard": "true"
               "to": "s118"
             },
             {
               "action": "d",
-              "guard": "true"
               "to": "s129"
             }
           ]
@@ -1682,12 +1489,10 @@
           "transitions": [
             {
               "action": "r",
-              "guard": "true"
               "to": "s121"
             },
             {
               "action": "u",
-              "guard": "true"
               "to": "s110"
             }
           ]
@@ -1700,17 +1505,14 @@
           "transitions": [
             {
               "action": "r",
-              "guard": "true"
               "to": "s122"
             },
             {
               "action": "l",
-              "guard": "true"
               "to": "s120"
             },
             {
               "action": "d",
-              "guard": "true"
               "to": "s131"
             }
           ]
@@ -1723,12 +1525,10 @@
           "transitions": [
             {
               "action": "l",
-              "guard": "true"
               "to": "s121"
             },
             {
               "action": "u",
-              "guard": "true"
               "to": "s112"
             }
           ]
@@ -1741,12 +1541,10 @@
           "transitions": [
             {
               "action": "r",
-              "guard": "true"
               "to": "s125"
             },
             {
               "action": "u",
-              "guard": "true"
               "to": "s114"
             }
           ]
@@ -1760,17 +1558,14 @@
           "transitions": [
             {
               "action": "l",
-              "guard": "true"
               "to": "s124"
             },
             {
               "action": "u",
-              "guard": "true"
               "to": "s115"
             },
             {
               "action": "d",
-              "guard": "true"
               "to": "s135"
             }
           ]
@@ -1785,12 +1580,10 @@
           "transitions": [
             {
               "action": "r",
-              "guard": "true"
               "to": "s128"
             },
             {
               "action": "d",
-              "guard": "true"
               "to": "s137"
             }
           ]
@@ -1803,22 +1596,18 @@
           "transitions": [
             {
               "action": "r",
-              "guard": "true"
               "to": "s129"
             },
             {
               "action": "l",
-              "guard": "true"
               "to": "s127"
             },
             {
               "action": "u",
-              "guard": "true"
               "to": "s118"
             },
             {
               "action": "d",
-              "guard": "true"
               "to": "s138"
             }
           ]
@@ -1832,17 +1621,14 @@
           "transitions": [
             {
               "action": "l",
-              "guard": "true"
               "to": "s128"
             },
             {
               "action": "u",
-              "guard": "true"
               "to": "s119"
             },
             {
               "action": "d",
-              "guard": "true"
               "to": "s139"
             }
           ]
@@ -1856,12 +1642,10 @@
           "transitions": [
             {
               "action": "u",
-              "guard": "true"
               "to": "s121"
             },
             {
               "action": "d",
-              "guard": "true"
               "to": "s141"
             }
           ]
@@ -1876,17 +1660,14 @@
           "transitions": [
             {
               "action": "r",
-              "guard": "true"
               "to": "s136"
             },
             {
               "action": "u",
-              "guard": "true"
               "to": "s125"
             },
             {
               "action": "d",
-              "guard": "true"
               "to": "s145"
             }
           ]
@@ -1901,17 +1682,14 @@
           "transitions": [
             {
               "action": "r",
-              "guard": "true"
               "to": "s137"
             },
             {
               "action": "l",
-              "guard": "true"
               "to": "s135"
             },
             {
               "action": "d",
-              "guard": "true"
               "to": "s146"
             }
           ]
@@ -1927,22 +1705,18 @@
           "transitions": [
             {
               "action": "r",
-              "guard": "true"
               "to": "s138"
             },
             {
               "action": "l",
-              "guard": "true"
               "to": "s136"
             },
             {
               "action": "u",
-              "guard": "true"
               "to": "s127"
             },
             {
               "action": "d",
-              "guard": "true"
               "to": "s147"
             }
           ]
@@ -1956,22 +1730,18 @@
           "transitions": [
             {
               "action": "r",
-              "guard": "true"
               "to": "s139"
             },
             {
               "action": "l",
-              "guard": "true"
               "to": "s137"
             },
             {
               "action": "u",
-              "guard": "true"
               "to": "s128"
             },
             {
               "action": "d",
-              "guard": "true"
               "to": "s148"
             }
           ]
@@ -1986,17 +1756,14 @@
           "transitions": [
             {
               "action": "l",
-              "guard": "true"
               "to": "s138"
             },
             {
               "action": "u",
-              "guard": "true"
               "to": "s129"
             },
             {
               "action": "d",
-              "guard": "true"
               "to": "s149"
             }
           ]
@@ -2009,17 +1776,14 @@
           "transitions": [
             {
               "action": "r",
-              "guard": "true"
               "to": "s142"
             },
             {
               "action": "u",
-              "guard": "true"
               "to": "s131"
             },
             {
               "action": "d",
-              "guard": "true"
               "to": "s151"
             }
           ]
@@ -2032,12 +1796,10 @@
           "transitions": [
             {
               "action": "l",
-              "guard": "true"
               "to": "s141"
             },
             {
               "action": "d",
-              "guard": "true"
               "to": "s152"
             }
           ]
@@ -2050,7 +1812,6 @@
           "transitions": [
             {
               "action": "r",
-              "guard": "true"
               "to": "s145"
             }
           ]
@@ -2064,17 +1825,14 @@
           "transitions": [
             {
               "action": "r",
-              "guard": "true"
               "to": "s146"
             },
             {
               "action": "l",
-              "guard": "true"
               "to": "s144"
             },
             {
               "action": "u",
-              "guard": "true"
               "to": "s135"
             }
           ]
@@ -2088,17 +1846,14 @@
           "transitions": [
             {
               "action": "r",
-              "guard": "true"
               "to": "s147"
             },
             {
               "action": "l",
-              "guard": "true"
               "to": "s145"
             },
             {
               "action": "u",
-              "guard": "true"
               "to": "s136"
             }
           ]
@@ -2113,17 +1868,14 @@
           "transitions": [
             {
               "action": "r",
-              "guard": "true"
               "to": "s148"
             },
             {
               "action": "l",
-              "guard": "true"
               "to": "s146"
             },
             {
               "action": "u",
-              "guard": "true"
               "to": "s137"
             }
           ]
@@ -2136,22 +1888,18 @@
           "transitions": [
             {
               "action": "r",
-              "guard": "true"
               "to": "s149"
             },
             {
               "action": "l",
-              "guard": "true"
               "to": "s147"
             },
             {
               "action": "u",
-              "guard": "true"
               "to": "s138"
             },
             {
               "action": "d",
-              "guard": "true"
               "to": "s158"
             }
           ]
@@ -2165,12 +1913,10 @@
           "transitions": [
             {
               "action": "l",
-              "guard": "true"
               "to": "s148"
             },
             {
               "action": "u",
-              "guard": "true"
               "to": "s139"
             }
           ]
@@ -2184,17 +1930,14 @@
           "transitions": [
             {
               "action": "r",
-              "guard": "true"
               "to": "s152"
             },
             {
               "action": "u",
-              "guard": "true"
               "to": "s141"
             },
             {
               "action": "d",
-              "guard": "true"
               "to": "s161"
             }
           ]
@@ -2208,17 +1951,14 @@
           "transitions": [
             {
               "action": "r",
-              "guard": "true"
               "to": "s153"
             },
             {
               "action": "l",
-              "guard": "true"
               "to": "s151"
             },
             {
               "action": "u",
-              "guard": "true"
               "to": "s142"
             }
           ]
@@ -2233,12 +1973,10 @@
           "transitions": [
             {
               "action": "l",
-              "guard": "true"
               "to": "s152"
             },
             {
               "action": "d",
-              "guard": "true"
               "to": "s163"
             }
           ]
@@ -2252,7 +1990,6 @@
           "transitions": [
             {
               "action": "u",
-              "guard": "true"
               "to": "s148"
             }
           ]
@@ -2265,12 +2002,10 @@
           "transitions": [
             {
               "action": "r",
-              "guard": "true"
               "to": "s161"
             },
             {
               "action": "d",
-              "guard": "true"
               "to": "s170"
             }
           ]
@@ -2284,12 +2019,10 @@
           "transitions": [
             {
               "action": "l",
-              "guard": "true"
               "to": "s160"
             },
             {
               "action": "u",
-              "guard": "true"
               "to": "s151"
             }
           ]
@@ -2304,17 +2037,14 @@
           "transitions": [
             {
               "action": "r",
-              "guard": "true"
               "to": "s164"
             },
             {
               "action": "u",
-              "guard": "true"
               "to": "s153"
             },
             {
               "action": "d",
-              "guard": "true"
               "to": "s173"
             }
           ]
@@ -2328,12 +2058,10 @@
           "transitions": [
             {
               "action": "r",
-              "guard": "true"
               "to": "s165"
             },
             {
               "action": "l",
-              "guard": "true"
               "to": "s163"
             }
           ]
@@ -2348,12 +2076,10 @@
           "transitions": [
             {
               "action": "r",
-              "guard": "true"
               "to": "s166"
             },
             {
               "action": "l",
-              "guard": "true"
               "to": "s164"
             }
           ]
@@ -2368,12 +2094,10 @@
           "transitions": [
             {
               "action": "r",
-              "guard": "true"
               "to": "s167"
             },
             {
               "action": "l",
-              "guard": "true"
               "to": "s165"
             }
           ]
@@ -2389,7 +2113,6 @@
           "transitions": [
             {
               "action": "l",
-              "guard": "true"
               "to": "s166"
             }
           ]
@@ -2404,7 +2127,6 @@
           "transitions": [
             {
               "action": "d",
-              "guard": "true"
               "to": "s179"
             }
           ]
@@ -2418,7 +2140,6 @@
           "transitions": [
             {
               "action": "u",
-              "guard": "true"
               "to": "s160"
             }
           ]
@@ -2433,7 +2154,6 @@
           "transitions": [
             {
               "action": "r",
-              "guard": "true"
               "to": "s173"
             }
           ]
@@ -2449,17 +2169,14 @@
           "transitions": [
             {
               "action": "l",
-              "guard": "true"
               "to": "s172"
             },
             {
               "action": "u",
-              "guard": "true"
               "to": "s163"
             },
             {
               "action": "d",
-              "guard": "true"
               "to": "s183"
             }
           ]
@@ -2475,7 +2192,6 @@
           "transitions": [
             {
               "action": "u",
-              "guard": "true"
               "to": "s169"
             }
           ]
@@ -2489,17 +2205,14 @@
           "transitions": [
             {
               "action": "r",
-              "guard": "true"
               "to": "s184"
             },
             {
               "action": "u",
-              "guard": "true"
               "to": "s173"
             },
             {
               "action": "d",
-              "guard": "true"
               "to": "s193"
             }
           ]
@@ -2512,12 +2225,10 @@
           "transitions": [
             {
               "action": "r",
-              "guard": "true"
               "to": "s185"
             },
             {
               "action": "l",
-              "guard": "true"
               "to": "s183"
             }
           ]
@@ -2531,17 +2242,14 @@
           "transitions": [
             {
               "action": "r",
-              "guard": "true"
               "to": "s186"
             },
             {
               "action": "l",
-              "guard": "true"
               "to": "s184"
             },
             {
               "action": "d",
-              "guard": "true"
               "to": "s195"
             }
           ]
@@ -2555,17 +2263,14 @@
           "transitions": [
             {
               "action": "r",
-              "guard": "true"
               "to": "s187"
             },
             {
               "action": "l",
-              "guard": "true"
               "to": "s185"
             },
             {
               "action": "d",
-              "guard": "true"
               "to": "s196"
             }
           ]
@@ -2580,12 +2285,10 @@
           "transitions": [
             {
               "action": "r",
-              "guard": "true"
               "to": "s188"
             },
             {
               "action": "l",
-              "guard": "true"
               "to": "s186"
             }
           ]
@@ -2598,17 +2301,9 @@
           "transitions": [
             {
               "action": "l",
-              "guard": "true"
               "to": "s187"
             }
           ]
-        },
-        "s190": {
-          "labels": [
-            "x13",
-            "x10"
-          ],
-          "transitions": []
         },
         "s192": {
           "labels": [
@@ -2619,7 +2314,6 @@
           "transitions": [
             {
               "action": "r",
-              "guard": "true"
               "to": "s193"
             }
           ]
@@ -2634,12 +2328,10 @@
           "transitions": [
             {
               "action": "l",
-              "guard": "true"
               "to": "s192"
             },
             {
               "action": "u",
-              "guard": "true"
               "to": "s183"
             }
           ]
@@ -2654,12 +2346,10 @@
           "transitions": [
             {
               "action": "r",
-              "guard": "true"
               "to": "s196"
             },
             {
               "action": "u",
-              "guard": "true"
               "to": "s185"
             }
           ]
@@ -2674,12 +2364,10 @@
           "transitions": [
             {
               "action": "l",
-              "guard": "true"
               "to": "s195"
             },
             {
               "action": "u",
-              "guard": "true"
               "to": "s186"
             }
           ]
@@ -2691,7 +2379,12 @@
             "y13",
             "y10"
           ],
-          "transitions": []
+          "transitions": [
+            {
+              "action": "*",
+              "to": "s199"
+            }
+          ]
         }
       }
     }

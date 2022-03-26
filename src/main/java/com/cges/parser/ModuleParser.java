@@ -22,7 +22,9 @@ import java.util.stream.Collectors;
 import owl.bdd.BddSet;
 import owl.bdd.BddSetFactory;
 import owl.bdd.jbdd.JBddSupplier;
+import owl.ltl.BooleanConstant;
 import owl.ltl.Formula;
+import owl.ltl.LabelledFormula;
 import owl.ltl.parser.LtlParser;
 
 public final class ModuleParser {
@@ -37,12 +39,16 @@ public final class ModuleParser {
     BddSetFactory factory = JBddSupplier.JBDD_SUPPLIER_INSTANCE.getBddSetFactory();
     FormulaParser visitor = new FormulaParser(factory, propositions);
 
+    LabelledFormula goal = json.has("goal")
+        ? LtlParser.parse(json.getAsJsonPrimitive("goal").getAsString(), propositions)
+        : LabelledFormula.of(BooleanConstant.TRUE, propositions);
+
     List<Module<State>> modules = new ArrayList<>();
     for (var agentEntry : requireNonNull(json.getAsJsonObject("modules"), "Missing modules definition").entrySet()) {
       String moduleName = agentEntry.getKey();
       JsonObject agentData = agentEntry.getValue().getAsJsonObject();
 
-      Formula goal = LtlParser.parse(requireNonNull(agentData.getAsJsonPrimitive("goal"),
+      Formula moduleGoal = LtlParser.parse(requireNonNull(agentData.getAsJsonPrimitive("goal"),
           () -> "Missing goal for module %s".formatted(moduleName)).getAsString(), propositions).formula();
       Agent.Payoff payoff = ParseUtil.parsePayoff(requireNonNull(agentData.getAsJsonPrimitive("payoff"),
           () -> "Missing payoff for module %s".formatted(moduleName)));
@@ -55,7 +61,7 @@ public final class ModuleParser {
           .map(JsonElement::getAsString)
           .map(Action::new)
           .collect(Collectors.toUnmodifiableSet());
-      Agent agent = new Agent(moduleName, goal, payoff, actions);
+      Agent agent = new Agent(moduleName, moduleGoal, payoff, actions);
 
       State initialState = new State(agentData.getAsJsonPrimitive("initial").getAsString());
       Map<State, BitSet> stateLabels = new HashMap<>();
@@ -68,7 +74,7 @@ public final class ModuleParser {
         Set<String> labels = stream(stateData.getAsJsonArray("labels"))
             .map(JsonElement::getAsString)
             .collect(Collectors.toSet());
-        checkArgument(moduleLabels.containsAll(labels), "State %s of agent %s labeled by %s",
+        checkArgument(moduleLabels.containsAll(labels), "State %s of module %s labeled by %s",
             stateName, moduleName, Sets.difference(labels, moduleLabels));
         BitSet labelSet = new BitSet();
         labels.stream().map(propositionIndices::get).forEach(labelSet::set);
@@ -85,6 +91,8 @@ public final class ModuleParser {
               ? ParseUtil.parse(transition.getAsJsonPrimitive("guard").getAsString(), visitor)
               : factory.of(true);
           String actionName = transition.getAsJsonPrimitive("action").getAsString();
+          checkArgument(actionName.equals("*") || agent.hasAction(actionName),
+              "State %s of module %s has uses unknown action %s", stateName, moduleName, actionName);
           (actionName.equals("*") ? agent.actions() : List.of(agent.action(actionName))).forEach(action ->
               stateTransitions.merge(new ModuleTransition<>(action, target), valuation, BddSet::union)
           );
@@ -112,6 +120,6 @@ public final class ModuleParser {
       }
       modules.add(new Module<>(agent, initialState, stateLabels, transitions));
     }
-    return new ModuleGame<>(gameName, propositions, modules);
+    return new ModuleGame<>(gameName, propositions, modules, goal);
   }
 }

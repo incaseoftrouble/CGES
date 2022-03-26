@@ -16,6 +16,8 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import owl.ltl.BooleanConstant;
+import owl.ltl.LabelledFormula;
 
 final class ExplicitGame<S> implements ConcurrentGame<S> {
   private final String name;
@@ -82,6 +84,11 @@ final class ExplicitGame<S> implements ConcurrentGame<S> {
   @Override
   public Set<String> labels(S state) {
     return labels.apply(state);
+  }
+
+  @Override
+  public LabelledFormula goal() {
+    return LabelledFormula.of(BooleanConstant.TRUE, atomicPropositions);
   }
 
   public static final class MapMove implements Move, DotFormatted {

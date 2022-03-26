@@ -21,7 +21,7 @@ import owl.automaton.algorithm.SccDecomposition;
 public final class RunGraphSccSolver {
   private RunGraphSccSolver() {}
 
-  public static <S> List<RunState<S>> searchShort(RunGraph<S> graph) {
+  public static <S> List<RunState<S>> search(RunGraph<S> graph) {
     List<Set<RunState<S>>> decomposition = SccDecomposition.of(graph.initialStates(), graph::successors).sccsWithoutTransient();
 
     Map<RunState<S>, List<RunState<S>>> shortestAcceptingCycle = new HashMap<>();

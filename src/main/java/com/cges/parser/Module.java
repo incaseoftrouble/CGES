@@ -3,6 +3,7 @@ package com.cges.parser;
 import com.cges.model.Action;
 import com.cges.model.Agent;
 import java.util.BitSet;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
@@ -51,6 +52,10 @@ public class Module<S> {
 
   public Set<S> successors(S state, Action action) {
     return transitions.get(state).get(action).keySet();
+  }
+
+  public Map<S, BddSet> successorMap(S state, Action action) {
+    return Collections.unmodifiableMap(transitions.get(state).get(action));
   }
 
   public Map<Action, S> successors(S state, BitSet valuation) {

@@ -58,7 +58,7 @@ public final class RunGraphSolver {
       });
     }
 
-    var path = RunGraphSccSolver.searchShort(graph);
+    var path = RunGraphBmcSolver.search(graph);
     if (path.isEmpty()) {
       return Optional.empty();
     }

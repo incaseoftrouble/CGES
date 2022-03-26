@@ -10,8 +10,11 @@ import com.cges.model.Agent;
 import com.cges.model.ConcurrentGame;
 import com.cges.model.EquilibriumStrategy;
 import com.cges.model.PayoffAssignment;
+import com.cges.output.DotWriter;
 import com.cges.output.Formatter;
 import com.cges.parser.GameParser;
+import com.cges.parser.Module;
+import com.cges.parser.ModuleGame;
 import com.google.common.base.Stopwatch;
 import com.google.common.collect.Sets;
 import com.google.gson.JsonArray;
@@ -49,7 +52,13 @@ public final class Main {
     } else {
       try (BufferedReader reader = Files.newBufferedReader(Path.of(args[0]))) {
         JsonObject jsonObject = JsonParser.parseReader(reader).getAsJsonObject();
-        game = GameParser.parseExplicit(jsonObject);
+        game = GameParser.parse(jsonObject);
+        if (game instanceof ModuleGame<?> module) {
+          for (Module<?> m : module.modules()) {
+            DotWriter.writeModule(m, module, System.out);
+            System.out.println();
+          }
+        }
         JsonArray validation = jsonObject.getAsJsonArray("expected");
         if (validation == null) {
           validationSet = null;

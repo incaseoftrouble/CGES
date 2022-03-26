@@ -57,6 +57,10 @@ public final class Agent {
     return Objects.requireNonNull(actions.get(name));
   }
 
+  public boolean hasAction(String name) {
+    return actions.containsKey(name);
+  }
+
   public Payoff payoff() {
     return payoff;
   }

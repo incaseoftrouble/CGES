@@ -8,6 +8,7 @@ import java.util.NoSuchElementException;
 import java.util.Set;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
+import owl.ltl.LabelledFormula;
 
 public interface ConcurrentGame<S> {
   String name();
@@ -34,6 +35,8 @@ public interface ConcurrentGame<S> {
   S initialState();
 
   Set<String> labels(S state);
+
+  LabelledFormula goal();
 
   Set<S> states();
 

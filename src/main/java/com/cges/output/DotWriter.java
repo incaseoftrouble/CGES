@@ -4,12 +4,15 @@ import com.cges.graph.HistoryGame;
 import com.cges.graph.HistoryGame.HistoryState;
 import com.cges.graph.RunGraph;
 import com.cges.graph.SuspectGame;
+import com.cges.model.Action;
 import com.cges.model.Agent;
 import com.cges.model.ConcurrentGame;
 import com.cges.model.EquilibriumStrategy;
 import com.cges.model.Move;
 import com.cges.parity.ParityGame;
 import com.cges.parity.Player;
+import com.cges.parser.Module;
+import com.cges.parser.ModuleGame;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.SetMultimap;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
@@ -17,7 +20,9 @@ import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import java.io.PrintStream;
 import java.util.ArrayDeque;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Queue;
 import java.util.Set;
 import java.util.function.Function;
@@ -25,9 +30,43 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.annotation.Nullable;
+import owl.bdd.BddSet;
 
 public final class DotWriter {
   private DotWriter() {}
+
+  public static <S> void writeModule(Module<S> module, ModuleGame<?> game, PrintStream writer) {
+    Object2IntMap<S> ids = new Object2IntOpenHashMap<>();
+    module.states().forEach(s -> ids.put(s, ids.size()));
+
+    writer.append("digraph {\n");
+    for (Object2IntMap.Entry<S> entry : ids.object2IntEntrySet()) {
+      writer.append("MS_%d [label=\"%s\"]\n".formatted(
+          entry.getIntValue(),
+          DotFormatted.toString(entry.getKey())
+      ));
+    }
+
+    for (var entry : ids.object2IntEntrySet()) {
+      S state = entry.getKey();
+      Map<S, Map<Action, BddSet>> successorByAction = new HashMap<>();
+      for (Action action : module.actions(state)) {
+        for (Map.Entry<S, BddSet> transition : module.successorMap(state, action).entrySet()) {
+          successorByAction.computeIfAbsent(transition.getKey(), k -> new HashMap<>()).merge(action, transition.getValue(), BddSet::union);
+        }
+      }
+      for (var moveEntry : successorByAction.entrySet()) {
+        String label = moveEntry.getValue().entrySet().stream()
+            .map(e -> e.getValue().isUniverse()
+                ? e.getKey().name()
+                : "%s[%s]".formatted(e.getKey().name(), e.getValue().toExpression().map(game.atomicPropositions()::get)))
+            .collect(Collectors.joining(", "));
+
+        writer.append("MS_%d -> MS_%d [label=\"%s\"]\n".formatted(entry.getIntValue(), ids.getInt(moveEntry.getKey()), label));
+      }
+    }
+    writer.append("}");
+  }
 
   public static <S> void writeHistoryGame(HistoryGame<S> game, PrintStream writer,
       @Nullable Predicate<HistoryState<S>> winning) {
@@ -66,7 +105,6 @@ public final class DotWriter {
     }
     writer.append("}");
   }
-
 
   public static <S> void writeSuspectGame(SuspectGame<S> game, SuspectGame.EveState<S> initial,
       PrintStream writer, @Nullable Predicate<SuspectGame.EveState<S>> winning) {

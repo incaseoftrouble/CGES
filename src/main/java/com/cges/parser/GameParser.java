@@ -89,7 +89,7 @@ public final class GameParser {
     return new ExplicitGame<>("empty", agents, propositions, initialState, states, transitions, state -> Set.of(state.name()));
   }
 
-  public static ConcurrentGame<?> parseExplicit(JsonObject json) {
+  public static ConcurrentGame<?> parse(JsonObject json) {
     String type = json.getAsJsonPrimitive("type").getAsString();
     return switch (type) {
       case "module" -> ModuleParser.parse(json);

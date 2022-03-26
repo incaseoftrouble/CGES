@@ -16,6 +16,7 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
+import java.util.stream.Stream;
 import owl.automaton.Automaton;
 import owl.automaton.acceptance.BuchiAcceptance;
 import owl.automaton.edge.Edge;
@@ -46,7 +47,8 @@ public final class RunGraph<S> {
     Set<Agent> agents = concurrentGame.agents();
 
     LabelledFormula eveGoal = SimplifierRepository.SYNTACTIC_FIXPOINT.apply(LabelledFormula.of(
-        Conjunction.of(agents.stream().map(a -> payoffAssignment.isLoser(a) ? a.goal().not() : a.goal())),
+        Conjunction.of(Stream.concat(agents.stream().map(a -> payoffAssignment.isLoser(a) ? a.goal().not() : a.goal()),
+                Stream.of(suspectGame.historyGame().concurrentGame().goal().formula()))),
         concurrentGame.atomicPropositions()));
     LiteralMapper.ShiftedLabelledFormula shifted = LiteralMapper.shiftLiterals(eveGoal);
     var translator = LtlTranslationRepository.defaultTranslation(
