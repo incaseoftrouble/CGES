@@ -24,5 +24,7 @@ public interface HistoryGame<S> {
     S state();
 
     Formula goal(Agent agent);
+
+    HistoryGame<S> game();
   }
 }

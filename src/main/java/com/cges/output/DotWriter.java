@@ -1,5 +1,6 @@
 package com.cges.output;
 
+import com.cges.GameSolution;
 import com.cges.graph.HistoryGame;
 import com.cges.graph.HistoryGame.HistoryState;
 import com.cges.graph.RunGraph;
@@ -7,7 +8,6 @@ import com.cges.graph.SuspectGame;
 import com.cges.model.Action;
 import com.cges.model.Agent;
 import com.cges.model.ConcurrentGame;
-import com.cges.model.EquilibriumStrategy;
 import com.cges.model.Move;
 import com.cges.parity.ParityGame;
 import com.cges.parity.Player;
@@ -15,11 +15,11 @@ import com.cges.parser.Module;
 import com.cges.parser.ModuleGame;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.SetMultimap;
+import com.google.common.collect.Sets;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import java.io.PrintStream;
 import java.util.ArrayDeque;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -31,6 +31,8 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.annotation.Nullable;
 import owl.bdd.BddSet;
+import owl.ltl.BooleanConstant;
+import owl.ltl.LabelledFormula;
 
 public final class DotWriter {
   private DotWriter() {}
@@ -212,37 +214,56 @@ public final class DotWriter {
     writer.append("}");
   }
 
-  public static <S> void writeSolution(SuspectGame<S> suspectGame, RunGraph<S> runGraph, EquilibriumStrategy<S> strategy,
-      PrintStream writer) {
-    Object2IntMap<RunGraph.RunState<S>> ids = new Object2IntOpenHashMap<>();
-    // TODO
+  public static <S> void writeSolution(GameSolution<S> solution, PrintStream writer) {
+    var suspectGame = solution.suspectGame();
+    var strategy = solution.strategy();
+    var runGraph = solution.runGraph();
+    List<String> atomicPropositions = suspectGame.historyGame().concurrentGame().atomicPropositions();
 
     writer.append("digraph {\n");
     Set<RunGraph.RunState<S>> loopStates = strategy.lasso().states(false).collect(Collectors.toSet());
+    Set<RunGraph.RunState<S>> successors = Set.of();
+    /*
     Set<RunGraph.RunState<S>> successors = loopStates.stream().map(runGraph::transitions)
         .flatMap(Collection::stream)
         .map(RunGraph.RunTransition::successor)
         .filter(s -> !loopStates.contains(s))
         .collect(Collectors.toSet());
+     */
 
-    Stream.concat(loopStates.stream(), successors.stream()).forEach(runState -> {
+    Object2IntMap<RunGraph.RunState<S>> ids = new Object2IntOpenHashMap<>();
+    ids.defaultReturnValue(-1);
+    Sets.union(loopStates, successors).forEach(runState -> ids.put(runState, ids.size()));
+    Sets.union(loopStates, successors).forEach(runState -> {
       int id = ids.getInt(runState);
-      // TODO Automaton state labels
-      writer.append("S_%d [label=\"{%s}\"]\n".formatted(id,
-          DotFormatted.toString(runState)));
+      HistoryState<S> historyState = runState.historyState();
+      String label = Stream.concat(Stream.concat(Stream.of(DotFormatted.toRecordString(DotFormatted.toString(historyState.state()))),
+                  suspectGame.historyGame().concurrentGame().agents().stream()
+                      .filter(a -> !historyState.goal(a).equals(BooleanConstant.TRUE))
+                      .map(a -> "%s %s".formatted(
+                          DotFormatted.toRecordString(a.name()),
+                          DotFormatted.toRecordString(LabelledFormula.of(historyState.goal(a), atomicPropositions).toString())))),
+              Stream.of(DotFormatted.toRecordString(DotFormatted.toString(runState.automatonState(), runGraph.automatonPropositions()))))
+          .collect(Collectors.joining("|", "{", "}"));
+      writer.append("S_%d [shape=record,label=\"%s\"]\n".formatted(id, label));
     });
 
-//    oddStrategy.lasso().states(false).forEach(runState -> {
-//      int id = ids.getInt(runState);
-//      Move move = oddStrategy.moves().get(runState);
-//      SuspectGame.AdamState<S> adamSuccessor = new SuspectGame.AdamState<>(runState, move);
-//      Collection<SuspectGame.EveState<S>> eveSuccessors = suspectGame.successors(adamSuccessor);
-//
-//      runGraph.transitions(runState).forEach(transition ->
-//          writer.append("S_%d -> S_%d [color=%s,label=\"%s\"];\n".formatted(id, ids.getInt(transition.eveSuccessor()),
-//              eveSuccessors.contains(transition.eveSuccessor().eveState()) ? "green" : "gray",
-//              DotFormatted.toString(transition.move()))));
-//    });
+    strategy.lasso().states(false).forEach(runState -> {
+      int id = ids.getInt(runState);
+      Move move = strategy.moves().get(runState);
+      var historySuccessor = suspectGame.historyGame().transition(runState.historyState(), move).orElseThrow().destination();
+      var runSuccessor = runGraph.successors(runState).stream().filter(s -> s.historyState().equals(historySuccessor)).findAny()
+          .orElseThrow();
+
+      writer.append("S_%d -> S_%d [label=\"%s\"];\n".formatted(id, ids.getInt(runSuccessor), DotFormatted.toString(move)));
+
+      /*
+      runGraph.transitions(runState).forEach(transition ->
+          writer.append("S_%d -> S_%d [color=%s,label=\"%s\"];\n".formatted(id, ids.getInt(transition.successor()),
+              eveSuccessors.contains(transition.successor().historyState()) ? "green" : "gray",
+              DotFormatted.toString(move))));
+       */
+    });
 
     writer.append("}");
   }

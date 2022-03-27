@@ -8,7 +8,6 @@ import com.cges.graph.RunGraph;
 import com.cges.graph.SuspectGame;
 import com.cges.model.Agent;
 import com.cges.model.ConcurrentGame;
-import com.cges.model.EquilibriumStrategy;
 import com.cges.model.PayoffAssignment;
 import com.cges.output.DotWriter;
 import com.cges.output.Formatter;
@@ -81,6 +80,9 @@ public final class Main {
         Formatter.format(solution.assignment(), game),
         solution.strategy())).collect(Collectors.toList());
     System.out.println("Overall: " + overall);
+    for (GameSolution<?> gameSolution : list) {
+      DotWriter.writeSolution(gameSolution, System.out);
+    }
     list.sort(Comparator.comparingLong(solution -> game.agents().stream().map(solution.assignment()::isLoser).count()));
     list.stream().map(solution -> Formatter.format(solution.assignment(), game)).forEach(System.out::println);
     if (validationSet != null) {
@@ -113,11 +115,11 @@ public final class Main {
         .map(payoff -> {
           System.out.printf("Processing: %s%n", Formatter.format(payoff, game));
           Stopwatch timer = Stopwatch.createStarted();
-          var strategy = RunGraphSolver.solve(new RunGraph<S>(suspectGame, payoff));
+          RunGraph<S> runGraph = new RunGraph<>(suspectGame, payoff);
+          var strategy = RunGraphSolver.solve(runGraph);
           System.out.println("Solution: " + timer);
-          return strategy.map(s -> new GameSolution<>(payoff, s));
+          return strategy.map(s -> new GameSolution<>(suspectGame, runGraph, payoff, s));
         }).flatMap(Optional::stream);
   }
 
-  record GameSolution<S>(PayoffAssignment assignment, EquilibriumStrategy<S> strategy) {}
 }

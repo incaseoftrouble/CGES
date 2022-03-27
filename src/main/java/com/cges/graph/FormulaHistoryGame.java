@@ -22,24 +22,32 @@ import owl.ltl.Formula;
 import owl.ltl.rewriter.SimplifierRepository;
 
 public class FormulaHistoryGame<S> implements HistoryGame<S> {
+
+  private final Map<Agent, Integer> indices;
+
   static final class ListHistoryState<S> implements HistoryState<S> {
     private static final Formula[] EMPTY = new Formula[0];
 
     private final S state;
     private final Formula[] agentGoals;
-    private final Map<Agent, Integer> agentIndices;
+    private final FormulaHistoryGame<S> game;
     private final int hashCode;
 
-    ListHistoryState(S state, List<Formula> agentGoals, Map<Agent, Integer> agentIndices) {
+    ListHistoryState(S state, List<Formula> agentGoals, FormulaHistoryGame<S> game) {
       this.state = state;
       this.agentGoals = agentGoals.toArray(EMPTY);
-      this.agentIndices = Map.copyOf(agentIndices);
+      this.game = game;
       this.hashCode = this.state.hashCode() ^ Arrays.hashCode(this.agentGoals);
     }
 
     @Override
     public Formula goal(Agent agent) {
-      return agentGoals[agentIndices.get(agent)];
+      return agentGoals[game.indices.get(agent)];
+    }
+
+    @Override
+    public HistoryGame<S> game() {
+      return game;
     }
 
     @Override
@@ -47,7 +55,7 @@ public class FormulaHistoryGame<S> implements HistoryGame<S> {
       return state;
     }
 
-    public List<Formula> agentGoals() {
+    public List<Formula> goals() {
       return Arrays.asList(agentGoals);
     }
 
@@ -67,7 +75,7 @@ public class FormulaHistoryGame<S> implements HistoryGame<S> {
 
     @Override
     public String toString() {
-      return state + " " + agentIndices.entrySet().stream().sorted(Map.Entry.comparingByKey(Comparator.comparing(Agent::name)))
+      return state + " " + game.indices.entrySet().stream().sorted(Map.Entry.comparingByKey(Comparator.comparing(Agent::name)))
           .map(Map.Entry::getValue)
           .map(i -> agentGoals[i])
           .map(SimplifierRepository.SYNTACTIC_FIXPOINT::apply)
@@ -87,10 +95,10 @@ public class FormulaHistoryGame<S> implements HistoryGame<S> {
     Indices.forEachIndexed(game.atomicPropositions(), (index, proposition) -> propositionIndices.put(proposition, index));
     Map<Agent, Integer> agentIndices = new HashMap<>();
     Indices.forEachIndexed(game.agents(), (index, agent) -> agentIndices.put(agent, index));
-    Map<Agent, Integer> indices = Map.copyOf(agentIndices);
+    indices = Map.copyOf(agentIndices);
 
     this.initialState = new ListHistoryState<>(game.initialState(),
-        game.agents().stream().map(Agent::goal).map(Formula::unfold).toList(), indices);
+        game.agents().stream().map(Agent::goal).map(Formula::unfold).toList(), this);
 
     Map<HistoryState<S>, Set<Transition<HistoryState<S>>>> transitions = new HashMap<>();
     Set<ListHistoryState<S>> states = new HashSet<>(List.of(initialState));
@@ -104,10 +112,10 @@ public class FormulaHistoryGame<S> implements HistoryGame<S> {
         game.labels(s).stream().map(propositionIndices::get).forEach(set::set);
         return set;
       });
-      List<Formula> successorGoals = List.copyOf(Lists.transform(state.agentGoals(), goal -> goal.temporalStep(valuation).unfold()));
+      List<Formula> successorGoals = List.copyOf(Lists.transform(state.goals(), goal -> goal.temporalStep(valuation).unfold()));
       Set<Transition<HistoryState<S>>> stateTransitions = new HashSet<>();
       for (Transition<S> transition : game.transitions(state.state())) {
-        ListHistoryState<S> successor = new ListHistoryState<>(transition.destination(), successorGoals, indices);
+        ListHistoryState<S> successor = new ListHistoryState<>(transition.destination(), successorGoals, this);
         stateTransitions.add(transition.withDestination(successor));
         if (states.add(successor)) {
           queue.add(successor);

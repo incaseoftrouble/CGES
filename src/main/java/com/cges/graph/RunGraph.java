@@ -5,7 +5,9 @@ import com.cges.graph.HistoryGame.HistoryState;
 import com.cges.model.Agent;
 import com.cges.model.ConcurrentGame;
 import com.cges.model.PayoffAssignment;
+import com.cges.output.DotFormatted;
 import java.util.BitSet;
+import java.util.Comparator;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
@@ -20,6 +22,7 @@ import java.util.stream.Stream;
 import owl.automaton.Automaton;
 import owl.automaton.acceptance.BuchiAcceptance;
 import owl.automaton.edge.Edge;
+import owl.ltl.BooleanConstant;
 import owl.ltl.Conjunction;
 import owl.ltl.LabelledFormula;
 import owl.ltl.rewriter.LiteralMapper;
@@ -113,10 +116,36 @@ public final class RunGraph<S> {
     return suspectGame;
   }
 
-  public record RunState<S>(Object automatonState, HistoryState<S> historyState) {
+  public List<String> automatonPropositions() {
+    return automaton.atomicPropositions();
+  }
+
+  public record RunState<S>(Object automatonState, HistoryState<S> historyState) implements DotFormatted {
     @Override
     public String toString() {
       return "(%s x %s)".formatted(historyState, automatonState);
+    }
+
+
+    @Override
+    public String dotString() {
+      ConcurrentGame<S> game = historyState.game().concurrentGame();
+      var goalsString = game.agents().stream()
+          .sorted(Comparator.comparing(Agent::name))
+          .filter(a -> !historyState.goal(a).equals(BooleanConstant.TRUE))
+          .map(a -> {
+            var goalString = LabelledFormula.of(historyState.goal(a), game.atomicPropositions()).toString();
+            int goalLength = goalString.length();
+            return goalLength < 20
+                ? goalString
+                : "%s...%s".formatted(goalString.substring(0, 7), goalString.substring(goalLength - 7));
+          }).collect(Collectors.joining(",", "[", "]"));
+      var automatonString = DotFormatted.toString(automatonState);
+      int automatonLength = automatonString.length();
+      if (automatonLength > 20) {
+        automatonString = "%s...%s".formatted(automatonString.substring(0, 7), automatonString.substring(automatonLength - 7));
+      }
+      return "%s: %s x %s".formatted(DotFormatted.toString(historyState.state()), goalsString, automatonString);
     }
   }
 }

@@ -7,7 +7,7 @@ import java.util.stream.Stream;
 import owl.ltl.Formula;
 
 public record MockHistoryGame<S>(ConcurrentGame<S> concurrentGame) implements HistoryGame<S> {
-  record MockHistoryState<S>(S state) implements HistoryGame.HistoryState<S> {
+  record MockHistoryState<S>(S state, MockHistoryGame<S> game) implements HistoryGame.HistoryState<S> {
     @Override
     public Formula goal(Agent agent) {
       return agent.goal();
@@ -21,11 +21,11 @@ public record MockHistoryGame<S>(ConcurrentGame<S> concurrentGame) implements Hi
 
   @Override
   public HistoryState<S> initialState() {
-    return new MockHistoryState<>(this.concurrentGame.initialState());
+    return new MockHistoryState<>(this.concurrentGame.initialState(), this);
   }
 
   @Override
   public Stream<Transition<HistoryState<S>>> transitions(HistoryState<S> state) {
-    return concurrentGame.transitions(state.state()).stream().map(Transition.transform(MockHistoryState::new));
+    return concurrentGame.transitions(state.state()).stream().map(Transition.transform(s -> new MockHistoryState<>(s, this)));
   }
 }
