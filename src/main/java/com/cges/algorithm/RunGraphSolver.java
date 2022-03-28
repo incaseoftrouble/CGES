@@ -72,7 +72,6 @@ public final class RunGraphSolver {
 
     // Construct the sequence of moves to obtain the lasso
     Map<RunState<S>, Move> runGraphMoves = new HashMap<>();
-    Map<RunState<S>, DeviationSolver.PunishmentStrategy<S>> punishmentStrategy = new HashMap<>();
     while (iterator.hasNext()) {
       var next = iterator.next();
       // TODO Bit ugly, could maybe store this information when constructing the lasso
@@ -83,10 +82,9 @@ public final class RunGraphSolver {
       runGraphMoves.put(current, move);
 
       // For each deviation, provide a proof that we can punish someone
-      punishmentStrategy.put(current, graph.deviationStrategy(current.historyState()));
       current = next;
     }
-    var strategy = new EquilibriumStrategy<>(lasso, Map.copyOf(runGraphMoves), Map.copyOf(punishmentStrategy));
+    var strategy = new EquilibriumStrategy<>(lasso, Map.copyOf(runGraphMoves), graph.deviationStrategy());
     assert validate(strategy, graph);
     return Optional.of(strategy);
   }

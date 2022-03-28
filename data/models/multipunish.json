@@ -1,0 +1,215 @@
+{
+  "name": "multipunish",
+  "type": "explicit",
+  "ap": [
+    "s1",
+    "s2",
+    "s5",
+    "s7"
+  ],
+  "goal": "true",
+  "agents": {
+    "A1": {
+      "goal": "F G s1",
+      "payoff": "?",
+      "actions": [
+        "a",
+        "b"
+      ]
+    },
+    "A2": {
+      "goal": "F G s5 | F G s7",
+      "payoff": "?",
+      "actions": [
+        "a",
+        "b"
+      ]
+    },
+    "A3": {
+      "goal": "F G s2 | F G s5",
+      "payoff": "?",
+      "actions": [
+        "a",
+        "b"
+      ]
+    }
+  },
+  "arena": {
+    "initial": "s0",
+    "states": {
+      "s0": {
+        "labels": [],
+        "transitions": [
+          {
+            "actions": {
+              "A1": "a",
+              "A2": "a",
+              "A3": "a"
+            },
+            "to": "s1"
+          },
+          {
+            "actions": {
+              "A1": "b",
+              "A2": "a",
+              "A3": "a"
+            },
+            "to": "s2"
+          },
+          {
+            "actions": {
+              "A1": "a",
+              "A2": "b",
+              "A3": "a"
+            },
+            "to": "s3"
+          },
+          {
+            "actions": {
+              "A1": "a",
+              "A2": "a",
+              "A3": "b"
+            },
+            "to": "s3"
+          }
+        ]
+      },
+      "s1": {
+        "labels": [
+          "s1"
+        ],
+        "transitions": [
+          {
+            "actions": {
+              "A1": "a",
+              "A2": "a",
+              "A3": "a"
+            },
+            "to": "s1"
+          }
+        ]
+      },
+      "s2": {
+        "labels": [
+          "s2"
+        ],
+        "transitions": [
+          {
+            "actions": {
+              "A1": "a",
+              "A2": "a",
+              "A3": "a"
+            },
+            "to": "s2"
+          }
+        ]
+      },
+      "s3": {
+        "labels": [],
+        "transitions": [
+          {
+            "actions": {
+              "A1": "a",
+              "A2": "a",
+              "A3": "a"
+            },
+            "to": "s4"
+          },
+          {
+            "actions": {
+              "A1": "b",
+              "A2": "b",
+              "A3": "a"
+            },
+            "to": "s5"
+          },
+          {
+            "actions": {
+              "A1": "a",
+              "A2": "b",
+              "A3": "a"
+            },
+            "to": "s6"
+          }
+        ]
+      },
+      "s4": {
+        "labels": [],
+        "transitions": [
+          {
+            "actions": {
+              "A1": "a",
+              "A2": "a",
+              "A3": "a"
+            },
+            "to": "s4"
+          }
+        ]
+      },
+      "s5": {
+        "labels": [
+          "s5"
+        ],
+        "transitions": [
+          {
+            "actions": {
+              "A1": "a",
+              "A2": "a",
+              "A3": "a"
+            },
+            "to": "s5"
+          }
+        ]
+      },
+      "s6": {
+        "labels": [],
+        "transitions": [
+          {
+            "actions": {
+              "A1": "a",
+              "A2": "a",
+              "A3": "a"
+            },
+            "to": "s7"
+          },
+          {
+            "actions": {
+              "A1": "b",
+              "A2": "b",
+              "A3": "b"
+            },
+            "to": "s8"
+          }
+        ]
+      },
+      "s7": {
+        "labels": [
+          "s7"
+        ],
+        "transitions": [
+          {
+            "actions": {
+              "A1": "a",
+              "A2": "a",
+              "A3": "a"
+            },
+            "to": "s7"
+          }
+        ]
+      },
+      "s8": {
+        "labels": [],
+        "transitions": [
+          {
+            "actions": {
+              "A1": "a",
+              "A2": "a",
+              "A3": "a"
+            },
+            "to": "s8"
+          }
+        ]
+      }
+    }
+  }
+}

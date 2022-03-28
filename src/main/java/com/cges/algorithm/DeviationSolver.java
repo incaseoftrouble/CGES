@@ -1,7 +1,5 @@
 package com.cges.algorithm;
 
-import static com.google.common.base.Preconditions.checkArgument;
-
 import com.cges.graph.HistoryGame;
 import com.cges.graph.HistoryGame.HistoryState;
 import com.cges.graph.SuspectGame;
@@ -20,12 +18,12 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Queue;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import javax.annotation.Nullable;
 import owl.automaton.Automaton;
 import owl.automaton.ParityUtil;
 import owl.automaton.acceptance.ParityAcceptance;
@@ -40,7 +38,7 @@ import owl.ltl.rewriter.SimplifierRepository;
 import owl.translations.LtlTranslationRepository;
 import owl.translations.LtlTranslationRepository.Option;
 
-public final class DeviationSolver<S> {
+public final class DeviationSolver<S> implements PunishmentStrategy<S> {
   private static final boolean CROSS_VALIDATE = false;
 
   private static final Function<LabelledFormula, Automaton<?, ? extends ParityAcceptance>> translation =
@@ -63,6 +61,8 @@ public final class DeviationSolver<S> {
   private final Map<HistoryState<S>, Boolean> isWinning;
   private final Map<HistoryState<S>, PriorityState<S>> initialStates;
   private final Map<PriorityState<S>, PriorityState<S>> strategy;
+  @Nullable
+  private final SuspectParityGame<S> game;
 
   @SuppressWarnings("unchecked")
   private final Function<LabelledFormula, Automaton<Object, ParityAcceptance>> dpaCachingFunction = formula ->
@@ -92,12 +92,13 @@ public final class DeviationSolver<S> {
       isWinning = Map.of();
       strategy = Map.of();
       initialStates = Map.of();
+      game = null;
     } else {
       var gameSolution = solveParityGame(eveState, goal);
-      var parityGame = gameSolution.parityGame();
+      game = gameSolution.parityGame();
       var paritySolution = gameSolution.solution();
 
-      Set<PriorityState<S>> solvedTopLevelEveStates = parityGame.states().stream()
+      Set<PriorityState<S>> solvedTopLevelEveStates = game.states().stream()
           .filter(p -> p.isEve() && p.eve().suspects().equals(losingAgents))
           .collect(Collectors.toSet());
       Queue<PriorityState<S>> queue = new ArrayDeque<>();
@@ -108,8 +109,8 @@ public final class DeviationSolver<S> {
         PriorityState<S> next = queue.poll();
         assert paritySolution.winner(next) == Player.ODD;
         Stream<PriorityState<S>> successors;
-        if (parityGame.owner(next) == Player.EVEN) {
-          successors = parityGame.successors(next);
+        if (game.owner(next) == Player.EVEN) {
+          successors = game.successors(next);
         } else {
           PriorityState<S> successor = paritySolution.oddStrategy().get(next);
           strategy.put(next, successor);
@@ -144,35 +145,41 @@ public final class DeviationSolver<S> {
         .map(a -> Conjunction.of(GOperator.of(agentLiterals.get(a)), historyState.goal(a)))).not(), atomicPropositions);
   }
 
-  private Optional<PunishmentStrategy<S>> doSolve(HistoryState<S> historyState) {
+  public boolean isWinning(HistoryState<S> historyState) {
     Boolean winning = this.isWinning.get(historyState);
     if (winning == null) {
       LabelledFormula eveGoal = eveGoal(historyState);
       var goal = SimplifierRepository.SYNTACTIC_FAIRNESS.apply(eveGoal).formula();
       assert goal instanceof BooleanConstant;
-      boolean value = ((BooleanConstant) goal).value;
-      if (value) {
-        PriorityState<S> state = new PriorityState<>(null, new EveState<>(historyState, losingAgents), 1);
-        return Optional.of(new Strategy<>(state, Map.of(state, state)));
-      }
-    } else {
-      if (winning) {
-        return Optional.of(new Strategy<>(initialStates.get(historyState), strategy));
-      }
+      assert computeWinning(historyState) == ((BooleanConstant) goal).value;
+      winning = ((BooleanConstant) goal).value;
     }
-
-    return Optional.empty();
-  }
-
-  public Optional<PunishmentStrategy<S>> solve(HistoryState<S> historyState) {
-    var solution = doSolve(historyState);
-    assert computeWinning(historyState) == solution.isPresent();
-    return solution;
+    assert winning == computeWinning(historyState);
+    return winning;
   }
 
   private boolean computeWinning(HistoryState<S> historyState) {
     var solution = solveParityGame(new EveState<>(historyState, losingAgents), eveGoal(historyState));
     return solution.solution().winner(solution.parityGame().initialState()) == Player.ODD;
+  }
+
+  @Override
+  public PriorityState<S> initialState(HistoryState<S> state) {
+    return initialStates.get(state);
+  }
+
+  @Override
+  public PriorityState<S> move(PriorityState<S> state) {
+    assert state.isEve();
+    return strategy.getOrDefault(state, state);
+  }
+
+  @Override
+  public Set<PriorityState<S>> successors(PriorityState<S> state) {
+    if (state.isEve()) {
+      return Set.of(move(state));
+    }
+    return game == null ? Set.of(state) : game.successors(state).collect(Collectors.toSet());
   }
 
   record ParitySolution<S>(SuspectParityGame<S> parityGame, Solution<PriorityState<S>> solution) {}
@@ -184,19 +191,5 @@ public final class DeviationSolver<S> {
     var parityGame = SuspectParityGame.create(suspectGame, eveState, automaton);
     var paritySolution = solver.solve(parityGame);
     return new ParitySolution<>(parityGame, paritySolution);
-  }
-
-  public interface PunishmentStrategy<S> {
-    PriorityState<S> initialState();
-
-    PriorityState<S> move(PriorityState<S> state);
-  }
-
-  record Strategy<S>(PriorityState<S> initialState, Map<PriorityState<S>, PriorityState<S>> strategies) implements PunishmentStrategy<S> {
-    @Override
-    public PriorityState<S> move(PriorityState<S> state) {
-      checkArgument(strategies.containsKey(state));
-      return strategies.get(state);
-    }
   }
 }

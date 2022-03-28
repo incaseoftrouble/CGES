@@ -82,6 +82,9 @@ public final class Main {
     System.out.println("Overall: " + overall);
     for (GameSolution<?> gameSolution : list) {
       DotWriter.writeSolution(gameSolution, System.out);
+      System.out.println();
+      System.out.println();
+      System.out.println();
     }
     list.sort(Comparator.comparingLong(solution -> game.agents().stream().map(solution.assignment()::isLoser).count()));
     list.stream().map(solution -> Formatter.format(solution.assignment(), game)).forEach(System.out::println);

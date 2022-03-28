@@ -1,6 +1,7 @@
 package com.cges.graph;
 
 import com.cges.algorithm.DeviationSolver;
+import com.cges.algorithm.PunishmentStrategy;
 import com.cges.graph.HistoryGame.HistoryState;
 import com.cges.model.Agent;
 import com.cges.model.ConcurrentGame;
@@ -13,7 +14,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -38,7 +38,6 @@ public final class RunGraph<S> {
   private final SuspectGame<S> suspectGame;
   private final Map<S, BitSet> labelCache = new HashMap<>();
   private final Map<String, Integer> propositionIndex;
-  private final Map<HistoryState<S>, Optional<DeviationSolver.PunishmentStrategy<S>>> historySolutions = new HashMap<>();
   private final DeviationSolver<S> deviationSolver;
   private final HistoryGame<S> historyGame;
 
@@ -67,7 +66,7 @@ public final class RunGraph<S> {
   }
 
   public Set<RunState<S>> initialStates() {
-    if (isWinning(historyGame.initialState())) {
+    if (deviationSolver.isWinning(historyGame.initialState())) {
       return automaton.initialStates().stream()
           .map(s -> new RunState<>(s, historyGame.initialState()))
           .collect(Collectors.toSet());
@@ -75,12 +74,8 @@ public final class RunGraph<S> {
     return Set.of();
   }
 
-  public boolean isWinning(HistoryState<S> historyState) {
-    return historySolutions.computeIfAbsent(historyState, deviationSolver::solve).isPresent();
-  }
-
-  public DeviationSolver.PunishmentStrategy<S> deviationStrategy(HistoryState<S> historyState) {
-    return historySolutions.computeIfAbsent(historyState, deviationSolver::solve).orElseThrow();
+  public PunishmentStrategy<S> deviationStrategy() {
+    return deviationSolver;
   }
 
   private BitSet labels(RunState<S> current) {
@@ -100,7 +95,7 @@ public final class RunGraph<S> {
       return Set.of();
     }
     var transitions = historyGame.transitions(current.historyState())
-        .filter(t -> isWinning(t.destination()))
+        .filter(t -> deviationSolver.isWinning(t.destination()))
         .flatMap(transition -> automatonEdges.stream().map(edge ->
             new RunTransition<>(new RunState<>(edge.successor(), transition.destination()), !edge.colours().isEmpty())))
         .collect(Collectors.toSet());
