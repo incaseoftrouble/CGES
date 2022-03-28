@@ -7,6 +7,7 @@ import owl.collections.Either;
 import owl.ltl.Formula;
 import owl.ltl.LabelledFormula;
 import owl.ltl.rewriter.SimplifierRepository;
+import owl.ltl.visitors.PrintVisitor;
 
 public interface DotFormatted {
   String dotString();
@@ -19,7 +20,7 @@ public interface DotFormatted {
       return either.map(DotFormatted::toString, DotFormatted::toString);
     }
     if (object instanceof LabelledFormula formula) {
-      return SimplifierRepository.SYNTACTIC_FIXPOINT.apply(formula).toString();
+      return PrintVisitor.toString(SimplifierRepository.SYNTACTIC_FIXPOINT.apply(formula), false);
     }
     if (object instanceof Formula formula) {
       return SimplifierRepository.SYNTACTIC_FIXPOINT.apply(formula).toString();
@@ -35,10 +36,10 @@ public interface DotFormatted {
       return either.map(o -> toString(o, propositions), o -> toString(o, propositions));
     }
     if (object instanceof LabelledFormula formula) {
-      return SimplifierRepository.SYNTACTIC_FIXPOINT.apply(formula).toString();
+      return PrintVisitor.toString(SimplifierRepository.SYNTACTIC_FIXPOINT.apply(formula), false);
     }
     if (object instanceof Formula formula) {
-      return LabelledFormula.of(SimplifierRepository.SYNTACTIC_FIXPOINT.apply(formula), propositions).toString();
+      return toString(LabelledFormula.of(SimplifierRepository.SYNTACTIC_FIXPOINT.apply(formula), propositions), propositions);
     }
     return (object instanceof DotFormatted format) ? format.dotString() : object.toString();
   }

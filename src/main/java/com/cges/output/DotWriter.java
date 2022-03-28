@@ -20,7 +20,6 @@ import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import java.io.PrintStream;
 import java.util.ArrayDeque;
-import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
@@ -72,6 +71,10 @@ public final class DotWriter {
     writer.append("}");
   }
 
+  public static <S> void writeHistoryGame(HistoryGame<S> game, PrintStream writer) {
+    writeHistoryGame(game, writer, null);
+  }
+
   public static <S> void writeHistoryGame(HistoryGame<S> game, PrintStream writer,
       @Nullable Predicate<HistoryState<S>> winning) {
     Object2IntMap<HistoryState<S>> ids = new Object2IntOpenHashMap<>();
@@ -110,6 +113,10 @@ public final class DotWriter {
     writer.append("}");
   }
 
+  public static <S> void writeSuspectGame(SuspectGame<S> game, PrintStream writer) {
+    writeSuspectGame(game, game.initialState(), writer, null);
+  }
+
   public static <S> void writeSuspectGame(SuspectGame<S> game, SuspectGame.EveState<S> initial,
       PrintStream writer, @Nullable Predicate<SuspectGame.EveState<S>> winning) {
     Object2IntMap<SuspectGame.EveState<S>> ids = new Object2IntOpenHashMap<>();
@@ -142,17 +149,8 @@ public final class DotWriter {
 
       SuspectGame.EveState<S> eveState = entry.getKey();
       game.successors(eveState).forEach(adamState -> {
-        for (Move move : adamState.moves()) {
-          var compliantTransition = game.historyGame().transition(eveState.historyState(), move).orElseThrow();
-          game.successors(adamState).forEach(eveSuccessor -> {
-            if (eveSuccessor.historyState().equals(compliantTransition.destination())) {
-              assert compliantTransition.move().equals(adamState.moves());
-              compliantMoves.put(eveSuccessor, compliantTransition.move());
-            } else {
-              deviatingMovesBySuccessor.put(eveSuccessor, move);
-            }
-          });
-        }
+        compliantMoves.put(game.compliantSuccessor(adamState), adamState.move());
+        game.deviationSuccessors(adamState).forEach(eveSuccessor -> deviatingMovesBySuccessor.put(eveSuccessor, adamState.move()));
       });
       assert !compliantMoves.isEmpty();
 
@@ -259,15 +257,14 @@ public final class DotWriter {
     var punishmentStrategy = solution.strategy().punishmentStrategy();
     var runGraph = solution.runGraph();
     var lasso = solution.strategy().lasso();
+    var moves = solution.strategy().moves();
     List<String> atomicPropositions = suspectGame.historyGame().concurrentGame().atomicPropositions();
 
     writer.append("digraph {\n");
     Set<RunGraph.RunState<S>> loopStates = lasso.states(false).collect(Collectors.toSet());
     Set<PriorityState<S>> reachableGameStates = loopStates.stream()
-        .map(RunGraph.RunState::historyState)
-        .map(punishmentStrategy::initialState)
-        .map(punishmentStrategy::successors)
-        .flatMap(Collection::stream)
+        .flatMap(runState -> punishmentStrategy.initialStates(runState.historyState(), moves.get(runState))
+            .stream().filter(s -> !s.eve().historyState().equals(lasso.successor(runState).historyState())))
         .collect(Collectors.toSet());
     Queue<PriorityState<S>> queue = new ArrayDeque<>(reachableGameStates);
     while (!queue.isEmpty()) {
@@ -291,9 +288,9 @@ public final class DotWriter {
       String label = Stream.concat(Stream.concat(Stream.of(DotFormatted.toRecordString(DotFormatted.toString(historyState.state()))),
                   suspectGame.historyGame().concurrentGame().agents().stream().sorted(Comparator.comparing(Agent::name))
                       .filter(a -> !historyState.goal(a).equals(BooleanConstant.TRUE))
-                      .map(a -> "%s %s".formatted(
+                      .map(a -> "%s: %s".formatted(
                           DotFormatted.toRecordString(a.name()),
-                          DotFormatted.toRecordString(LabelledFormula.of(historyState.goal(a), atomicPropositions).toString())))),
+                          DotFormatted.toRecordString(DotFormatted.toString(historyState.goal(a), atomicPropositions))))),
               Stream.of(DotFormatted.toRecordString(DotFormatted.toString(runState.automatonState(), runGraph.automatonPropositions()))))
           .collect(Collectors.joining("|", "{", "}"));
       writer.append("HS_%d [shape=record,label=\"%s\"]\n".formatted(id, label));
@@ -305,10 +302,11 @@ public final class DotWriter {
                     DotFormatted.toString(gameState.eve().historyState().goal(a), atomicPropositions))))
             .map(DotFormatted::toRecordString)
             .collect(Collectors.joining("|", "{", "}"));
-        writer.append("GS_%d [shape=record,style=dotted,label=\"%s|%d\"]\n".formatted(id, eveState, gameState.priority()));
+        writer.append("GS_%d [shape=record,style=dotted,label=\"%s|%d\"]\n"
+            .formatted(id, eveState, gameState.priority()));
       } else {
-        String deviationMoves = gameState.adam().moves().stream().map(DotFormatted::toString).collect(Collectors.joining(","));
-        writer.append("GS_%d [shape=record,style=dashed,label=\"%s|%d\"]\n".formatted(id, deviationMoves, gameState.priority()));
+        writer.append("GS_%d [shape=record,style=dashed,label=\"%s|%d\"]\n"
+            .formatted(id, DotFormatted.toString(gameState.adam().move()), gameState.priority()));
       }
     });
 
@@ -316,10 +314,9 @@ public final class DotWriter {
       Move move = strategy.moves().get(runState);
       writer.append("HS_%d -> HS_%d [label=\"%s\",penwidth=2];\n".formatted(id, loopIds.getInt(lasso.successor(runState)),
           DotFormatted.toString(move)));
-      var punishmentState = punishmentStrategy.initialState(runState.historyState());
-      for (PriorityState<S> successor : punishmentStrategy.successors(punishmentState)) {
-        writer.append("HS_%d -> GS_%d [style=dotted];\n".formatted(id, gameIds.getInt(successor)));
-      }
+      punishmentStrategy.initialStates(runState.historyState(), move)
+          .stream().filter(s -> !s.eve().historyState().equals(lasso.successor(runState).historyState()))
+          .forEach(punishmentState -> writer.append("HS_%d -> GS_%d [style=dotted];\n".formatted(id, gameIds.getInt(punishmentState))));
     });
     gameIds.forEach((gameState, id) -> {
       for (PriorityState<S> successor : punishmentStrategy.successors(gameState)) {

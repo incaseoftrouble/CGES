@@ -1,11 +1,12 @@
 package com.cges.algorithm;
 
 import com.cges.graph.HistoryGame;
+import com.cges.model.Move;
 import com.cges.parity.PriorityState;
 import java.util.Set;
 
 public interface PunishmentStrategy<S> {
-  PriorityState<S> initialState(HistoryGame.HistoryState<S> state);
+  Set<PriorityState<S>> initialStates(HistoryGame.HistoryState<S> state, Move proposedMove);
 
   PriorityState<S> move(PriorityState<S> state);
 

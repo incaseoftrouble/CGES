@@ -18,6 +18,10 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 public final class RunGraphSolver {
+  public enum LassoSolver {
+    GRAPH_SEARCH, BMC
+  }
+
   private RunGraphSolver() {}
 
   private static <S> boolean validate(EquilibriumStrategy<S> strategy, RunGraph<S> graph) {
@@ -47,7 +51,7 @@ public final class RunGraphSolver {
     return true;
   }
 
-  public static <S> Optional<EquilibriumStrategy<S>> solve(RunGraph<S> graph) {
+  public static <S> Optional<EquilibriumStrategy<S>> solve(RunGraph<S> graph, LassoSolver solver) {
     Set<RunState<S>> states = new HashSet<>(graph.initialStates());
     Queue<RunState<S>> queue = new ArrayDeque<>(states);
     while (!queue.isEmpty()) {
@@ -58,7 +62,10 @@ public final class RunGraphSolver {
       });
     }
 
-    var path = RunGraphSccSolver.search(graph);
+    var path = switch (solver) {
+      case GRAPH_SEARCH -> RunGraphSccSolver.search(graph);
+      case BMC -> RunGraphBmcSolver.search(graph);
+    };
     if (path.isEmpty()) {
       return Optional.empty();
     }

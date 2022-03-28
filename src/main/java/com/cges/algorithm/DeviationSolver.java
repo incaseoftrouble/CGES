@@ -6,6 +6,7 @@ import com.cges.graph.SuspectGame;
 import com.cges.graph.SuspectGame.EveState;
 import com.cges.model.Agent;
 import com.cges.model.ConcurrentGame;
+import com.cges.model.Move;
 import com.cges.model.PayoffAssignment;
 import com.cges.parity.OinkGameSolver;
 import com.cges.parity.Player;
@@ -58,8 +59,7 @@ public final class DeviationSolver<S> implements PunishmentStrategy<S> {
   private final Map<Agent, Literal> agentLiterals;
   private final List<String> atomicPropositions;
   private final Set<Agent> losingAgents;
-  private final Map<HistoryState<S>, Boolean> isWinning;
-  private final Map<HistoryState<S>, PriorityState<S>> initialStates;
+  private final Map<HistoryState<S>, Map<Move, PriorityState<S>>> initialStates;
   private final Map<PriorityState<S>, PriorityState<S>> strategy;
   @Nullable
   private final SuspectParityGame<S> game;
@@ -89,7 +89,6 @@ public final class DeviationSolver<S> implements PunishmentStrategy<S> {
 
     var goal = SimplifierRepository.SYNTACTIC_FAIRNESS.apply(eveGoal);
     if (goal.formula() instanceof BooleanConstant) {
-      isWinning = Map.of();
       strategy = Map.of();
       initialStates = Map.of();
       game = null;
@@ -124,19 +123,17 @@ public final class DeviationSolver<S> implements PunishmentStrategy<S> {
       }
 
       this.strategy = Map.copyOf(strategy);
-      Map<HistoryState<S>, Boolean> isWinning = new HashMap<>();
 
-      Map<HistoryState<S>, PriorityState<S>> initialStates = new HashMap<>();
+      Map<HistoryState<S>, Map<Move, PriorityState<S>>> initialStates = new HashMap<>();
       for (PriorityState<S> priorityState : solvedTopLevelEveStates) {
         HistoryState<S> gameHistoryState = priorityState.eve().historyState();
-        boolean stateWinning = paritySolution.winner(priorityState) == Player.ODD;
-        isWinning.put(gameHistoryState, stateWinning);
-        if (stateWinning) {
-          initialStates.put(gameHistoryState, priorityState);
-        }
+        Map<Move, PriorityState<S>> winningInitial = new HashMap<>();
+        game.successors(priorityState)
+            .filter(s -> paritySolution.winner(s) == Player.ODD)
+            .forEach(winner -> winningInitial.put(winner.adam().move(), winner));
+        initialStates.put(gameHistoryState, Map.copyOf(winningInitial));
       }
       this.initialStates = Map.copyOf(initialStates);
-      this.isWinning = Map.copyOf(isWinning);
     }
   }
 
@@ -145,17 +142,16 @@ public final class DeviationSolver<S> implements PunishmentStrategy<S> {
         .map(a -> Conjunction.of(GOperator.of(agentLiterals.get(a)), historyState.goal(a)))).not(), atomicPropositions);
   }
 
-  public boolean isWinning(HistoryState<S> historyState) {
-    Boolean winning = this.isWinning.get(historyState);
-    if (winning == null) {
+  public boolean isWinning(HistoryState<S> historyState, Move move) {
+    Map<Move, PriorityState<S>> winningMoves = this.initialStates.get(historyState);
+    if (winningMoves == null) {
       LabelledFormula eveGoal = eveGoal(historyState);
       var goal = SimplifierRepository.SYNTACTIC_FAIRNESS.apply(eveGoal).formula();
       assert goal instanceof BooleanConstant;
       assert computeWinning(historyState) == ((BooleanConstant) goal).value;
-      winning = ((BooleanConstant) goal).value;
+      return ((BooleanConstant) goal).value;
     }
-    assert winning == computeWinning(historyState);
-    return winning;
+    return winningMoves.containsKey(move);
   }
 
   private boolean computeWinning(HistoryState<S> historyState) {
@@ -164,8 +160,9 @@ public final class DeviationSolver<S> implements PunishmentStrategy<S> {
   }
 
   @Override
-  public PriorityState<S> initialState(HistoryState<S> state) {
-    return initialStates.get(state);
+  public Set<PriorityState<S>> initialStates(HistoryState<S> state, Move proposedMove) {
+    PriorityState<S> initialAdam = initialStates.get(state).get(proposedMove);
+    return game == null ? Set.of(initialAdam) : game.successors(initialAdam).collect(Collectors.toSet());
   }
 
   @Override

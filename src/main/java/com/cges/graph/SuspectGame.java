@@ -4,9 +4,7 @@ import com.cges.graph.HistoryGame.HistoryState;
 import com.cges.model.Agent;
 import com.cges.model.Move;
 import com.cges.model.Transition;
-import com.google.common.collect.HashMultimap;
 import com.google.common.collect.ImmutableSetMultimap;
-import com.google.common.collect.SetMultimap;
 import com.google.common.collect.Sets;
 import java.util.Collection;
 import java.util.HashMap;
@@ -36,29 +34,41 @@ public final class SuspectGame<S> {
     return initialState;
   }
 
-  public Stream<SuspectTransition<S>> transitions(EveState<S> eveState) {
-    return transitions.computeIfAbsent(eveState, this::computeSuccessorMap).entrySet().stream()
+  public Stream<SuspectTransition<S>> deviatingTransitions(EveState<S> eveState) {
+    return transitions.computeIfAbsent(eveState, this::computeDeviatingSuccessors).entrySet().stream()
         .flatMap(entry -> entry.getValue().stream().map(eve -> new SuspectTransition<>(entry.getKey(), eve)));
   }
 
   public Stream<AdamState<S>> successors(EveState<S> eveState) {
-    return Set.copyOf(transitions.computeIfAbsent(eveState, this::computeSuccessorMap).keySet()).stream();
+    return Set.copyOf(transitions.computeIfAbsent(eveState, this::computeDeviatingSuccessors).keySet()).stream();
   }
 
   public Stream<EveState<S>> successors(AdamState<S> adamState) {
-    return transitions.computeIfAbsent(adamState.eveState(), this::computeSuccessorMap).get(adamState).stream();
+    return Stream.concat(Stream.of(compliantSuccessor(adamState)), deviationSuccessors(adamState));
+  }
+
+  public Stream<EveState<S>> deviationSuccessors(AdamState<S> adamState) {
+    return transitions.computeIfAbsent(adamState.eveState(), this::computeDeviatingSuccessors).get(adamState).stream();
+  }
+
+  public EveState<S> compliantSuccessor(AdamState<S> adamState) {
+    EveState<S> eve = adamState.eveState();
+    return new EveState<>(game.transition(eve.historyState(), adamState.move()).orElseThrow().destination(), eve.suspects());
   }
 
   public Stream<EveState<S>> eveSuccessors(EveState<S> eveState) {
-    return transitions.computeIfAbsent(eveState, this::computeSuccessorMap).values().stream().flatMap(Collection::stream);
+    return Stream.concat(transitions.computeIfAbsent(eveState, this::computeDeviatingSuccessors)
+        .values().stream().flatMap(Collection::stream),
+        game.transitions(eveState.historyState()).map(t -> new EveState<S>(t.destination(), eveState.suspects())));
   }
 
-  private Map<AdamState<S>, Set<EveState<S>>> computeSuccessorMap(EveState<S> eveState) {
+  private Map<AdamState<S>, Set<EveState<S>>> computeDeviatingSuccessors(EveState<S> eveState) {
     var gameState = eveState.historyState();
 
+    // Can only happen if we start with an empty set of suspects (= all agents winning)
     if (eveState.suspects().isEmpty()) {
       return game.transitions(gameState).collect(Collectors.toUnmodifiableMap(
-          t -> new AdamState<>(eveState, Set.of(t.move())),
+          t -> new AdamState<>(eveState, t.move()),
           t -> Set.of(new EveState<>(t.destination(), Set.of()))
       ));
     }
@@ -72,8 +82,7 @@ public final class SuspectGame<S> {
 
     // TODO This is somewhat inefficient, but smaller than the subsequent algorithmic problems
     // Which set of states can we reach by deviating from the move
-    SetMultimap<Set<EveState<S>>, Move> reachableByDeviation = HashMultimap.create();
-
+    Map<AdamState<S>, Set<EveState<S>>> transitions = new HashMap<>();
     game.transitions(gameState).forEach(proposedTransition -> {
       // Eve proposes this transition -- adam can either comply or change the choice of one suspect
       Move proposedMove = proposedTransition.move();
@@ -87,12 +96,8 @@ public final class SuspectGame<S> {
         Set<Move> movesLeadingToAlternative = movesToSuccessors.get(alternativeSuccessor);
         assert !alternativeSuccessor.equals(proposedTransition.destination()) || movesLeadingToAlternative.contains(proposedMove);
 
-        Collection<Agent> successorSuspects;
-        if (movesLeadingToAlternative.contains(proposedMove)) {
-          // Nobody needs to deviate to achieve this move
-          successorSuspects = currentSuspects;
-        } else {
-          successorSuspects = new HashSet<>();
+        if (!movesLeadingToAlternative.contains(proposedMove)) {
+          Collection<Agent> successorSuspects = new HashSet<>();
           for (Move move : movesLeadingToAlternative) {
             if (nonSuspects.stream().allMatch(a -> move.action(a).equals(proposedMove.action(a)))) {
               // Check if there is a single suspect who could deviate to achieve this move (i.e. move to the successor)
@@ -111,30 +116,20 @@ public final class SuspectGame<S> {
                   == (deviating != null);
             }
           }
-        }
-        assert currentSuspects.containsAll(successorSuspects);
-        if (!successorSuspects.isEmpty()) {
-          deviationSuccessors.add(new EveState<>(alternativeSuccessor, Set.copyOf(successorSuspects)));
+          assert currentSuspects.containsAll(successorSuspects);
+          if (!successorSuspects.isEmpty()) {
+            deviationSuccessors.add(new EveState<>(alternativeSuccessor, Set.copyOf(successorSuspects)));
+          }
         }
       });
-
-      assert deviationSuccessors.stream().map(EveState::historyState).anyMatch(proposedTransition.destination()::equals);
-      reachableByDeviation.put(Set.copyOf(deviationSuccessors), proposedTransition.move());
+      transitions.put(new AdamState<>(eveState, proposedMove), Set.copyOf(deviationSuccessors));
     });
 
-    Map<AdamState<S>, Set<EveState<S>>> transitions = reachableByDeviation.asMap().entrySet().stream()
-        .collect(Collectors.toUnmodifiableMap(e -> new AdamState<>(eveState, Set.copyOf(e.getValue())), Map.Entry::getKey));
-    assert transitions.values().stream()
+    assert eveState.suspects().containsAll(transitions.values().stream()
         .flatMap(Collection::stream)
         .map(EveState::suspects)
         .flatMap(Collection::stream)
-        .collect(Collectors.toSet()).equals(eveState.suspects()) : "Vanishing suspects";
-    assert transitions.values().stream()
-        .flatMap(Collection::stream)
-        .map(EveState::historyState)
-        .collect(Collectors.toSet())
-        .containsAll(game.transitions(eveState.historyState()).map(Transition::destination).collect(Collectors.toSet())) :
-        "Missing successors";
+        .collect(Collectors.toSet())) : "Re-appearing suspects";
     return Map.copyOf(transitions);
   }
 
@@ -144,26 +139,26 @@ public final class SuspectGame<S> {
 
   public static final class AdamState<S> {
     private final EveState<S> eveState;
-    private final Set<Move> moves;
+    private final Move move;
     private final int hashCode;
 
-    public AdamState(EveState<S> eveState, Set<Move> moves) {
+    public AdamState(EveState<S> eveState, Move move) {
       this.eveState = eveState;
-      this.moves = Set.copyOf(moves);
-      this.hashCode = eveState.hashCode() ^ Set.copyOf(moves).hashCode();
+      this.move = move;
+      this.hashCode = eveState.hashCode() ^ move.hashCode();
     }
 
     @Override
     public String toString() {
-      return "AS[%s]@[%s]".formatted(eveState.historyState(), moves);
+      return "AS[%s]@[%s]".formatted(eveState.historyState(), move);
     }
 
     public EveState<S> eveState() {
       return eveState;
     }
 
-    public Set<Move> moves() {
-      return moves;
+    public Move move() {
+      return move;
     }
 
     @Override
@@ -172,7 +167,7 @@ public final class SuspectGame<S> {
           || (obj instanceof SuspectGame.AdamState<?> that
           && hashCode == that.hashCode
           && eveState.equals(that.eveState)
-          && moves.equals(that.moves));
+          && move.equals(that.move));
     }
 
     @Override

@@ -6,6 +6,7 @@ import com.cges.graph.HistoryGame.HistoryState;
 import com.cges.model.Agent;
 import com.cges.model.ConcurrentGame;
 import com.cges.model.PayoffAssignment;
+import com.cges.model.Transition;
 import com.cges.output.DotFormatted;
 import java.util.BitSet;
 import java.util.Comparator;
@@ -50,7 +51,7 @@ public final class RunGraph<S> {
 
     LabelledFormula eveGoal = SimplifierRepository.SYNTACTIC_FIXPOINT.apply(LabelledFormula.of(
         Conjunction.of(Stream.concat(agents.stream().map(a -> payoffAssignment.isLoser(a) ? a.goal().not() : a.goal()),
-                Stream.of(suspectGame.historyGame().concurrentGame().goal().formula()))),
+            Stream.of(suspectGame.historyGame().concurrentGame().goal().formula()))),
         concurrentGame.atomicPropositions()));
     LiteralMapper.ShiftedLabelledFormula shifted = LiteralMapper.shiftLiterals(eveGoal);
     var translator = LtlTranslationRepository.defaultTranslation(
@@ -66,9 +67,10 @@ public final class RunGraph<S> {
   }
 
   public Set<RunState<S>> initialStates() {
-    if (deviationSolver.isWinning(historyGame.initialState())) {
+    HistoryState<S> initialState = historyGame.initialState();
+    if (historyGame.transitions(initialState).map(Transition::move).anyMatch(m -> deviationSolver.isWinning(initialState, m))) {
       return automaton.initialStates().stream()
-          .map(s -> new RunState<>(s, historyGame.initialState()))
+          .map(s -> new RunState<>(s, initialState))
           .collect(Collectors.toSet());
     }
     return Set.of();
@@ -95,11 +97,11 @@ public final class RunGraph<S> {
       return Set.of();
     }
     var transitions = historyGame.transitions(current.historyState())
-        .filter(t -> deviationSolver.isWinning(t.destination()))
+        .filter(t -> deviationSolver.isWinning(current.historyState(), t.move()))
         .flatMap(transition -> automatonEdges.stream().map(edge ->
             new RunTransition<>(new RunState<>(edge.successor(), transition.destination()), !edge.colours().isEmpty())))
         .collect(Collectors.toSet());
-    assert !transitions.isEmpty() : "No winning successor in state %s".formatted(current);
+    assert !transitions.isEmpty() : "No winning moves in state %s".formatted(current);
     return transitions;
   }
 

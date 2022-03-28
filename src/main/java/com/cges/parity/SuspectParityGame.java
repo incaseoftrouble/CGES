@@ -8,7 +8,6 @@ import com.cges.model.Agent;
 import de.tum.in.naturals.bitset.BitSets;
 import java.util.BitSet;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -78,13 +77,10 @@ public final class SuspectParityGame<S> implements ParityGame<PriorityState<S>> 
       Edge<Object> automatonEdge = dpa.edge(current.automatonState(), label);
       assert automatonEdge != null;
       int priority = maximumPriority - automatonEdge.colours().first().orElse(maximumPriority);
-      return suspectGame.successors(eveState).map(adam -> {
-        Iterator<EveState<S>> eveSuccessors = suspectGame.successors(adam).iterator();
-        var eveSuccessor = eveSuccessors.next();
-        return new PriorityState<>(automatonEdge.successor(), eveSuccessors.hasNext() ? adam : eveSuccessor, priority);
-      });
+      return suspectGame.successors(eveState).map(adam -> new PriorityState<>(automatonEdge.successor(), adam, priority));
     }
-    return suspectGame.successors(current.adam()).map(successor -> new PriorityState<>(current.automatonState(), successor, 0));
+    return Stream.concat(Stream.of(suspectGame.compliantSuccessor(current.adam())), suspectGame.deviationSuccessors(current.adam()))
+        .map(successor -> new PriorityState<>(current.automatonState(), successor, 0));
   }
 
   @Override
