@@ -6,7 +6,7 @@ import java.util.Objects;
 import java.util.stream.Collectors;
 import owl.ltl.Formula;
 
-public final class Agent {
+public final class Agent implements Comparable<Agent> {
   public enum Payoff {
     WINNING, LOSING, UNDEFINED;
 
@@ -51,6 +51,11 @@ public final class Agent {
 
   public Collection<Action> actions() {
     return actions.values();
+  }
+
+  @Override
+  public int compareTo(Agent o) {
+    return name.compareTo(o.name);
   }
 
   public Action action(String name) {

@@ -167,12 +167,25 @@ public final class Main implements Callable<Void> {
         .toList();
     log.log(Level.INFO, () -> "Solving took %s overall".formatted(overall));
     if (!solutionList.isEmpty()) {
-      writeIfPresent(writeDotSolution, solutionList, (list, stream) -> {
-        for (GameSolution<?> solution : list) {
-          DotWriter.writeSolution(solution, stream);
-          stream.println();
+      if (writeDotSolution != null) {
+        if (writeDotSolution.contains("%A"))
+        for (GameSolution<S> solution : solutionList) {
+          var destination = writeDotSolution.replaceAll("%A", game.agents().stream().sorted()
+              .map(solution.assignment()::map)
+              .map(Agent.Payoff::toString)
+              .collect(Collectors.joining()));
+          try(var stream = open(destination)) {
+            DotWriter.writeSolution(solution, stream);
+          }
+        } else {
+          writeIfPresent(writeDotSolution, solutionList, (list, stream) -> {
+            for (GameSolution<?> solution : list) {
+              DotWriter.writeSolution(solution, stream);
+              stream.println();
+            }
+          });
         }
-      });
+      }
     }
     if (input.validationSet != null) {
       validate(game, solutionList, input.validationSet);
