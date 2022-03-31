@@ -1,5 +1,7 @@
 package com.cges.output;
 
+import static com.cges.output.DotFormatted.toDotString;
+
 import com.cges.GameSolution;
 import com.cges.graph.HistoryGame;
 import com.cges.graph.HistoryGame.HistoryState;
@@ -46,7 +48,7 @@ public final class DotWriter {
     for (Object2IntMap.Entry<S> entry : ids.object2IntEntrySet()) {
       writer.append("MS_%d [label=\"%s\"]\n".formatted(
           entry.getIntValue(),
-          DotFormatted.toString(entry.getKey())
+          toDotString(entry.getKey())
       ));
     }
 
@@ -96,7 +98,7 @@ public final class DotWriter {
       writer.append("HS_%d [color=%s,fillcolor=white,label=\"%s\"]\n".formatted(
           entry.getIntValue(),
           winning == null ? "black" : (winning.test(entry.getKey()) ? "green" : "red"),
-          DotFormatted.toString(entry.getKey())
+          toDotString(entry.getKey())
       ));
     }
     for (Object2IntMap.Entry<HistoryState<S>> entry : ids.object2IntEntrySet()) {
@@ -107,7 +109,7 @@ public final class DotWriter {
         writer.append("HS_%d -> HS_%d [label=\"%s\"]\n".formatted(
             entry.getIntValue(),
             ids.getInt(moveEntry.getKey()),
-            moveEntry.getValue().stream().map(DotFormatted::toString).collect(Collectors.joining(", "))));
+            moveEntry.getValue().stream().map(DotFormatted::toDotString).collect(Collectors.joining(", "))));
       }
     }
     writer.append("}");
@@ -131,16 +133,22 @@ public final class DotWriter {
         }
       });
     }
+    List<Agent> agents = game.historyGame().concurrentGame().agents().stream().sorted(Comparator.comparing(Agent::name)).toList();
+    List<String> propositions = game.historyGame().concurrentGame().atomicPropositions();
 
     writer.append("digraph {\n");
     for (Object2IntMap.Entry<SuspectGame.EveState<S>> entry : ids.object2IntEntrySet()) {
       SuspectGame.EveState<S> eveState = entry.getKey();
-      writer.append("ES_%d [color=%s,fillcolor=white,label=\"%s -- %s\"]\n".formatted(
+      writer.append("ES_%d [color=%s,fillcolor=white,shape=record,label=\"%s\"]\n".formatted(
           entry.getIntValue(),
           winning == null ? "black" : (winning.test(eveState) ? "green" : "red"),
-          DotFormatted.toString(eveState.historyState()),
-          eveState.suspects().stream().map(Agent::name).sorted().collect(Collectors.joining(",")))
-      );
+          Stream.concat(Stream.of(
+                  toDotString(eveState.historyState().state()),
+                  toDotString(eveState.suspects().stream()
+                      .sorted(Comparator.comparing(Agent::name))
+                      .map(Agent::name).collect(Collectors.joining(",")))),
+              agents.stream().map(a -> a.name() + " " + toDotString(eveState.historyState().goal(a), propositions))
+          ).map(DotFormatted::toRecordString).collect(Collectors.joining("|", "{", "}"))));
     }
 
     for (Object2IntMap.Entry<SuspectGame.EveState<S>> entry : ids.object2IntEntrySet()) {
@@ -158,13 +166,13 @@ public final class DotWriter {
         writer.append("ES_%d -> ES_%d [label=\"%s\",style=dotted]\n".formatted(
             entry.getIntValue(),
             ids.getInt(moveEntry.getKey()),
-            moveEntry.getValue().stream().map(DotFormatted::toString).collect(Collectors.joining(", "))));
+            moveEntry.getValue().stream().map(DotFormatted::toDotString).collect(Collectors.joining(", "))));
       }
       for (var moveEntry : compliantMoves.asMap().entrySet()) {
         writer.append("ES_%d -> ES_%d [label=\"%s\"]\n".formatted(
             entry.getIntValue(),
             ids.getInt(moveEntry.getKey()),
-            moveEntry.getValue().stream().map(DotFormatted::toString).collect(Collectors.joining(", "))));
+            moveEntry.getValue().stream().map(DotFormatted::toDotString).collect(Collectors.joining(", "))));
       }
     }
     writer.append("}");
@@ -174,7 +182,7 @@ public final class DotWriter {
       @Nullable Function<S, String> stateFormatter) {
     Object2IntMap<S> ids = new Object2IntOpenHashMap<>();
     game.forEachState(state -> ids.put(state, ids.size()));
-    Function<S, String> formatter = stateFormatter == null ? DotFormatted::toString : stateFormatter;
+    Function<S, String> formatter = stateFormatter == null ? DotFormatted::toDotString : stateFormatter;
 
     writer.append("digraph {\n");
     for (var entry : ids.object2IntEntrySet()) {
@@ -198,7 +206,7 @@ public final class DotWriter {
     game.states().forEach(state -> ids.put(state, ids.size()));
     writer.append("digraph {\n");
     for (var entry : ids.object2IntEntrySet()) {
-      writer.append("S_%d [label=\"%s\"]\n".formatted(entry.getIntValue(), DotFormatted.toString(entry.getKey())));
+      writer.append("S_%d [label=\"%s\"]\n".formatted(entry.getIntValue(), toDotString(entry.getKey())));
     }
     for (var entry : ids.object2IntEntrySet()) {
       SetMultimap<S, Move> movesBySuccessor = HashMultimap.create();
@@ -208,7 +216,7 @@ public final class DotWriter {
         writer.append("S_%d -> S_%d [label=\"%s\"]\n".formatted(
             entry.getIntValue(),
             ids.getInt(moveEntry.getKey()),
-            moveEntry.getValue().stream().map(DotFormatted::toString).collect(Collectors.joining(", "))));
+            moveEntry.getValue().stream().map(DotFormatted::toDotString).collect(Collectors.joining(", "))));
       }
     }
     writer.append("}");
@@ -228,13 +236,13 @@ public final class DotWriter {
     loopStates.forEach(runState -> ids.put(runState, ids.size()));
     ids.forEach((runState, id) -> {
       HistoryState<S> historyState = runState.historyState();
-      String label = Stream.concat(Stream.concat(Stream.of(DotFormatted.toRecordString(DotFormatted.toString(historyState.state()))),
+      String label = Stream.concat(Stream.concat(Stream.of(DotFormatted.toRecordString(toDotString(historyState.state()))),
                   suspectGame.historyGame().concurrentGame().agents().stream()
                       .filter(a -> !historyState.goal(a).equals(BooleanConstant.TRUE))
                       .map(a -> "%s %s".formatted(
                           DotFormatted.toRecordString(a.name()),
                           DotFormatted.toRecordString(LabelledFormula.of(historyState.goal(a), atomicPropositions).toString())))),
-              Stream.of(DotFormatted.toRecordString(DotFormatted.toString(runState.automatonState(), runGraph.automatonPropositions()))))
+              Stream.of(DotFormatted.toRecordString(toDotString(runState.automatonState(), runGraph.automatonPropositions()))))
           .collect(Collectors.joining("|", "{", "}"));
       writer.append("S_%d [shape=record,label=\"%s\"]\n".formatted(id, label));
     });
@@ -245,7 +253,7 @@ public final class DotWriter {
           .filter(s -> s.historyState().equals(historySuccessor)).findAny()
           .orElseThrow();
 
-      writer.append("S_%d -> S_%d [label=\"%s\"];\n".formatted(id, ids.getInt(runSuccessor), DotFormatted.toString(move)));
+      writer.append("S_%d -> S_%d [label=\"%s\"];\n".formatted(id, ids.getInt(runSuccessor), toDotString(move)));
     });
 
     writer.append("}");
@@ -285,35 +293,35 @@ public final class DotWriter {
 
     loopIds.forEach((runState, id) -> {
       HistoryState<S> historyState = runState.historyState();
-      String label = Stream.concat(Stream.concat(Stream.of(DotFormatted.toRecordString(DotFormatted.toString(historyState.state()))),
+      String label = Stream.concat(Stream.concat(Stream.of(DotFormatted.toRecordString(toDotString(historyState.state()))),
                   suspectGame.historyGame().concurrentGame().agents().stream().sorted(Comparator.comparing(Agent::name))
                       .filter(a -> !historyState.goal(a).equals(BooleanConstant.TRUE))
                       .map(a -> "%s: %s".formatted(
                           DotFormatted.toRecordString(a.name()),
-                          DotFormatted.toRecordString(DotFormatted.toString(historyState.goal(a), atomicPropositions))))),
-              Stream.of(DotFormatted.toRecordString(DotFormatted.toString(runState.automatonState(), runGraph.automatonPropositions()))))
+                          DotFormatted.toRecordString(toDotString(historyState.goal(a), atomicPropositions))))),
+              Stream.of(DotFormatted.toRecordString(toDotString(runState.automatonState(), runGraph.automatonPropositions()))))
           .collect(Collectors.joining("|", "{", "}"));
       writer.append("HS_%d [shape=record,label=\"%s\"]\n".formatted(id, label));
     });
     gameIds.forEach((gameState, id) -> {
       if (gameState.isEve()) {
-        String eveState = Stream.concat(Stream.of(DotFormatted.toString(gameState.eve().gameState())),
+        String eveState = Stream.concat(Stream.of(toDotString(gameState.eve().gameState())),
                 gameState.eve().suspects().stream().sorted(Comparator.comparing(Agent::name)).map(a -> "%s: %s".formatted(a.name(),
-                    DotFormatted.toString(gameState.eve().historyState().goal(a), atomicPropositions))))
+                    toDotString(gameState.eve().historyState().goal(a), atomicPropositions))))
             .map(DotFormatted::toRecordString)
             .collect(Collectors.joining("|", "{", "}"));
         writer.append("GS_%d [shape=record,style=dotted,label=\"%s|%d\"]\n"
             .formatted(id, eveState, gameState.priority()));
       } else {
         writer.append("GS_%d [shape=record,style=dashed,label=\"%s|%d\"]\n"
-            .formatted(id, DotFormatted.toString(gameState.adam().move()), gameState.priority()));
+            .formatted(id, toDotString(gameState.adam().move()), gameState.priority()));
       }
     });
 
     loopIds.forEach((runState, id) -> {
       Move move = strategy.moves().get(runState);
       writer.append("HS_%d -> HS_%d [label=\"%s\",penwidth=2];\n".formatted(id, loopIds.getInt(lasso.successor(runState)),
-          DotFormatted.toString(move)));
+          toDotString(move)));
       punishmentStrategy.initialStates(runState.historyState(), move)
           .stream().filter(s -> !s.eve().historyState().equals(lasso.successor(runState).historyState()))
           .forEach(punishmentState -> writer.append("HS_%d -> GS_%d [style=dotted];\n".formatted(id, gameIds.getInt(punishmentState))));

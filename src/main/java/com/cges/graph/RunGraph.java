@@ -137,12 +137,12 @@ public final class RunGraph<S> {
                 ? goalString
                 : "%s...%s".formatted(goalString.substring(0, 7), goalString.substring(goalLength - 7));
           }).collect(Collectors.joining(",", "[", "]"));
-      var automatonString = DotFormatted.toString(automatonState);
+      var automatonString = DotFormatted.toDotString(automatonState);
       int automatonLength = automatonString.length();
       if (automatonLength > 20) {
         automatonString = "%s...%s".formatted(automatonString.substring(0, 7), automatonString.substring(automatonLength - 7));
       }
-      return "%s: %s x %s".formatted(DotFormatted.toString(historyState.state()), goalsString, automatonString);
+      return "%s: %s x %s".formatted(DotFormatted.toDotString(historyState.state()), goalsString, automatonString);
     }
   }
 }

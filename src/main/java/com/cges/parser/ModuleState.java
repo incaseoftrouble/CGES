@@ -32,7 +32,7 @@ public final class ModuleState<S> implements DotFormatted {
 
   @Override
   public String dotString() {
-    return Arrays.stream(states).map(DotFormatted::toString).collect(Collectors.joining(","));
+    return Arrays.stream(states).map(DotFormatted::toDotString).collect(Collectors.joining(","));
   }
 
   public List<S> states() {

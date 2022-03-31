@@ -12,12 +12,12 @@ import owl.ltl.visitors.PrintVisitor;
 public interface DotFormatted {
   String dotString();
 
-  static String toString(Object object) {
+  static String toDotString(Object object) {
     if (object instanceof Optional<?> optional) {
-      return optional.map(DotFormatted::toString).orElse("/");
+      return optional.map(DotFormatted::toDotString).orElse("/");
     }
     if (object instanceof Either<?,?> either) {
-      return either.map(DotFormatted::toString, DotFormatted::toString);
+      return either.map(DotFormatted::toDotString, DotFormatted::toDotString);
     }
     if (object instanceof LabelledFormula formula) {
       return PrintVisitor.toString(SimplifierRepository.SYNTACTIC_FIXPOINT.apply(formula), false);
@@ -28,18 +28,18 @@ public interface DotFormatted {
     return (object instanceof DotFormatted format) ? format.dotString() : object.toString();
   }
 
-  static String toString(Object object, List<String> propositions) {
+  static String toDotString(Object object, List<String> propositions) {
     if (object instanceof Optional<?> optional) {
-      return optional.map(o -> toString(o, propositions)).orElse("/");
+      return optional.map(o -> toDotString(o, propositions)).orElse("/");
     }
     if (object instanceof Either<?,?> either) {
-      return either.map(o -> toString(o, propositions), o -> toString(o, propositions));
+      return either.map(o -> toDotString(o, propositions), o -> toDotString(o, propositions));
     }
     if (object instanceof LabelledFormula formula) {
       return PrintVisitor.toString(SimplifierRepository.SYNTACTIC_FIXPOINT.apply(formula), false);
     }
     if (object instanceof Formula formula) {
-      return toString(LabelledFormula.of(SimplifierRepository.SYNTACTIC_FIXPOINT.apply(formula), propositions), propositions);
+      return toDotString(LabelledFormula.of(SimplifierRepository.SYNTACTIC_FIXPOINT.apply(formula), propositions), propositions);
     }
     return (object instanceof DotFormatted format) ? format.dotString() : object.toString();
   }
