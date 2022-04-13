@@ -34,8 +34,7 @@ public final class ModuleParser {
     String gameName = requireNonNull(json.getAsJsonPrimitive("name"), "Missing name").getAsString();
     List<String> propositions = stream(requireNonNull(json.getAsJsonArray("ap"), "Missing atomic propositions"))
         .map(JsonElement::getAsString).toList();
-    Map<String, Integer> propositionIndices = new HashMap<>();
-    Indices.forEachIndexed(propositions, (index, proposition) -> propositionIndices.put(proposition, index));
+    var propositionIndices = Indices.ids(propositions);
     BddSetFactory factory = JBddSupplier.JBDD_SUPPLIER_INSTANCE.getBddSetFactory();
     FormulaParser visitor = new FormulaParser(factory, propositions);
 
@@ -77,7 +76,7 @@ public final class ModuleParser {
         checkArgument(moduleLabels.containsAll(labels), "State %s of module %s labeled by %s",
             stateName, moduleName, Sets.difference(labels, moduleLabels));
         BitSet labelSet = new BitSet();
-        labels.stream().map(propositionIndices::get).forEach(labelSet::set);
+        labels.stream().map(propositionIndices::getInt).forEach(labelSet::set);
         State state = new State(stateName);
         stateLabels.put(state, labelSet);
 

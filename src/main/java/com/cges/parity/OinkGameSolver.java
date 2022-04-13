@@ -5,6 +5,8 @@ import static java.util.Objects.requireNonNull;
 
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.common.util.concurrent.Uninterruptibles;
+import de.tum.in.naturals.map.Nat2ObjectDenseArrayMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.ints.IntSet;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
@@ -14,16 +16,13 @@ import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
-import java.util.ArrayDeque;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
-import java.util.Queue;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -64,39 +63,22 @@ public final class OinkGameSolver {
   public <S> Solution<S> solve(ParityGame<S> game) {
     Object2IntMap<S> oinkNumbering = new Object2IntOpenHashMap<>();
     oinkNumbering.defaultReturnValue(-1);
-    oinkNumbering.put(game.initialState(), 0);
-
     List<S> reverseMapping = new ArrayList<>();
-    reverseMapping.add(game.initialState());
-    Queue<Indexed<S>> queue = new ArrayDeque<>(List.of(new Indexed<>(game.initialState(), 0)));
-    IntSet[] successorIdsBuild = new IntSet[128];
-
-    while (!queue.isEmpty()) {
-      Indexed<S> state = queue.poll();
-      assert state.index() == oinkNumbering.getInt(state.object());
-
+    game.forEachState(s -> {
+      int id = oinkNumbering.size();
+      oinkNumbering.put(s, id);
+      reverseMapping.add(s);
+    });
+    Int2ObjectMap<IntSet> successorIds = new Nat2ObjectDenseArrayMap<>(128);
+    oinkNumbering.forEach((state, id) -> {
       IntSet stateSuccessorIds = new IntOpenHashSet();
-      game.successors(state.object()).distinct().forEach(successor -> {
-        int newId = oinkNumbering.size();
-        int existingId = oinkNumbering.putIfAbsent(successor, newId);
-        if (existingId == -1) {
-          reverseMapping.add(successor);
-          queue.add(new Indexed<>(successor, newId));
-          stateSuccessorIds.add(newId);
-        } else {
-          stateSuccessorIds.add(existingId);
-        }
-      });
-      if (successorIdsBuild.length <= state.index()) {
-        successorIdsBuild = Arrays.copyOf(successorIdsBuild, Math.max(state.index() + 1, successorIdsBuild.length * 2));
-      }
-      successorIdsBuild[state.index()] = stateSuccessorIds;
-    }
-    assert oinkNumbering.object2IntEntrySet().stream().allMatch(entry -> entry.getKey().equals(reverseMapping.get(entry.getIntValue())));
+      game.successors(state).mapToInt(oinkNumbering::getInt).forEach(stateSuccessorIds::add);
+      successorIds.put(id.intValue(), stateSuccessorIds);
+    });
 
-    IntSet[] successorIds = successorIdsBuild;
+    assert oinkNumbering.object2IntEntrySet().stream().allMatch(entry -> entry.getKey().equals(reverseMapping.get(entry.getIntValue())));
     assert IntStream.range(0, oinkNumbering.size()).allMatch(i ->
-            game.successors(reverseMapping.get(i)).map(oinkNumbering::getInt).collect(Collectors.toSet()).equals(successorIds[i]));
+            game.successors(reverseMapping.get(i)).map(oinkNumbering::getInt).collect(Collectors.toSet()).equals(successorIds.get(i)));
 
     ProcessBuilder oinkProcessBuilder = new ProcessBuilder(OINK_EXECUTION);
     oinkProcessBuilder.redirectErrorStream(true);
@@ -154,7 +136,7 @@ public final class OinkGameSolver {
         writer.append(String.valueOf(index)).append(' ')
             .append(String.valueOf(game.priority(state))).append(' ')
             .append(String.valueOf(game.owner(state).id()));
-        var successorIterator = successorIds[index].intIterator();
+        var successorIterator = successorIds.get(index).intIterator();
         if (successorIterator.hasNext()) {
           writer.append(' ').append(String.valueOf(successorIterator.nextInt()));
           while (successorIterator.hasNext()) {

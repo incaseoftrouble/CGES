@@ -40,7 +40,7 @@ public final class SuspectGame<S> {
   }
 
   public Stream<AdamState<S>> successors(EveState<S> eveState) {
-    return Set.copyOf(transitions.computeIfAbsent(eveState, this::computeDeviatingSuccessors).keySet()).stream();
+    return game.transitions(eveState.historyState()).map(Transition::move).map(move -> new AdamState<>(eveState, move));
   }
 
   public Stream<EveState<S>> successors(AdamState<S> adamState) {
@@ -58,7 +58,7 @@ public final class SuspectGame<S> {
 
   public Stream<EveState<S>> eveSuccessors(EveState<S> eveState) {
     return Stream.concat(transitions.computeIfAbsent(eveState, this::computeDeviatingSuccessors)
-        .values().stream().flatMap(Collection::stream),
+            .values().stream().flatMap(Collection::stream),
         game.transitions(eveState.historyState()).map(t -> new EveState<S>(t.destination(), eveState.suspects())));
   }
 

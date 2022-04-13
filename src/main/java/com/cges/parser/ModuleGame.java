@@ -27,7 +27,7 @@ import owl.ltl.LabelledFormula;
 public class ModuleGame<S> implements ConcurrentGame<ModuleState<S>> {
   private static <S> BitSet label(ModuleState<S> state, List<Module<S>> modules) {
     BitSet set = new BitSet();
-    Indices.forEachIndexed(state.states(), (index, agentState) -> set.or(modules.get(index).labels(agentState)));
+    Indices.forEachIndexed(state.states(), (agentState, index) -> set.or(modules.get(index).labels(agentState)));
     return set;
   }
 
@@ -50,7 +50,7 @@ public class ModuleGame<S> implements ConcurrentGame<ModuleState<S>> {
     this.goal = goal;
     this.agents = this.modules.stream().map(Module::agent).collect(Collectors.toUnmodifiableSet());
     Map<Agent, Integer> agentIndices = new HashMap<>();
-    Indices.forEachIndexed(this.modules, (index, module) -> agentIndices.put(module.agent(), index));
+    Indices.forEachIndexed(this.modules, (module, index) -> agentIndices.put(module.agent(), index));
 
     assert Set.copyOf(agentIndices.values()).size() == agents.size();
     this.agentIndices = Map.copyOf(agentIndices);

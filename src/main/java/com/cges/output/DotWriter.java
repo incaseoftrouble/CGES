@@ -271,7 +271,7 @@ public final class DotWriter {
     writer.append("digraph {\n");
     Set<RunGraph.RunState<S>> loopStates = lasso.states(false).collect(Collectors.toSet());
     Set<PriorityState<S>> reachableGameStates = loopStates.stream()
-        .flatMap(runState -> punishmentStrategy.initialStates(runState.historyState(), moves.get(runState))
+        .flatMap(runState -> punishmentStrategy.states(runState.historyState(), moves.get(runState))
             .stream().filter(s -> !s.eve().historyState().equals(lasso.successor(runState).historyState())))
         .collect(Collectors.toSet());
     Queue<PriorityState<S>> queue = new ArrayDeque<>(reachableGameStates);
@@ -320,9 +320,9 @@ public final class DotWriter {
 
     loopIds.forEach((runState, id) -> {
       Move move = strategy.moves().get(runState);
-      writer.append("HS_%d -> HS_%d [label=\"%s\",penwidth=2];\n".formatted(id, loopIds.getInt(lasso.successor(runState)),
-          toDotString(move)));
-      punishmentStrategy.initialStates(runState.historyState(), move)
+      writer.append("HS_%d -> HS_%d [label=\"%s\",penwidth=2];\n"
+          .formatted(id, loopIds.getInt(lasso.successor(runState)), toDotString(move)));
+      punishmentStrategy.states(runState.historyState(), move)
           .stream().filter(s -> !s.eve().historyState().equals(lasso.successor(runState).historyState()))
           .forEach(punishmentState -> writer.append("HS_%d -> GS_%d [style=dotted];\n".formatted(id, gameIds.getInt(punishmentState))));
     });

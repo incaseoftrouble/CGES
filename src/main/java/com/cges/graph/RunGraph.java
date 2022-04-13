@@ -6,7 +6,6 @@ import com.cges.graph.HistoryGame.HistoryState;
 import com.cges.model.Agent;
 import com.cges.model.ConcurrentGame;
 import com.cges.model.PayoffAssignment;
-import com.cges.model.Transition;
 import com.cges.output.DotFormatted;
 import java.util.BitSet;
 import java.util.Comparator;
@@ -68,7 +67,7 @@ public final class RunGraph<S> {
 
   public Set<RunState<S>> initialStates() {
     HistoryState<S> initialState = historyGame.initialState();
-    if (historyGame.transitions(initialState).map(Transition::move).anyMatch(m -> deviationSolver.isWinning(initialState, m))) {
+    if (deviationSolver.winningMoves(initialState).findAny().isPresent()) {
       return automaton.initialStates().stream()
           .map(s -> new RunState<>(s, initialState))
           .collect(Collectors.toSet());
@@ -96,8 +95,9 @@ public final class RunGraph<S> {
     if (automatonEdges.isEmpty()) {
       return Set.of();
     }
-    var transitions = historyGame.transitions(current.historyState())
-        .filter(t -> deviationSolver.isWinning(current.historyState(), t.move()))
+    HistoryState<S> historyState = current.historyState();
+    var transitions = historyGame.transitions(historyState)
+        .filter(t -> deviationSolver.isWinning(historyState, t.move()))
         .flatMap(transition -> automatonEdges.stream().map(edge ->
             new RunTransition<>(new RunState<>(edge.successor(), transition.destination()), !edge.colours().isEmpty())))
         .collect(Collectors.toSet());

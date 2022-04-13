@@ -6,7 +6,7 @@ import com.cges.parity.PriorityState;
 import java.util.Set;
 
 public interface PunishmentStrategy<S> {
-  Set<PriorityState<S>> initialStates(HistoryGame.HistoryState<S> state, Move proposedMove);
+  Set<PriorityState<S>> states(HistoryGame.HistoryState<S> state, Move proposedMove);
 
   PriorityState<S> move(PriorityState<S> state);
 
