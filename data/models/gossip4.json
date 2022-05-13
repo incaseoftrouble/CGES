@@ -1,12 +1,13 @@
 {
   "name": "gossip4",
-  "type": "module",
   "ap": [
     "g1",
     "g2",
     "g3",
     "g4"
   ],
+  "type": "module",
+  "goal": "F G (g1 & g2 & g3 & g4)",
   "modules": {
     "A1": {
       "goal": "G F g1",
@@ -49,7 +50,7 @@
             {
               "action": "g",
               "guard": "g2 | g3 | g4",
-              "to": "s2"
+              "to": "s1"
             }
           ]
         }
@@ -96,7 +97,7 @@
             {
               "action": "g",
               "guard": "g1 | g3 | g4",
-              "to": "s2"
+              "to": "s1"
             }
           ]
         }
@@ -143,7 +144,7 @@
             {
               "action": "g",
               "guard": "g1 | g2 | g4",
-              "to": "s2"
+              "to": "s1"
             }
           ]
         }
@@ -190,7 +191,7 @@
             {
               "action": "g",
               "guard": "g1 | g2 | g3",
-              "to": "s2"
+              "to": "s1"
             }
           ]
         }

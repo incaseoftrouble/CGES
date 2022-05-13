@@ -7,6 +7,7 @@ if __name__ == "__main__":
         "name": f"gossip{n}",
         "ap": [f"g{i}" for i in range(1, n + 1)],
         "type": "module",
+        "goal": f"F G ({' & '.join(f'g{i}' for i in range(1, n + 1))})",
         "modules": {
             f"A{i}": {
                 "goal": f"G F g{i}",
@@ -41,7 +42,7 @@ if __name__ == "__main__":
                             {
                                 "action": "g",
                                 "guard": " | ".join(f"g{j}" for j in range(1, n+1) if j != i),
-                                "to": "s2"
+                                "to": "s1"
                             }
                         ]
                     }

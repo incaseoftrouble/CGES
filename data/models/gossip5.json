@@ -1,12 +1,14 @@
 {
-  "name": "gossip3",
+  "name": "gossip5",
   "ap": [
     "g1",
     "g2",
-    "g3"
+    "g3",
+    "g4",
+    "g5"
   ],
   "type": "module",
-  "goal": "F G (g1 & g2 & g3)",
+  "goal": "F G (g1 & g2 & g3 & g4 & g5)",
   "modules": {
     "A1": {
       "goal": "G F g1",
@@ -43,12 +45,12 @@
           "transitions": [
             {
               "action": "w",
-              "guard": "!g2 & !g3",
+              "guard": "!g2 & !g3 & !g4 & !g5",
               "to": "s2"
             },
             {
               "action": "g",
-              "guard": "g2 | g3",
+              "guard": "g2 | g3 | g4 | g5",
               "to": "s1"
             }
           ]
@@ -90,12 +92,12 @@
           "transitions": [
             {
               "action": "w",
-              "guard": "!g1 & !g3",
+              "guard": "!g1 & !g3 & !g4 & !g5",
               "to": "s2"
             },
             {
               "action": "g",
-              "guard": "g1 | g3",
+              "guard": "g1 | g3 | g4 | g5",
               "to": "s1"
             }
           ]
@@ -137,12 +139,106 @@
           "transitions": [
             {
               "action": "w",
-              "guard": "!g1 & !g2",
+              "guard": "!g1 & !g2 & !g4 & !g5",
               "to": "s2"
             },
             {
               "action": "g",
-              "guard": "g1 | g2",
+              "guard": "g1 | g2 | g4 | g5",
+              "to": "s1"
+            }
+          ]
+        }
+      }
+    },
+    "A4": {
+      "goal": "G F g4",
+      "payoff": "?",
+      "actions": [
+        "a",
+        "g",
+        "w"
+      ],
+      "labels": [
+        "g4"
+      ],
+      "initial": "s1",
+      "states": {
+        "s1": {
+          "labels": [],
+          "transitions": [
+            {
+              "action": "a",
+              "guard": "true",
+              "to": "s1"
+            },
+            {
+              "action": "g",
+              "guard": "true",
+              "to": "s2"
+            }
+          ]
+        },
+        "s2": {
+          "labels": [
+            "g4"
+          ],
+          "transitions": [
+            {
+              "action": "w",
+              "guard": "!g1 & !g2 & !g3 & !g5",
+              "to": "s2"
+            },
+            {
+              "action": "g",
+              "guard": "g1 | g2 | g3 | g5",
+              "to": "s1"
+            }
+          ]
+        }
+      }
+    },
+    "A5": {
+      "goal": "G F g5",
+      "payoff": "?",
+      "actions": [
+        "a",
+        "g",
+        "w"
+      ],
+      "labels": [
+        "g5"
+      ],
+      "initial": "s1",
+      "states": {
+        "s1": {
+          "labels": [],
+          "transitions": [
+            {
+              "action": "a",
+              "guard": "true",
+              "to": "s1"
+            },
+            {
+              "action": "g",
+              "guard": "true",
+              "to": "s2"
+            }
+          ]
+        },
+        "s2": {
+          "labels": [
+            "g5"
+          ],
+          "transitions": [
+            {
+              "action": "w",
+              "guard": "!g1 & !g2 & !g3 & !g4",
+              "to": "s2"
+            },
+            {
+              "action": "g",
+              "guard": "g1 | g2 | g3 | g4",
               "to": "s1"
             }
           ]

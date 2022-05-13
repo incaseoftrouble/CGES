@@ -1,45 +1,54 @@
 {
   "name": "gossip2",
-  "type": "module",
   "ap": [
     "g1",
     "g2"
   ],
+  "type": "module",
+  "goal": "F G (g1 & g2)",
   "modules": {
     "A1": {
       "goal": "G F g1",
       "payoff": "?",
-      "actions": ["a", "g", "w"],
-      "labels": ["g1"],
-      "initial": "s11",
+      "actions": [
+        "a",
+        "g",
+        "w"
+      ],
+      "labels": [
+        "g1"
+      ],
+      "initial": "s1",
       "states": {
-        "s11": {
+        "s1": {
           "labels": [],
           "transitions": [
             {
               "action": "a",
               "guard": "true",
-              "to": "s11"
+              "to": "s1"
             },
             {
               "action": "g",
               "guard": "true",
-              "to": "s12"
+              "to": "s2"
             }
           ]
         },
-        "s12": {
-          "labels": ["g1"],
+        "s2": {
+          "labels": [
+            "g1"
+          ],
           "transitions": [
             {
               "action": "w",
               "guard": "!g2",
-              "to": "s12"
+              "to": "s2"
             },
             {
-              "action": "a",
+              "action": "g",
               "guard": "g2",
-              "to": "s11"
+              "to": "s1"
             }
           ]
         }
@@ -48,37 +57,45 @@
     "A2": {
       "goal": "G F g2",
       "payoff": "?",
-      "actions": ["a", "g", "w"],
-      "labels": ["g2"],
-      "initial": "s21",
+      "actions": [
+        "a",
+        "g",
+        "w"
+      ],
+      "labels": [
+        "g2"
+      ],
+      "initial": "s1",
       "states": {
-        "s21": {
+        "s1": {
           "labels": [],
           "transitions": [
             {
               "action": "a",
               "guard": "true",
-              "to": "s21"
+              "to": "s1"
             },
             {
               "action": "g",
               "guard": "true",
-              "to": "s22"
+              "to": "s2"
             }
           ]
         },
-        "s22": {
-          "labels": ["g2"],
+        "s2": {
+          "labels": [
+            "g2"
+          ],
           "transitions": [
             {
               "action": "w",
               "guard": "!g1",
-              "to": "s22"
+              "to": "s2"
             },
             {
-              "action": "a",
+              "action": "g",
               "guard": "g1",
-              "to": "s21"
+              "to": "s1"
             }
           ]
         }
