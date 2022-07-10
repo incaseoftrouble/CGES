@@ -72,6 +72,12 @@ public final class DeviationSolver<S> implements PunishmentStrategy<S> {
     var gameSolution = solveParityGame(eveState, goal);
     parityGame = gameSolution.parityGame();
     paritySolution = gameSolution.solution();
+    assert paritySolution.oddWinning().stream().allMatch(s -> {
+      if (parityGame.owner(s) == Player.EVEN) {
+        return parityGame.successors(s).allMatch(paritySolution.oddWinning()::contains);
+      }
+      return parityGame.successors(s).anyMatch(paritySolution.oddWinning()::contains);
+    }) : "Parity game solution is inconsistent";
   }
 
   private LabelledFormula eveGoal(HistoryState<S> historyState) {
@@ -79,13 +85,15 @@ public final class DeviationSolver<S> implements PunishmentStrategy<S> {
         .map(a -> Conjunction.of(GOperator.of(agentLiterals.get(a)), historyState.goal(a)))).not(), atomicPropositions);
   }
 
-  public Stream<Move> winningMoves(HistoryState<S> historyState) {
+  public Stream<Move> movesWithoutLosingDeviation(HistoryState<S> historyState) {
     return suspectGame.historyGame().transitions(historyState)
         .map(Transition::move)
-        .filter(m -> isWinning(historyState, m));
+        .filter(m -> hasNoLosingDeviation(historyState, m));
   }
 
-  public boolean isWinning(HistoryState<S> historyState, Move proposedMove) {
+  public boolean hasNoLosingDeviation(HistoryState<S> historyState, Move proposedMove) {
+    assert parityGame.deviationStates(historyState, proposedMove).map(paritySolution::winner).collect(Collectors.toSet()).size() <= 1 :
+        parityGame.deviationStates(historyState, proposedMove).collect(Collectors.toMap(Function.identity(), paritySolution::winner));
     return parityGame.deviationStates(historyState, proposedMove).map(paritySolution::winner).allMatch(Player.ODD::equals);
   }
 

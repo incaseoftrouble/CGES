@@ -164,6 +164,7 @@ public final class SuspectParityGame<S> implements ParityGame<PriorityState<S>> 
   public Stream<PriorityState<S>> deviationStates(HistoryGame.HistoryState<S> historyState, Move move) {
     assert historyStateMap.containsKey(historyState);
     var states = historyStateMap.get(historyState);
+    assert !states.isEmpty();
     return states.stream().map(s -> this.deviationSuccessors.get(s, move))
         .peek(Objects::requireNonNull)
         .flatMap(Collection::stream);

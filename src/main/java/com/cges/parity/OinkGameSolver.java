@@ -73,6 +73,7 @@ public final class OinkGameSolver {
     oinkNumbering.forEach((state, id) -> {
       IntSet stateSuccessorIds = new IntOpenHashSet();
       game.successors(state).mapToInt(oinkNumbering::getInt).forEach(stateSuccessorIds::add);
+      assert stateSuccessorIds.intStream().allMatch(i -> i >= 0);
       successorIds.put(id.intValue(), stateSuccessorIds);
     });
 

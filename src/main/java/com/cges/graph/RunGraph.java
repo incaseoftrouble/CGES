@@ -67,7 +67,7 @@ public final class RunGraph<S> {
 
   public Set<RunState<S>> initialStates() {
     HistoryState<S> initialState = historyGame.initialState();
-    if (deviationSolver.winningMoves(initialState).findAny().isPresent()) {
+    if (deviationSolver.movesWithoutLosingDeviation(initialState).findAny().isPresent()) {
       return automaton.initialStates().stream()
           .map(s -> new RunState<>(s, initialState))
           .collect(Collectors.toSet());
@@ -92,17 +92,17 @@ public final class RunGraph<S> {
 
   public Set<RunTransition<S>> transitions(RunState<S> current) {
     Set<Edge<Object>> automatonEdges = automaton.edges(current.automatonState(), labels(current));
-    if (automatonEdges.isEmpty()) {
+    if (automatonEdges.isEmpty()) { // || (automatonEdges.size() == 1 && automatonEdges.iterator().next().successor().equals(Optional
+      // .empty()))) {
       return Set.of();
     }
     HistoryState<S> historyState = current.historyState();
-    var transitions = historyGame.transitions(historyState)
-        .filter(t -> deviationSolver.isWinning(historyState, t.move()))
+    assert historyGame.transitions(historyState).findAny().isPresent() : "No history successors in state %s".formatted(historyState);
+    return historyGame.transitions(historyState)
+        .filter(t -> deviationSolver.hasNoLosingDeviation(historyState, t.move()))
         .flatMap(transition -> automatonEdges.stream().map(edge ->
             new RunTransition<>(new RunState<>(edge.successor(), transition.destination()), !edge.colours().isEmpty())))
         .collect(Collectors.toSet());
-    assert !transitions.isEmpty() : "No winning moves in state %s".formatted(current);
-    return transitions;
   }
 
   public Set<RunState<S>> successors(RunState<S> state) {
