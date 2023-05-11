@@ -110,6 +110,7 @@ public final class ModuleParser {
         }
       }
 
+      checkArgument(stateLabels.containsKey(initialState), "Initial state has no defined transitions");
       for (var transitionEntry : transitions.entrySet()) {
         for (var transition : transitionEntry.getValue().keySet()) {
           checkArgument(stateLabels.containsKey(transition.destination()),
@@ -117,6 +118,7 @@ public final class ModuleParser {
               transitionEntry.getKey().name(), moduleName, transition.action().name(), transition.destination().name());
         }
       }
+      checkArgument(stateLabels.keySet().equals(transitions.keySet()));
       modules.add(new Module<>(agent, initialState, stateLabels, transitions));
     }
     return new ModuleGame<>(gameName, propositions, modules, goal);

@@ -37,13 +37,8 @@ import owl.translations.LtlTranslationRepository;
 import owl.translations.LtlTranslationRepository.Option;
 
 public final class DeviationSolver<S> implements PunishmentStrategy<S> {
-  private static final boolean CROSS_VALIDATE = false;
-
   private static final Function<LabelledFormula, Automaton<?, ? extends ParityAcceptance>> translation =
-      LtlTranslationRepository.LtlToDpaTranslation.SEJK16_EKRS17.translation(EnumSet.of(Option.SIMPLIFY_AUTOMATON));
-  private static final Function<LabelledFormula, Automaton<?, ? extends ParityAcceptance>> referenceTranslation =
-      LtlTranslationRepository.defaultTranslation(EnumSet.of(Option.COMPLETE),
-          LtlTranslationRepository.BranchingMode.DETERMINISTIC, ParityAcceptance.class);
+      LtlTranslationRepository.LtlToDpaTranslation.SEJK16_EKRS17.translation(EnumSet.of(Option.SIMPLIFY_AUTOMATON, Option.COMPLETE));
 
   private final SuspectGame<S> suspectGame;
   private final OinkGameSolver solver = new OinkGameSolver();
@@ -65,7 +60,7 @@ public final class DeviationSolver<S> implements PunishmentStrategy<S> {
     assert Set.copyOf(atomicPropositions).size() == atomicPropositions.size();
 
     var historyState = historyGame.initialState();
-    var eveState = new EveState<S>(historyState, losingAgents);
+    var eveState = new EveState<>(historyState, losingAgents);
     var goal = SimplifierRepository.SYNTACTIC_FAIRNESS.apply(LabelledFormula.of(Disjunction.of(losingAgents.stream()
         .map(a -> Conjunction.of(GOperator.of(agentLiterals.get(a)), historyState.goal(a)))).not(), atomicPropositions));
 
@@ -131,6 +126,9 @@ public final class DeviationSolver<S> implements PunishmentStrategy<S> {
     var automaton = (Automaton<Object, ParityAcceptance>) ParityUtil.convert(translation.apply(shifted.formula), Parity.MIN_EVEN);
     assert !automaton.states().isEmpty();
     var parityGame = SuspectParityGame.create(suspectGame, eveState, automaton);
+    if (parityGame.states().isEmpty()) {
+        return new ParitySolution<>(parityGame, new Solution<>(Set.of(), Map.of()));
+    }
     var paritySolution = solver.solve(parityGame);
     return new ParitySolution<>(parityGame, paritySolution);
   }

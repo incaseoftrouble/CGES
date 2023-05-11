@@ -22,10 +22,13 @@ import java.util.Map;
 import java.util.Queue;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import owl.ltl.LabelledFormula;
 
 public class ModuleGame<S> implements ConcurrentGame<ModuleState<S>> {
   private static <S> BitSet label(ModuleState<S> state, List<Module<S>> modules) {
+    assert IntStream.range(0, state.states().size())
+        .allMatch(i -> modules.get(i).states().contains(state.states().get(i)));
     BitSet set = new BitSet();
     Indices.forEachIndexed(state.states(), (agentState, index) -> set.or(modules.get(index).labels(agentState)));
     return set;

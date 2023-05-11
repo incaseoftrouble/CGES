@@ -4,6 +4,8 @@ plugins {
     application
     idea
     antlr
+
+    id("com.diffplug.spotless") version "6.18.0"
 }
 
 group = "org.game"
@@ -31,6 +33,15 @@ idea {
 
 repositories {
     mavenCentral()
+}
+
+spotless {
+    java {
+        palantirJavaFormat()
+    }
+    groovyGradle {
+        greclipse()
+    }
 }
 
 dependencies {
