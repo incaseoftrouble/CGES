@@ -47,7 +47,7 @@ spotless {
 dependencies {
     // Owl
     implementation(files("lib/owl-21.0.jar", "lib/jhoafparser-1.1.1-patched.jar", "lib/jbdd-0.6.0.jar"))
-    // implementation("de.tum.in", "jbdd", "0.5.2")
+    implementation("de.tum.in", "jbdd", "0.5.2")
     implementation("de.tum.in", "naturals-util", "0.17.0")
     implementation("commons-cli", "commons-cli", "1.4")
     implementation("org.antlr", "antlr4-runtime", "4.8-1")
