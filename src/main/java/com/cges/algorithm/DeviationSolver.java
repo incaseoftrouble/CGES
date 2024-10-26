@@ -16,6 +16,7 @@ import com.cges.parity.Player;
 import com.cges.parity.PriorityState;
 import com.cges.parity.Solution;
 import com.cges.parity.SuspectParityGame;
+
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
@@ -25,6 +26,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
 import owl.automaton.Automaton;
 import owl.automaton.ParityUtil;
 import owl.automaton.acceptance.ParityAcceptance;
@@ -40,9 +42,12 @@ import owl.translations.LtlTranslationRepository.Option;
 
 public final class DeviationSolver<S> implements PunishmentStrategy<S> {
     private static final Logger logger = Logger.getLogger(DeviationSolver.class.getName());
+//    private static final Function<LabelledFormula, Automaton<?, ? extends ParityAcceptance>> translation =
+//            LtlTranslationRepository.LtlToDpaTranslation.DEFAULT.translation(
+//                    EnumSet.of(Option.SIMPLIFY_AUTOMATON, Option.COMPLETE));
     private static final Function<LabelledFormula, Automaton<?, ? extends ParityAcceptance>> translation =
-            LtlTranslationRepository.LtlToDpaTranslation.DEFAULT.translation(
-                    EnumSet.of(Option.SIMPLIFY_AUTOMATON, Option.COMPLETE));
+            LtlTranslationRepository.LtlToDpaTranslation.SEJK16_EKRS17.translation(
+                    EnumSet.of(Option.SIMPLIFY_AUTOMATON));
 
     private final SuspectGame<S> suspectGame;
     private final OinkGameSolver solver = new OinkGameSolver();
@@ -78,11 +83,11 @@ public final class DeviationSolver<S> implements PunishmentStrategy<S> {
         parityGame = gameSolution.parityGame();
         paritySolution = gameSolution.solution();
         assert paritySolution.oddWinning().stream().allMatch(s -> {
-                    if (parityGame.owner(s) == Player.EVEN) {
-                        return parityGame.successors(s).allMatch(paritySolution.oddWinning()::contains);
-                    }
-                    return parityGame.successors(s).anyMatch(paritySolution.oddWinning()::contains);
-                })
+            if (parityGame.owner(s) == Player.EVEN) {
+                return parityGame.successors(s).allMatch(paritySolution.oddWinning()::contains);
+            }
+            return parityGame.successors(s).anyMatch(paritySolution.oddWinning()::contains);
+        })
                 : "Parity game solution is inconsistent";
     }
 
@@ -104,14 +109,14 @@ public final class DeviationSolver<S> implements PunishmentStrategy<S> {
 
     public boolean hasNoLosingDeviation(HistoryState<S> historyState, Move proposedMove) {
         assert parityGame
-                                .deviationStates(historyState, proposedMove)
-                                .map(paritySolution::winner)
-                                .collect(Collectors.toSet())
-                                .size()
-                        <= 1
+                .deviationStates(historyState, proposedMove)
+                .map(paritySolution::winner)
+                .collect(Collectors.toSet())
+                .size()
+                <= 1
                 : parityGame
-                        .deviationStates(historyState, proposedMove)
-                        .collect(Collectors.toMap(Function.identity(), paritySolution::winner));
+                .deviationStates(historyState, proposedMove)
+                .collect(Collectors.toMap(Function.identity(), paritySolution::winner));
         return parityGame
                 .deviationStates(historyState, proposedMove)
                 .map(paritySolution::winner)
@@ -150,7 +155,8 @@ public final class DeviationSolver<S> implements PunishmentStrategy<S> {
                 : parityGame.successors(state).collect(Collectors.toSet());
     }
 
-    record ParitySolution<S>(SuspectParityGame<S> parityGame, Solution<PriorityState<S>> solution) {}
+    record ParitySolution<S>(SuspectParityGame<S> parityGame, Solution<PriorityState<S>> solution) {
+    }
 
     private ParitySolution<S> solveParityGame(EveState<S> eveState, LabelledFormula goal) {
         var shifted = LiteralMapper.shiftLiterals(goal);
@@ -160,7 +166,7 @@ public final class DeviationSolver<S> implements PunishmentStrategy<S> {
         assert !automaton.states().isEmpty();
         var parityGame = SuspectParityGame.create(suspectGame, eveState, automaton);
         if (parityGame.states().isEmpty()) {
-            logger.log(Level.INFO, "State {0} with goal {1} has no possible deviations", new Object[] {eveState, goal});
+            logger.log(Level.INFO, "State {0} with goal {1} has no possible deviations", new Object[]{eveState, goal});
             return new ParitySolution<>(parityGame, new Solution<>(Set.of(), Map.of()));
         }
         var paritySolution = solver.solve(parityGame);
