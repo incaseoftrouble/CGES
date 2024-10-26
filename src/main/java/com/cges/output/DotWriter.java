@@ -207,7 +207,11 @@ public final class DotWriter {
         writer.append("}");
     }
 
-    public static <S> void writeParityGame(
+
+    public static <S> void writeParityGame(ParityGame<S> game, PrintStream writer) {
+        writeParityGame(game, writer, null);
+    }
+    private static <S> void writeParityGame(
             ParityGame<S> game, PrintStream writer, @Nullable Function<S, String> stateFormatter) {
         Object2IntMap<S> ids = new Object2IntOpenHashMap<>();
         game.forEachState(state -> ids.put(state, ids.size()));
