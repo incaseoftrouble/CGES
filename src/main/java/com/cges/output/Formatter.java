@@ -7,12 +7,12 @@ import java.util.Comparator;
 import java.util.stream.Collectors;
 
 public final class Formatter {
-  private Formatter() {}
+    private Formatter() {}
 
-  public static String format(PayoffAssignment payoff, ConcurrentGame<?> game) {
-    return game.agents().stream()
-        .sorted(Comparator.comparing(Agent::name))
-        .map(a -> "%s:%s".formatted(a.name(), payoff.map(a)))
-        .collect(Collectors.joining(",", "[", "]"));
-  }
+    public static String format(PayoffAssignment payoff, ConcurrentGame<?> game) {
+        return game.agents().stream()
+                .sorted(Comparator.comparing(Agent::name))
+                .map(a -> "%s:%s".formatted(a.name(), payoff.map(a)))
+                .collect(Collectors.joining(",", "[", "]"));
+    }
 }

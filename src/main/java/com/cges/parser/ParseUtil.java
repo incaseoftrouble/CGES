@@ -20,32 +20,36 @@ import owl.bdd.BddSet;
 import owl.ltl.parser.TokenErrorListener;
 
 public final class ParseUtil {
-  private ParseUtil() {}
+    private ParseUtil() {}
 
-  static BddSet parse(String formula, PropositionalParserVisitor<BddSet> visitor) {
-    try {
-      PropositionalLexer lexer = new PropositionalLexer(CharStreams.fromString(formula));
-      lexer.removeErrorListener(ConsoleErrorListener.INSTANCE);
-      lexer.addErrorListener(new TokenErrorListener());
-      CommonTokenStream tokens = new CommonTokenStream(lexer);
-      PropositionalParser parser = new PropositionalParser(tokens);
-      parser.setErrorHandler(new BailErrorStrategy());
-      return visitor.visit(parser.formula());
-    } catch (ParseCancellationException e) {
-      throw new IllegalArgumentException("Failed to parse formula " + formula, e);
+    static BddSet parse(String formula, PropositionalParserVisitor<BddSet> visitor) {
+        try {
+            PropositionalLexer lexer = new PropositionalLexer(CharStreams.fromString(formula));
+            lexer.removeErrorListener(ConsoleErrorListener.INSTANCE);
+            lexer.addErrorListener(new TokenErrorListener());
+            CommonTokenStream tokens = new CommonTokenStream(lexer);
+            PropositionalParser parser = new PropositionalParser(tokens);
+            parser.setErrorHandler(new BailErrorStrategy());
+            return visitor.visit(parser.formula());
+        } catch (ParseCancellationException e) {
+            throw new IllegalArgumentException("Failed to parse formula " + formula, e);
+        }
     }
-  }
 
-  static Stream<JsonElement> stream(JsonArray array) {
-    return StreamSupport.stream(Spliterators.spliterator(array.iterator(), array.size(),
-        Spliterator.IMMUTABLE | Spliterator.SIZED | Spliterator.ORDERED), false);
-  }
-
-  static Agent.Payoff parsePayoff(JsonPrimitive payoffPrimitive) {
-    if (payoffPrimitive.isBoolean()) {
-      return payoffPrimitive.getAsBoolean() ? Agent.Payoff.WINNING : Agent.Payoff.LOSING;
+    static Stream<JsonElement> stream(JsonArray array) {
+        return StreamSupport.stream(
+                Spliterators.spliterator(
+                        array.iterator(),
+                        array.size(),
+                        Spliterator.IMMUTABLE | Spliterator.SIZED | Spliterator.ORDERED),
+                false);
     }
-    String payoffString = payoffPrimitive.getAsString();
-    return Agent.Payoff.parse(payoffString);
-  }
+
+    static Agent.Payoff parsePayoff(JsonPrimitive payoffPrimitive) {
+        if (payoffPrimitive.isBoolean()) {
+            return payoffPrimitive.getAsBoolean() ? Agent.Payoff.WINNING : Agent.Payoff.LOSING;
+        }
+        String payoffString = payoffPrimitive.getAsString();
+        return Agent.Payoff.parse(payoffString);
+    }
 }
