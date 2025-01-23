@@ -68,3 +68,7 @@ tasks.generateGrammarSource {
     arguments.addAll(listOf("-visitor", "-long-messages", "-lib", "src/main/antlr"))
     outputDirectory = outputDirectory.resolve("com/cges/grammar")
 }
+
+tasks.named<Jar>("sourcesJar") {
+    dependsOn("generateGrammarSource")
+}
