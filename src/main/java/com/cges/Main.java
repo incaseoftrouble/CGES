@@ -49,22 +49,18 @@ import javax.annotation.Nullable;
 
 import picocli.CommandLine;
 
-@Command(
-    name = "cges",
-    mixinStandardHelpOptions = true,
-    version = "Concurrent Game Equilibrium Solver 0.1",
-    description = "Computes Nash-equilibria for concurrent games")
+@Command(name = "cges", mixinStandardHelpOptions = true, version = "Concurrent Game Equilibrium Solver 0.1", description = "Computes Nash-equilibria for concurrent games")
 public final class Main implements Callable<Void> {
     private static final Logger log = Logger.getLogger(Main.class.getName());
 
     private static PrintStream open(String output) throws IOException {
         return "-".equals(output)
-            ? System.out
-            : new PrintStream(new BufferedOutputStream(Files.newOutputStream(Path.of(output))));
+                        ? System.out
+                        : new PrintStream(new BufferedOutputStream(Files.newOutputStream(Path.of(output))));
     }
 
     private static <S> void writeIfPresent(@Nullable String output, S object, BiConsumer<S, PrintStream> formatter)
-        throws IOException {
+                    throws IOException {
         if (output != null) {
             try (var stream = open(output)) {
                 formatter.accept(object, stream);
@@ -73,51 +69,36 @@ public final class Main implements Callable<Void> {
     }
 
     @Nullable
-    @Option(
-        names = {"--write-dot-cg"},
-        description = "Write the concurrent game")
+    @Option(names = {"--write-dot-cg"}, description = "Write the concurrent game")
     private String writeDotConcurrentGame;
 
     @Nullable
-    @Option(
-        names = {"--write-dot-hg"},
-        description = "Write the history game")
+    @Option(names = {"--write-dot-hg"}, description = "Write the history game")
     private String writeDotHistoryGame;
 
     @Nullable
-    @Option(
-        names = {"--write-dot-sg"},
-        description = "Write the suspect game")
+    @Option(names = {"--write-dot-sg"}, description = "Write the suspect game")
     private String writeDotSuspectGame;
 
     @Nullable
-    @Option(
-        names = {"--write-dot-sol"},
-        description = "Write the solutions")
+    @Option(names = {"--write-dot-sol"}, description = "Write the solutions")
     private String writeDotSolution;
 
-    @Option(
-        names = {"--write-dot-module"},
-        description = "Write the module (format: <name>,<destination>)")
+    @Option(names = {"--write-dot-module"}, description = "Write the module (format: <name>,<destination>)")
     private List<String> writeModule = List.of();
 
-    @Option(
-        names = {"-O", "--output"},
-        description = "Write the assignments with nash equilibria")
+    @Option(names = {"-O", "--output"}, description = "Write the assignments with nash equilibria")
     private String writeOutput = "-";
 
-    @Option(
-        names = {"--rg-solver"},
-        description = "Solver to search for a lasso. Valid: ${COMPLETION-CANDIDATES}, default: ${DEFAULT-VALUE}")
+    @Option(names = {
+                    "--rg-solver"}, description = "Solver to search for a lasso. Valid: ${COMPLETION-CANDIDATES}, default: ${DEFAULT-VALUE}")
     private RunGraphSolver.LassoSolver solver = RunGraphSolver.LassoSolver.GRAPH_SEARCH;
 
     @ArgGroup(heading = "game", multiplicity = "1")
     private GameSource gameSource;
 
-    @Option(
-        names = {"--memory"},
-        description = "Conserve memory by not storing solutions (disables some other options)"
-    )
+    @Option(names = {
+                    "--memory"}, description = "Conserve memory by not storing solutions (disables some other options)")
     private boolean memory = false;
 
     static class GameSource {
@@ -130,14 +111,14 @@ public final class Main implements Callable<Void> {
         private String explicit;
     }
 
-    private Main() {}
+    private Main() {
+    }
 
-    private record Input<S>(ConcurrentGame<S> game, @Nullable Set<Map<Agent, Boolean>> validationSet) {}
+    private record Input<S>(ConcurrentGame<S> game, @Nullable Set<Map<Agent, Boolean>> validationSet) {
+    }
 
     public static void main(String[] args) {
-        System.exit(new CommandLine(new Main())
-            .setCaseInsensitiveEnumValuesAllowed(true)
-            .execute(args));
+        System.exit(new CommandLine(new Main()).setCaseInsensitiveEnumValuesAllowed(true).execute(args));
     }
 
     private Input<?> parseGame() throws IOException {
@@ -155,8 +136,7 @@ public final class Main implements Callable<Void> {
             Set<Map<Agent, Boolean>> validationSet = new HashSet<>();
             for (JsonElement jsonElement : validation) {
                 Map<Agent, Boolean> expectedResult = new HashMap<>();
-                for (Map.Entry<String, JsonElement> entry :
-                    jsonElement.getAsJsonObject().entrySet()) {
+                for (Map.Entry<String, JsonElement> entry : jsonElement.getAsJsonObject().entrySet()) {
                     Agent agent = game.agent(entry.getKey());
                     boolean payoff = entry.getValue().getAsBoolean();
                     expectedResult.put(agent, payoff);
@@ -177,41 +157,33 @@ public final class Main implements Callable<Void> {
         var suspectGame = new SuspectGame<>(historyGame);
         writeIfPresent(writeDotSuspectGame, suspectGame, DotWriter::writeSuspectGame);
 
-        Set<Agent> undefinedAgents = game.agents().stream()
-            .filter(a -> a.payoff().equals(Agent.Payoff.UNDEFINED))
-            .collect(Collectors.toSet());
-        return Sets.powerSet(undefinedAgents).stream()
-            .map(PayoffAssignment::new)
-            .map(payoff -> {
-                log.log(Level.INFO, () -> "Processing: %s".formatted(Formatter.format(payoff, game)));
-                Stopwatch timer = Stopwatch.createStarted();
-                RunGraph<S> runGraph = new RunGraph<>(suspectGame, payoff);
-                var strategy = RunGraphSolver.solve(runGraph, solver);
-                log.log(Level.INFO, () -> "Solution: %s".formatted(timer));
-                return strategy.map(s -> new GameSolution<>(suspectGame, runGraph, payoff, s));
-            })
-            .flatMap(Optional::stream);
+        Set<Agent> undefinedAgents = game.agents().stream().filter(a -> a.payoff().equals(Agent.Payoff.UNDEFINED))
+                        .collect(Collectors.toSet());
+        return Sets.powerSet(undefinedAgents).stream().map(PayoffAssignment::new).map(payoff -> {
+            log.log(Level.INFO, () -> "Processing: %s".formatted(Formatter.format(payoff, game)));
+            Stopwatch timer = Stopwatch.createStarted();
+            RunGraph<S> runGraph = new RunGraph<>(suspectGame, payoff);
+            var strategy = RunGraphSolver.solve(runGraph, solver);
+            log.log(Level.INFO, () -> "Solution: %s".formatted(timer));
+            return strategy.map(s -> new GameSolution<>(suspectGame, runGraph, payoff, s));
+        }).flatMap(Optional::stream);
     }
 
     private <S> List<GameSolution<S>> solve(Input<S> input) throws IOException {
         Stopwatch overall = Stopwatch.createStarted();
         var game = input.game;
         var solutionList = computeSolutions(game)
-            .peek(solution -> log.log(Level.INFO, () -> "Found NE for %s:%n%s%n"
-                .formatted(Formatter.format(solution.assignment(), game), solution.strategy())))
-            .toList();
+                        .peek(solution -> log.log(Level.INFO, () -> "Found NE for %s:%n%s%n"
+                                        .formatted(Formatter.format(solution.assignment(), game), solution.strategy())))
+                        .toList();
         log.log(Level.INFO, () -> "Solving took %s overall".formatted(overall));
         if (!solutionList.isEmpty()) {
             if (writeDotSolution != null) {
                 if (writeDotSolution.contains("%A")) {
                     for (GameSolution<S> solution : solutionList) {
-                        var destination = writeDotSolution.replaceAll(
-                            "%A",
-                            game.agents().stream()
-                                .sorted()
-                                .map(solution.assignment()::map)
-                                .map(Agent.Payoff::toString)
-                                .collect(Collectors.joining()));
+                        var destination = writeDotSolution.replaceAll("%A",
+                                        game.agents().stream().sorted().map(solution.assignment()::map)
+                                                        .map(Agent.Payoff::toString).collect(Collectors.joining()));
                         try (var stream = open(destination)) {
                             DotWriter.writeSolution(solution, stream);
                         }
@@ -236,10 +208,8 @@ public final class Main implements Callable<Void> {
     public Void call() throws Exception {
         Input<?> input = parseGame();
         if (!writeModule.isEmpty()) {
-            Map<String, String> names = writeModule.stream()
-                .map(s -> s.split(","))
-                .peek(s -> checkArgument(s.length == 2))
-                .collect(Collectors.toMap(s -> s[0], s -> s[1]));
+            Map<String, String> names = writeModule.stream().map(s -> s.split(","))
+                            .peek(s -> checkArgument(s.length == 2)).collect(Collectors.toMap(s -> s[0], s -> s[1]));
             if (input.game instanceof ModuleGame<?> module) {
                 for (Module<?> m : module.modules()) {
                     var output = names.get(m.agent().name());
@@ -262,7 +232,7 @@ public final class Main implements Callable<Void> {
                     {
                         var solution = solutions.next();
                         log.log(Level.INFO, () -> "Found NE for %s:%n%s%n"
-                            .formatted(Formatter.format(solution.assignment(), game), solution.strategy()));
+                                        .formatted(Formatter.format(solution.assignment(), game), solution.strategy()));
                         stream.println(solution.assignment().format(input.game.agents()));
                     }
                     System.gc();
@@ -280,35 +250,30 @@ public final class Main implements Callable<Void> {
         return null;
     }
 
-    private <S> void validate(
-        ConcurrentGame<S> game, Collection<GameSolution<S>> solutions, Set<Map<Agent, Boolean>> validationSet) {
-        Set<Map<Agent, Boolean>> results = solutions.stream()
-            .map(GameSolution::assignment)
-            .map(p ->
-                game.agents().stream().collect(Collectors.toUnmodifiableMap(Function.identity(), p::isWinner)))
-            .collect(Collectors.toUnmodifiableSet());
+    private <S> void validate(ConcurrentGame<S> game, Collection<GameSolution<S>> solutions,
+                    Set<Map<Agent, Boolean>> validationSet) {
+        Set<Map<Agent, Boolean>> results = solutions.stream().map(GameSolution::assignment)
+                        .map(p -> game.agents().stream()
+                                        .collect(Collectors.toUnmodifiableMap(Function.identity(), p::isWinner)))
+                        .collect(Collectors.toUnmodifiableSet());
         if (!results.equals(validationSet)) {
             var invalid = Sets.difference(results, validationSet);
             var missing = Sets.difference(validationSet, results);
-            var agents = game.agents().stream()
-                .sorted(Comparator.comparing(Agent::name))
-                .toList();
+            var agents = game.agents().stream().sorted(Comparator.comparing(Agent::name)).toList();
 
             System.err.println("Validation failed!");
             if (!invalid.isEmpty()) {
                 System.err.println("Invalid equilibria:");
                 for (Map<Agent, Boolean> map : invalid) {
-                    System.err.println(agents.stream()
-                        .map(a -> "%s:%s".formatted(a.name(), map.get(a)))
-                        .collect(Collectors.joining(",", "[", "]")));
+                    System.err.println(agents.stream().map(a -> "%s:%s".formatted(a.name(), map.get(a)))
+                                    .collect(Collectors.joining(",", "[", "]")));
                 }
             }
             if (!missing.isEmpty()) {
                 System.err.println("Missing equilibria:");
                 for (Map<Agent, Boolean> map : results) {
-                    System.err.println(agents.stream()
-                        .map(a -> "%s:%s".formatted(a.name(), map.get(a)))
-                        .collect(Collectors.joining(",", "[", "]")));
+                    System.err.println(agents.stream().map(a -> "%s:%s".formatted(a.name(), map.get(a)))
+                                    .collect(Collectors.joining(",", "[", "]")));
                 }
             }
             System.exit(1);

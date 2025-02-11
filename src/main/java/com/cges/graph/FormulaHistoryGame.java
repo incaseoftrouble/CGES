@@ -61,11 +61,8 @@ public class FormulaHistoryGame<S> implements HistoryGame<S> {
 
         @Override
         public boolean equals(Object obj) {
-            return obj == this
-                    || (obj instanceof ListHistoryState<?> that
-                            && hashCode == that.hashCode
-                            && state.equals(that.state)
-                            && Arrays.equals(agentGoals, that.agentGoals));
+            return obj == this || (obj instanceof ListHistoryState<?> that && hashCode == that.hashCode
+                            && state.equals(that.state) && Arrays.equals(agentGoals, that.agentGoals));
         }
 
         @Override
@@ -76,13 +73,11 @@ public class FormulaHistoryGame<S> implements HistoryGame<S> {
         @Override
         public String toString() {
             return state + " "
-                    + game.indices.object2IntEntrySet().stream()
-                            .sorted(Map.Entry.comparingByKey(Comparator.comparing(Agent::name)))
-                            .map(Map.Entry::getValue)
-                            .map(i -> agentGoals[i])
-                            .map(SimplifierRepository.SYNTACTIC_FIXPOINT::apply)
-                            .map(Objects::toString)
-                            .collect(Collectors.joining(",", "[", "]"));
+                            + game.indices.object2IntEntrySet().stream()
+                                            .sorted(Map.Entry.comparingByKey(Comparator.comparing(Agent::name)))
+                                            .map(Map.Entry::getValue).map(i -> agentGoals[i])
+                                            .map(SimplifierRepository.SYNTACTIC_FIXPOINT::apply).map(Objects::toString)
+                                            .collect(Collectors.joining(",", "[", "]"));
         }
     }
 
@@ -96,10 +91,8 @@ public class FormulaHistoryGame<S> implements HistoryGame<S> {
         var propositionIndices = Indices.ids(game.atomicPropositions());
         indices = Indices.ids(game.agents());
 
-        this.initialState = new ListHistoryState<>(
-                game.initialState(),
-                game.agents().stream().map(Agent::goal).map(Formula::unfold).toList(),
-                this);
+        this.initialState = new ListHistoryState<>(game.initialState(),
+                        game.agents().stream().map(Agent::goal).map(Formula::unfold).toList(), this);
 
         Map<HistoryState<S>, Set<Transition<HistoryState<S>>>> transitions = new HashMap<>();
         Set<ListHistoryState<S>> states = new HashSet<>(List.of(initialState));
@@ -113,8 +106,8 @@ public class FormulaHistoryGame<S> implements HistoryGame<S> {
                 game.labels(s).stream().map(propositionIndices::getInt).forEach(set::set);
                 return set;
             });
-            List<Formula> successorGoals = List.copyOf(Lists.transform(
-                    state.goals(), goal -> goal.temporalStep(valuation).unfold()));
+            List<Formula> successorGoals = List
+                            .copyOf(Lists.transform(state.goals(), goal -> goal.temporalStep(valuation).unfold()));
             Set<Transition<HistoryState<S>>> stateTransitions = new HashSet<>();
             for (Transition<S> transition : game.transitions(state.state())) {
                 ListHistoryState<S> successor = new ListHistoryState<>(transition.destination(), successorGoals, this);

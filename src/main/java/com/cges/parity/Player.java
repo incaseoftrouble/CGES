@@ -1,8 +1,7 @@
 package com.cges.parity;
 
 public enum Player {
-    EVEN,
-    ODD;
+    EVEN, ODD;
 
     public int id() {
         return switch (this) {

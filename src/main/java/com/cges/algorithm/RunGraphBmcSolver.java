@@ -46,7 +46,8 @@ public final class RunGraphBmcSolver<S> {
     private int exploredDepth = 0;
     private final SetMultimap<RunState<S>, RunState<S>> acceptingTransitions = HashMultimap.create();
 
-    private record Distance<S>(RunState<S> state, int distance) {}
+    private record Distance<S>(RunState<S> state, int distance) {
+    }
 
     private RunGraphBmcSolver(RunGraph<S> graph, Context ctx) {
         this.graph = graph;
@@ -137,29 +138,21 @@ public final class RunGraphBmcSolver<S> {
             for (int step = 0; step <= depth; step++) {
                 BoolExpr[] stepVariables = variablesByDepth.get(step);
                 BoolExpr[] bitExpression = new BoolExpr[bits];
-                Arrays.setAll(
-                        bitExpression,
-                        bit -> (index & (1 << bit)) == 0 ? ctx.mkNot(stepVariables[bit]) : stepVariables[bit]);
+                Arrays.setAll(bitExpression,
+                                bit -> (index & (1 << bit)) == 0 ? ctx.mkNot(stepVariables[bit]) : stepVariables[bit]);
                 stepStateExpressions[step].put(state, ctx.mkAnd(bitExpression));
             }
         }
 
         Solver solver = ctx.mkSolver("QF_FD");
-        solver.add(ctx.mkOr(graph.initialStates().stream()
-                        .map(stepStateExpressions[0]::get)
-                        .toArray(BoolExpr[]::new))
-                .simplify());
+        solver.add(ctx.mkOr(graph.initialStates().stream().map(stepStateExpressions[0]::get).toArray(BoolExpr[]::new))
+                        .simplify());
 
         Expr<BoolSort>[] transitionSystem = new Expr[depth];
-        Arrays.setAll(
-                transitionSystem,
-                step -> ctx.mkAnd(explored.stream()
-                        .map(state -> ctx.mkImplies(
-                                stepStateExpressions[step].get(state),
-                                ctx.mkOr(graph.successors(state).stream()
-                                        .filter(explored::contains)
-                                        .map(stepStateExpressions[step + 1]::get)
-                                        .toArray(BoolExpr[]::new))))
+        Arrays.setAll(transitionSystem, step -> ctx.mkAnd(explored.stream().map(state -> ctx.mkImplies(
+                        stepStateExpressions[step].get(state),
+                        ctx.mkOr(graph.successors(state).stream().filter(explored::contains)
+                                        .map(stepStateExpressions[step + 1]::get).toArray(BoolExpr[]::new))))
                         .toArray(BoolExpr[]::new)));
         solver.add(ctx.mkAnd(transitionSystem).simplify());
 
@@ -168,22 +161,17 @@ public final class RunGraphBmcSolver<S> {
         // Can we use SCCs here?
         Arrays.setAll(acceptingLoopAtStep, step -> {
             BoolExpr[] loopExpr = new BoolExpr[bits];
-            Arrays.setAll(
-                    loopExpr,
-                    bit -> ctx.mkEq(
-                            variablesByDepth.get(step)[bit], variablesByDepth.get(depth)[bit]));
+            Arrays.setAll(loopExpr, bit -> ctx.mkEq(variablesByDepth.get(step)[bit], variablesByDepth.get(depth)[bit]));
             Expr<BoolSort> loop = ctx.mkAnd(loopExpr).simplify();
 
             Expr<BoolSort> acceptingTransition = ctx.mkOr(acceptingTransitions.asMap().entrySet().stream()
-                    .map(transition -> ctx.mkOr(IntStream.range(step, depth)
-                            .mapToObj(i -> ctx.mkAnd(
-                                    stepStateExpressions[i].get(transition.getKey()),
-                                    ctx.mkOr(transition.getValue().stream()
-                                            .filter(explored::contains)
-                                            .map(stepStateExpressions[i + 1]::get)
-                                            .toArray(BoolExpr[]::new))))
-                            .toArray(BoolExpr[]::new)))
-                    .toArray(BoolExpr[]::new));
+                            .map(transition -> ctx.mkOr(IntStream.range(step, depth).mapToObj(i -> ctx.mkAnd(
+                                            stepStateExpressions[i].get(transition.getKey()),
+                                            ctx.mkOr(transition.getValue().stream().filter(explored::contains)
+                                                            .map(stepStateExpressions[i + 1]::get)
+                                                            .toArray(BoolExpr[]::new))))
+                                            .toArray(BoolExpr[]::new)))
+                            .toArray(BoolExpr[]::new));
 
             return ctx.mkAnd(loop, acceptingTransition);
         });
@@ -236,8 +224,7 @@ public final class RunGraphBmcSolver<S> {
         }
 
         // TODO
-        Set<RunState<S>> acceptingStates =
-                Set.of(); // states.stream().filter(RunState::accepting).collect(Collectors.toSet());
+        Set<RunState<S>> acceptingStates = Set.of(); // states.stream().filter(RunState::accepting).collect(Collectors.toSet());
         if (acceptingStates.isEmpty()) {
             return List.of();
         }
@@ -266,9 +253,8 @@ public final class RunGraphBmcSolver<S> {
             }
 
             Solver solver = ctx.mkSolver();
-            solver.add(ctx.mkOr(graph.initialStates().stream()
-                    .map(stepStateExpressions[0]::get)
-                    .toArray(BoolExpr[]::new)));
+            solver.add(ctx.mkOr(
+                            graph.initialStates().stream().map(stepStateExpressions[0]::get).toArray(BoolExpr[]::new)));
 
             List<RunState<S>> lasso = new ArrayList<>(depth + 1);
             for (int k = 1; k <= depth; k++) {
@@ -278,29 +264,22 @@ public final class RunGraphBmcSolver<S> {
 
                 states.forEach(state -> {
                     var successors = graph.successors(state);
-                    solver.add(ctx.mkImplies(
-                                    stepStateExpressions[cutoff - 1].get(state),
-                                    ctx.mkOr(successors.stream()
-                                            .map(stepStateExpressions[cutoff]::get)
-                                            .toArray(BoolExpr[]::new)))
-                            .simplify());
+                    solver.add(ctx.mkImplies(stepStateExpressions[cutoff - 1].get(state), ctx.mkOr(successors.stream()
+                                    .map(stepStateExpressions[cutoff]::get).toArray(BoolExpr[]::new))).simplify());
                 });
 
                 Expr<BoolSort>[] acceptingLoopAtStep = new Expr[cutoff + 1];
                 Arrays.setAll(acceptingLoopAtStep, step -> {
                     Expr<BoolSort> loop = ctx.mkEq(stepVariables[step], stepVariables[cutoff]);
-                    Expr<BoolSort> visitAcceptingState = ctx.mkOr(
-                                    IntStream.range(step, cutoff) // Omit step = cutoff since we ensure loop anyway
-                                            .mapToObj(i -> ctx.mkOr(acceptingStates.stream()
-                                                            .map(stepStateExpressions[i]::get)
-                                                            .toArray(BoolExpr[]::new))
-                                                    .simplify())
-                                            .toArray(Expr[]::new))
-                            .simplify();
+                    Expr<BoolSort> visitAcceptingState = ctx.mkOr(IntStream.range(step, cutoff) // Omit step = cutoff
+                                                                                                // since we ensure loop
+                                                                                                // anyway
+                                    .mapToObj(i -> ctx.mkOr(acceptingStates.stream().map(stepStateExpressions[i]::get)
+                                                    .toArray(BoolExpr[]::new)).simplify())
+                                    .toArray(Expr[]::new)).simplify();
                     return ctx.mkAnd(loop, visitAcceptingState).simplify();
                 });
-                Expr<BoolSort> acceptingLassoExpression =
-                        ctx.mkOr(acceptingLoopAtStep).simplify();
+                Expr<BoolSort> acceptingLassoExpression = ctx.mkOr(acceptingLoopAtStep).simplify();
 
                 Status check = solver.check(acceptingLassoExpression);
                 if (check == Status.UNKNOWN) {

@@ -1,0 +1,25 @@
+# Ignore Gradle-specific directories
+.gradle/
+build/
+
+# Ignore IDE files (IntelliJ IDEA, VS Code, Eclipse, etc.)
+*.iml
+.idea/
+.vscode/
+*.ipr
+*.iws
+.classpath
+.project
+.settings/
+
+# Ignore OS-generated files
+.DS_Store
+Thumbs.db
+
+# Optionally ignore git metadata if not needed in your image
+.git/
+.gitignore
+
+# You can also ignore any other temporary or log files
+*.log
+

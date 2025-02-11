@@ -24,7 +24,8 @@ public class AcceptingLasso<S> {
         boolean inLoop = false;
         List<RunState<S>> states = loop.subList(0, loop.size() - 1);
         var iterator = states.iterator();
-        @Nullable RunState<S> previous = null;
+        @Nullable
+        RunState<S> previous = null;
         while (iterator.hasNext()) {
             RunState<S> state = iterator.next();
             if (!inLoop && state.equals(backLink)) {
@@ -54,8 +55,8 @@ public class AcceptingLasso<S> {
 
     public Stream<RunState<S>> loopStates(boolean withClosingState) {
         return withClosingState
-                ? Stream.concat(loopStates.stream(), Stream.of(loopStates.get(0)))
-                : loopStates.stream();
+                        ? Stream.concat(loopStates.stream(), Stream.of(loopStates.get(0)))
+                        : loopStates.stream();
     }
 
     public Stream<RunState<S>> states(boolean withClosingState) {
@@ -73,6 +74,6 @@ public class AcceptingLasso<S> {
     @Override
     public String toString() {
         return transientStates.stream().map(RunState::toString).collect(Collectors.joining("   ")) + " | "
-                + loopStates.stream().map(RunState::toString).collect(Collectors.joining("   "));
+                        + loopStates.stream().map(RunState::toString).collect(Collectors.joining("   "));
     }
 }

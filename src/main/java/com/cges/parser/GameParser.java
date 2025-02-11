@@ -28,7 +28,8 @@ public final class GameParser {
     private static final Pattern COMMA_PATTERN = Pattern.compile(" *, *");
     private static final Pattern SPACE_PATTERN = Pattern.compile(" +");
 
-    private GameParser() {}
+    private GameParser() {
+    }
 
     public static ConcurrentGame<State> parseExplicit(Stream<String> lines) {
         Iterator<String> iterator = lines.iterator();
@@ -58,9 +59,8 @@ public final class GameParser {
             LabelledFormula goal = LtlParser.parse(agentData[1], propositions);
             checkArgument(Set.of("0", "1", "?").contains(agentData[2]), "Expected 0/1, got %s", agentData[2]);
             Agent.Payoff payoff = Agent.Payoff.parse(agentData[2]);
-            List<Action> actions = Arrays.asList(agentData).subList(3, agentData.length).stream()
-                    .map(Action::new)
-                    .toList();
+            List<Action> actions = Arrays.asList(agentData).subList(3, agentData.length).stream().map(Action::new)
+                            .toList();
             agents.add(new Agent(name, goal.formula(), payoff, actions));
         }
         for (String[] stateData : stateStrings) {
@@ -81,18 +81,16 @@ public final class GameParser {
                 }
 
                 for (List<Action> pureMove : Lists.cartesianProduct(actions)) {
-                    Map<Agent, Action> transitionActions = IntStream.range(0, agents.size())
-                            .boxed()
-                            .collect(Collectors.toMap(agents::get, pureMove::get));
-                    transitions.put(
-                            state,
-                            new Transition<>(new ExplicitGame.MapMove(transitionActions), new State(destination)));
+                    Map<Agent, Action> transitionActions = IntStream.range(0, agents.size()).boxed()
+                                    .collect(Collectors.toMap(agents::get, pureMove::get));
+                    transitions.put(state, new Transition<>(new ExplicitGame.MapMove(transitionActions),
+                                    new State(destination)));
                 }
             }
         }
 
-        return new ExplicitGame<>(
-                "empty", agents, propositions, initialState, states, transitions, state -> Set.of(state.name()));
+        return new ExplicitGame<>("empty", agents, propositions, initialState, states, transitions,
+                        state -> Set.of(state.name()));
     }
 
     public static ConcurrentGame<?> parse(JsonObject json) {

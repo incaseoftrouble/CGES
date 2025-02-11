@@ -18,7 +18,6 @@ COPY . .
 # Grant execution permissions to the Gradle Wrapper
 RUN chmod +x ./gradlew
 
-# Cache dependencies and build the project
-RUN ./gradlew build -x javadoc --no-daemon
+RUN ./gradlew installDist
 
-CMD "build/install/cges/bin/cges"
+ENTRYPOINT ["build/install/cges/bin/cges"]

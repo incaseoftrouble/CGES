@@ -8,9 +8,7 @@ import owl.ltl.Formula;
 
 public final class Agent implements Comparable<Agent> {
     public enum Payoff {
-        WINNING,
-        LOSING,
-        UNDEFINED;
+        WINNING, LOSING, UNDEFINED;
 
         @Override
         public String toString() {
@@ -74,17 +72,13 @@ public final class Agent implements Comparable<Agent> {
 
     @Override
     public String toString() {
-        return "A[%s,%s]@{%s}"
-                .formatted(
-                        name,
-                        payoff,
+        return "A[%s,%s]@{%s}".formatted(name, payoff,
                         actions.values().stream().map(Action::name).sorted().collect(Collectors.joining(",")));
     }
 
     @Override
     public boolean equals(Object o) {
-        assert o instanceof Agent that
-                && (!name.equals(that.name)
+        assert o instanceof Agent that && (!name.equals(that.name)
                         || (actions.equals(that.actions) && payoff.equals(that.payoff) && goal.equals(that.goal)));
         if (this == o) {
             return true;

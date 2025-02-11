@@ -64,7 +64,7 @@ public class FormulaParser extends PropositionalParserBaseVisitor<BddSet> {
     public BddSet visitVariable(PropositionalParser.VariableContext ctx) {
         String variableName = ctx.variable.getText();
         return factory.of(
-                requireNonNull(index.get(variableName), () -> "Undefined variable %s".formatted(variableName)));
+                        requireNonNull(index.get(variableName), () -> "Undefined variable %s".formatted(variableName)));
     }
 
     @Override
@@ -90,28 +90,21 @@ public class FormulaParser extends PropositionalParserBaseVisitor<BddSet> {
             return left.intersection(right.complement()).union(right.intersection(left.complement()));
         }
 
-        throw new ParseCancellationException(
-                "Unsupported operator " + ctx.binaryOp().getText());
+        throw new ParseCancellationException("Unsupported operator " + ctx.binaryOp().getText());
     }
 
     @Override
     public BddSet visitAndExpression(PropositionalParser.AndExpressionContext ctx) {
         checkState(!ctx.isEmpty());
-        return ctx.children.stream()
-                .filter(child -> !(child instanceof TerminalNode))
-                .map(this::visit)
-                .reduce(BddSet::intersection)
-                .orElseThrow();
+        return ctx.children.stream().filter(child -> !(child instanceof TerminalNode)).map(this::visit)
+                        .reduce(BddSet::intersection).orElseThrow();
     }
 
     @Override
     public BddSet visitOrExpression(PropositionalParser.OrExpressionContext ctx) {
         checkState(!ctx.isEmpty());
-        return ctx.children.stream()
-                .filter(child -> !(child instanceof TerminalNode))
-                .map(this::visit)
-                .reduce(BddSet::union)
-                .orElseThrow();
+        return ctx.children.stream().filter(child -> !(child instanceof TerminalNode)).map(this::visit)
+                        .reduce(BddSet::union).orElseThrow();
     }
 
     @Override

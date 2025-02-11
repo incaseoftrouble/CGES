@@ -30,9 +30,7 @@ public record PayoffAssignment(Set<Agent> winning) {
     }
 
     public String format(Set<Agent> agents) {
-        return agents.stream()
-                .sorted(Comparator.comparing(Agent::name))
-                .map(a -> "%s:%s".formatted(a.name(), map(a)))
-                .collect(Collectors.joining(",", "[", "]"));
+        return agents.stream().sorted(Comparator.comparing(Agent::name)).map(a -> "%s:%s".formatted(a.name(), map(a)))
+                        .collect(Collectors.joining(",", "[", "]"));
     }
 }

@@ -20,7 +20,8 @@ import owl.bdd.BddSet;
 import owl.ltl.parser.TokenErrorListener;
 
 public final class ParseUtil {
-    private ParseUtil() {}
+    private ParseUtil() {
+    }
 
     static BddSet parse(String formula, PropositionalParserVisitor<BddSet> visitor) {
         try {
@@ -37,12 +38,8 @@ public final class ParseUtil {
     }
 
     static Stream<JsonElement> stream(JsonArray array) {
-        return StreamSupport.stream(
-                Spliterators.spliterator(
-                        array.iterator(),
-                        array.size(),
-                        Spliterator.IMMUTABLE | Spliterator.SIZED | Spliterator.ORDERED),
-                false);
+        return StreamSupport.stream(Spliterators.spliterator(array.iterator(), array.size(),
+                        Spliterator.IMMUTABLE | Spliterator.SIZED | Spliterator.ORDERED), false);
     }
 
     static Agent.Payoff parsePayoff(JsonPrimitive payoffPrimitive) {
