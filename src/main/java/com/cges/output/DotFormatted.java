@@ -39,9 +39,8 @@ public interface DotFormatted {
             return PrintVisitor.toString(SimplifierRepository.SYNTACTIC_FIXPOINT.apply(formula), false);
         }
         if (object instanceof Formula formula) {
-            return toDotString(
-                    LabelledFormula.of(SimplifierRepository.SYNTACTIC_FIXPOINT.apply(formula), propositions),
-                    propositions);
+            return toDotString(LabelledFormula.of(SimplifierRepository.SYNTACTIC_FIXPOINT.apply(formula), propositions),
+                            propositions);
         }
         return (object instanceof DotFormatted format) ? format.dotString() : object.toString();
     }

@@ -15,8 +15,8 @@ public final class PriorityState<S> {
         this.automatonState = automatonState;
         this.gameState = gameState;
         this.priority = priority;
-        this.hashCode =
-                HashCommon.murmurHash3(priority) + Objects.hashCode(gameState) + Objects.hashCode(automatonState);
+        this.hashCode = HashCommon.murmurHash3(priority) + Objects.hashCode(gameState)
+                        + Objects.hashCode(automatonState);
     }
 
     public boolean isEve() {
@@ -38,11 +38,8 @@ public final class PriorityState<S> {
 
     @Override
     public boolean equals(Object o) {
-        return this == o
-                || (o instanceof PriorityState<?> that
-                        && hashCode == that.hashCode
-                        && priority == that.priority
-                        && Objects.equals(gameState, that.gameState)
+        return this == o || (o instanceof PriorityState<?> that && hashCode == that.hashCode
+                        && priority == that.priority && Objects.equals(gameState, that.gameState)
                         && Objects.equals(automatonState, that.automatonState));
     }
 

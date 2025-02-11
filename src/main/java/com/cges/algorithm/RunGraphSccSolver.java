@@ -19,19 +19,19 @@ import javax.annotation.Nullable;
 import owl.automaton.algorithm.SccDecomposition;
 
 public final class RunGraphSccSolver {
-    private RunGraphSccSolver() {}
+    private RunGraphSccSolver() {
+    }
 
     public static <S> List<RunState<S>> search(RunGraph<S> graph) {
-        List<Set<RunState<S>>> decomposition =
-                SccDecomposition.of(graph.initialStates(), graph::successors).sccsWithoutTransient();
+        List<Set<RunState<S>>> decomposition = SccDecomposition.of(graph.initialStates(), graph::successors)
+                        .sccsWithoutTransient();
 
         Map<RunState<S>, List<RunState<S>>> shortestAcceptingCycle = new HashMap<>();
         for (Set<RunState<S>> scc : decomposition) {
             for (RunState<S> root : scc) {
                 Set<RunState<S>> states = graph.transitions(root).stream()
-                        .filter(t -> t.accepting() && scc.contains(t.successor()))
-                        .map(RunGraph.RunTransition::successor)
-                        .collect(Collectors.toSet());
+                                .filter(t -> t.accepting() && scc.contains(t.successor()))
+                                .map(RunGraph.RunTransition::successor).collect(Collectors.toSet());
                 if (states.isEmpty()) {
                     continue;
                 }
@@ -85,8 +85,10 @@ public final class RunGraphSccSolver {
         queue.addAll(graph.initialStates());
 
         int shortestCycleTotalLength = Integer.MAX_VALUE;
-        @Nullable List<RunState<S>> shortestCycle = null;
-        @Nullable RunState<S> shortestCycleEntry = null;
+        @Nullable
+        List<RunState<S>> shortestCycle = null;
+        @Nullable
+        RunState<S> shortestCycleEntry = null;
         Map<RunState<S>, RunState<S>> predecessor = new HashMap<>();
 
         while (!queue.isEmpty()) {

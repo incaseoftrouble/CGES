@@ -27,6 +27,6 @@ public record MockHistoryGame<S>(ConcurrentGame<S> concurrentGame) implements Hi
     @Override
     public Stream<Transition<HistoryState<S>>> transitions(HistoryState<S> state) {
         return concurrentGame.transitions(state.state()).stream()
-                .map(Transition.transform(s -> new MockHistoryState<>(s, this)));
+                        .map(Transition.transform(s -> new MockHistoryState<>(s, this)));
     }
 }

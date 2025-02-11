@@ -29,22 +29,14 @@ final class ExplicitGame<S> implements ConcurrentGame<S> {
     private final List<String> atomicPropositions;
     private final Function<S, Set<String>> labels;
 
-    public ExplicitGame(
-            String name,
-            Collection<Agent> agents,
-            List<String> atomicPropositions,
-            S initialState,
-            Set<S> states,
-            SetMultimap<S, Transition<S>> transitions,
-            Function<S, Set<String>> labels) {
+    public ExplicitGame(String name, Collection<Agent> agents, List<String> atomicPropositions, S initialState,
+                    Set<S> states, SetMultimap<S, Transition<S>> transitions, Function<S, Set<String>> labels) {
         this.name = name;
         assert states.containsAll(transitions.keys());
         assert transitions.values().stream().map(Transition::destination).allMatch(states::contains);
         assert states.contains(initialState);
-        assert states.stream()
-                .map(labels)
-                .flatMap(Collection::stream)
-                .allMatch(Set.copyOf(atomicPropositions)::contains);
+        assert states.stream().map(labels).flatMap(Collection::stream)
+                        .allMatch(Set.copyOf(atomicPropositions)::contains);
 
         this.agents = Set.copyOf(agents);
         this.atomicPropositions = List.copyOf(atomicPropositions);
@@ -118,20 +110,14 @@ final class ExplicitGame<S> implements ConcurrentGame<S> {
         // TODO Can replace the map with a list and fix an ordering of the agents
         @Override
         public String toString() {
-            return actions.entrySet().stream()
-                    .sorted(Map.Entry.comparingByKey(Comparator.comparing(Agent::name)))
-                    .map(Map.Entry::getValue)
-                    .map(Action::name)
-                    .collect(Collectors.joining(",", "[", "]"));
+            return actions.entrySet().stream().sorted(Map.Entry.comparingByKey(Comparator.comparing(Agent::name)))
+                            .map(Map.Entry::getValue).map(Action::name).collect(Collectors.joining(",", "[", "]"));
         }
 
         @Override
         public String dotString() {
-            return actions.entrySet().stream()
-                    .sorted(Map.Entry.comparingByKey(Comparator.comparing(Agent::name)))
-                    .map(Map.Entry::getValue)
-                    .map(Action::name)
-                    .collect(Collectors.joining());
+            return actions.entrySet().stream().sorted(Map.Entry.comparingByKey(Comparator.comparing(Agent::name)))
+                            .map(Map.Entry::getValue).map(Action::name).collect(Collectors.joining());
         }
 
         @Override

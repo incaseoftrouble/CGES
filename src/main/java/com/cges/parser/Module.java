@@ -21,17 +21,16 @@ public class Module<S> {
         this.initialState = initialState;
         this.labels = Map.copyOf(labels);
         this.transitions = transitions.entrySet().stream()
-                .collect(Collectors.toUnmodifiableMap(Map.Entry::getKey, stateTransitions -> {
-                    Map<Action, Map<S, BddSet>> actionMap = new HashMap<>();
-                    for (var entry : stateTransitions.getValue().entrySet()) {
-                        ModuleTransition<S> transition = entry.getKey();
-                        BddSet oldVs = actionMap
-                                .computeIfAbsent(transition.action(), k -> new HashMap<>())
-                                .put(transition.destination(), entry.getValue());
-                        assert oldVs == null;
-                    }
-                    return Map.copyOf(actionMap);
-                }));
+                        .collect(Collectors.toUnmodifiableMap(Map.Entry::getKey, stateTransitions -> {
+                            Map<Action, Map<S, BddSet>> actionMap = new HashMap<>();
+                            for (var entry : stateTransitions.getValue().entrySet()) {
+                                ModuleTransition<S> transition = entry.getKey();
+                                BddSet oldVs = actionMap.computeIfAbsent(transition.action(), k -> new HashMap<>())
+                                                .put(transition.destination(), entry.getValue());
+                                assert oldVs == null;
+                            }
+                            return Map.copyOf(actionMap);
+                        }));
     }
 
     public S initialState() {
@@ -44,10 +43,7 @@ public class Module<S> {
 
     public S successor(S state, Action action, BitSet valuation) {
         return transitions.get(state).get(action).entrySet().stream()
-                .filter(entry -> entry.getValue().contains(valuation))
-                .findAny()
-                .orElseThrow()
-                .getKey();
+                        .filter(entry -> entry.getValue().contains(valuation)).findAny().orElseThrow().getKey();
     }
 
     public Set<S> successors(S state, Action action) {
@@ -61,9 +57,8 @@ public class Module<S> {
     public Map<Action, S> successors(S state, BitSet valuation) {
         Map<Action, S> successors = new HashMap<>();
         transitions.get(state).forEach((action, actionTransitions) -> {
-            var iterator = actionTransitions.entrySet().stream()
-                    .filter(e -> e.getValue().contains(valuation))
-                    .iterator();
+            var iterator = actionTransitions.entrySet().stream().filter(e -> e.getValue().contains(valuation))
+                            .iterator();
             if (!iterator.hasNext()) {
                 return;
             }

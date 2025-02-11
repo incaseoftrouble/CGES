@@ -31,7 +31,8 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 public final class OinkGameSolver {
-    private record Indexed<S>(S object, int index) {}
+    private record Indexed<S>(S object, int index) {
+    }
 
     private static final String OINK_EXECUTABLE_NAME = "oink";
     private static final List<String> OINK_EXECUTION;
@@ -40,7 +41,7 @@ public final class OinkGameSolver {
         if (System.getProperty("os.name").contains("Windows")) {
             // Output to "-" requires a patched version of oink
             List<String> execution;
-            //noinspection ErrorNotRethrown
+            // noinspection ErrorNotRethrown
             try {
                 assert false;
                 execution = List.of("wsl", OINK_EXECUTABLE_NAME, "-o", "-");
@@ -55,11 +56,10 @@ public final class OinkGameSolver {
     }
 
     private final ExecutorService executor = Executors.newCachedThreadPool(new ThreadFactoryBuilder()
-            .setThreadFactory(Executors.defaultThreadFactory())
-            .setDaemon(true)
-            .build());
+                    .setThreadFactory(Executors.defaultThreadFactory()).setDaemon(true).build());
 
-    public OinkGameSolver() {}
+    public OinkGameSolver() {
+    }
 
     public <S> Solution<S> solve(ParityGame<S> game) {
         Object2IntMap<S> oinkNumbering = new Object2IntOpenHashMap<>();
@@ -79,11 +79,9 @@ public final class OinkGameSolver {
         });
 
         assert oinkNumbering.object2IntEntrySet().stream()
-                .allMatch(entry -> entry.getKey().equals(reverseMapping.get(entry.getIntValue())));
+                        .allMatch(entry -> entry.getKey().equals(reverseMapping.get(entry.getIntValue())));
         assert IntStream.range(0, oinkNumbering.size()).allMatch(i -> game.successors(reverseMapping.get(i))
-                .map(oinkNumbering::getInt)
-                .collect(Collectors.toSet())
-                .equals(successorIds.get(i)));
+                        .map(oinkNumbering::getInt).collect(Collectors.toSet()).equals(successorIds.get(i)));
 
         ProcessBuilder oinkProcessBuilder = new ProcessBuilder(OINK_EXECUTION);
         oinkProcessBuilder.redirectErrorStream(true);
@@ -99,18 +97,14 @@ public final class OinkGameSolver {
         List<String> oinkComments = new ArrayList<>();
         var readingFuture = executor.<Void>submit(() -> {
             try (BufferedReader reader = new BufferedReader(new InputStreamReader(oinkProcess.getInputStream()))) {
-                Iterator<String[]> iterator = reader.lines()
-                        .filter(line -> {
-                            if (line.startsWith("[")) {
-                                oinkComments.add(line);
-                                return false;
-                            }
-                            return true;
-                        })
-                        .skip(1)
-                        .peek(line -> checkState(line.charAt(line.length() - 1) == ';', "Invalid line %s", line))
-                        .map(line -> line.substring(0, line.length() - 1).split(" "))
-                        .iterator();
+                Iterator<String[]> iterator = reader.lines().filter(line -> {
+                    if (line.startsWith("[")) {
+                        oinkComments.add(line);
+                        return false;
+                    }
+                    return true;
+                }).skip(1).peek(line -> checkState(line.charAt(line.length() - 1) == ';', "Invalid line %s", line))
+                                .map(line -> line.substring(0, line.length() - 1).split(" ")).iterator();
                 if (!iterator.hasNext()) {
                     throw new OinkExecutionException("Did not read any solution");
                 }
@@ -122,8 +116,8 @@ public final class OinkGameSolver {
                         S state = requireNonNull(reverseMapping.get(index));
                         oddWinning.add(state);
                         if (elements.length == 3) {
-                            S previous = strategy.put(
-                                    state, requireNonNull(reverseMapping.get(Integer.parseInt(elements[2]))));
+                            S previous = strategy.put(state,
+                                            requireNonNull(reverseMapping.get(Integer.parseInt(elements[2]))));
                             assert previous == null;
                         }
                     }
@@ -133,19 +127,14 @@ public final class OinkGameSolver {
         });
 
         try (BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(oinkProcess.getOutputStream()))) {
-            writer.append("parity ")
-                    .append(String.valueOf(oinkNumbering.size()))
-                    .append(";");
+            writer.append("parity ").append(String.valueOf(oinkNumbering.size())).append(";");
             writer.newLine();
             ListIterator<S> iterator = reverseMapping.listIterator();
             while (iterator.hasNext()) {
                 int index = iterator.nextIndex();
                 var state = iterator.next();
-                writer.append(String.valueOf(index))
-                        .append(' ')
-                        .append(String.valueOf(game.priority(state)))
-                        .append(' ')
-                        .append(String.valueOf(game.owner(state).id()));
+                writer.append(String.valueOf(index)).append(' ').append(String.valueOf(game.priority(state)))
+                                .append(' ').append(String.valueOf(game.owner(state).id()));
                 var successorIterator = successorIds.get(index).intIterator();
                 if (successorIterator.hasNext()) {
                     writer.append(' ').append(String.valueOf(successorIterator.nextInt()));
@@ -157,19 +146,15 @@ public final class OinkGameSolver {
                 writer.newLine();
             }
         } catch (IOException e) {
-            throw new OinkExecutionException(
-                    "Failed to write to oink, output: "
-                            + oinkComments.stream().collect(Collectors.joining("\n", "\n", "")),
-                    e);
+            throw new OinkExecutionException("Failed to write to oink, output: "
+                            + oinkComments.stream().collect(Collectors.joining("\n", "\n", "")), e);
         }
 
         try {
             Uninterruptibles.getUninterruptibly(readingFuture);
         } catch (ExecutionException e) {
-            throw new OinkExecutionException(
-                    "Failed to read from oink, output: "
-                            + oinkComments.stream().collect(Collectors.joining("\n", "\n", "")),
-                    e);
+            throw new OinkExecutionException("Failed to read from oink, output: "
+                            + oinkComments.stream().collect(Collectors.joining("\n", "\n", "")), e);
         }
 
         return new Solution<>(oddWinning, strategy);

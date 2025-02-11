@@ -28,10 +28,9 @@ import owl.ltl.LabelledFormula;
 public class ModuleGame<S> implements ConcurrentGame<ModuleState<S>> {
     private static <S> BitSet label(ModuleState<S> state, List<Module<S>> modules) {
         assert IntStream.range(0, state.states().size())
-                .allMatch(i -> modules.get(i).states().contains(state.states().get(i)));
+                        .allMatch(i -> modules.get(i).states().contains(state.states().get(i)));
         BitSet set = new BitSet();
-        Indices.forEachIndexed(
-                state.states(), (agentState, index) -> set.or(modules.get(index).labels(agentState)));
+        Indices.forEachIndexed(state.states(), (agentState, index) -> set.or(modules.get(index).labels(agentState)));
         return set;
     }
 
@@ -58,8 +57,8 @@ public class ModuleGame<S> implements ConcurrentGame<ModuleState<S>> {
         assert Set.copyOf(agentIndices.values()).size() == agents.size();
         this.agentIndices = Map.copyOf(agentIndices);
 
-        initialState =
-                new ModuleState<>(List.copyOf(Lists.transform(this.modules, Module::initialState)), this.agentIndices);
+        initialState = new ModuleState<>(List.copyOf(Lists.transform(this.modules, Module::initialState)),
+                        this.agentIndices);
 
         Map<ModuleState<S>, Set<Transition<ModuleState<S>>>> transitions = new HashMap<>();
         Set<ModuleState<S>> states = new HashSet<>(List.of(initialState));
@@ -72,14 +71,12 @@ public class ModuleGame<S> implements ConcurrentGame<ModuleState<S>> {
             while (iterator.hasNext()) {
                 int index = iterator.nextIndex();
                 S agentState = iterator.next();
-                agentTransitions.add(List.copyOf(
-                        this.modules.get(index).successors(agentState, labels).entrySet()));
+                agentTransitions.add(List.copyOf(this.modules.get(index).successors(agentState, labels).entrySet()));
             }
-            var stateTransitions = Lists.cartesianProduct(agentTransitions).stream()
-                    .map(transition -> new Transition<>(
+            var stateTransitions = Lists.cartesianProduct(agentTransitions).stream().map(transition -> new Transition<>(
                             new ModuleMove(Lists.transform(transition, Map.Entry::getKey), this.agentIndices),
                             new ModuleState<>(Lists.transform(transition, Map.Entry::getValue), this.agentIndices)))
-                    .collect(Collectors.toSet());
+                            .collect(Collectors.toSet());
             transitions.put(state, stateTransitions);
             for (var transition : stateTransitions) {
                 var successor = transition.destination();
@@ -125,10 +122,8 @@ public class ModuleGame<S> implements ConcurrentGame<ModuleState<S>> {
 
     @Override
     public Set<String> labels(ModuleState<S> state) {
-        return NatBitSets.asSet(label(state, modules))
-                .intStream()
-                .mapToObj(propositions::get)
-                .collect(Collectors.toSet());
+        return NatBitSets.asSet(label(state, modules)).intStream().mapToObj(propositions::get)
+                        .collect(Collectors.toSet());
     }
 
     @Override
@@ -158,12 +153,9 @@ public class ModuleGame<S> implements ConcurrentGame<ModuleState<S>> {
 
         @Override
         public String toString() {
-            return agentIndices.entrySet().stream()
-                    .sorted(Map.Entry.comparingByKey(Comparator.comparing(Agent::name)))
-                    .map(Map.Entry::getValue)
-                    .map(transition::get)
-                    .map(Action::name)
-                    .collect(Collectors.joining(",", "[", "]"));
+            return agentIndices.entrySet().stream().sorted(Map.Entry.comparingByKey(Comparator.comparing(Agent::name)))
+                            .map(Map.Entry::getValue).map(transition::get).map(Action::name)
+                            .collect(Collectors.joining(",", "[", "]"));
         }
 
         @Override

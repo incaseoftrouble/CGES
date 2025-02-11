@@ -17,7 +17,8 @@ public interface ConcurrentGame<S> {
     Set<Agent> agents();
 
     default Agent agent(String name) {
-        @Nullable Agent candidate = null;
+        @Nullable
+        Agent candidate = null;
         for (Agent agent : agents()) {
             if (agent.name().equals(name)) {
                 checkState(candidate == null);

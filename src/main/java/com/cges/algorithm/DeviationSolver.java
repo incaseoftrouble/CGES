@@ -42,12 +42,12 @@ import owl.translations.LtlTranslationRepository.Option;
 
 public final class DeviationSolver<S> implements PunishmentStrategy<S> {
     private static final Logger logger = Logger.getLogger(DeviationSolver.class.getName());
-//    private static final Function<LabelledFormula, Automaton<?, ? extends ParityAcceptance>> translation =
-//            LtlTranslationRepository.LtlToDpaTranslation.DEFAULT.translation(
-//                    EnumSet.of(Option.SIMPLIFY_AUTOMATON, Option.COMPLETE));
-    private static final Function<LabelledFormula, Automaton<?, ? extends ParityAcceptance>> translation =
-            LtlTranslationRepository.LtlToDpaTranslation.SEJK16_EKRS17.translation(
-                    EnumSet.of(Option.SIMPLIFY_AUTOMATON));
+    // private static final Function<LabelledFormula, Automaton<?, ? extends
+    // ParityAcceptance>> translation =
+    // LtlTranslationRepository.LtlToDpaTranslation.DEFAULT.translation(
+    // EnumSet.of(Option.SIMPLIFY_AUTOMATON, Option.COMPLETE));
+    private static final Function<LabelledFormula, Automaton<?, ? extends ParityAcceptance>> translation = LtlTranslationRepository.LtlToDpaTranslation.SEJK16_EKRS17
+                    .translation(EnumSet.of(Option.SIMPLIFY_AUTOMATON));
 
     private final SuspectGame<S> suspectGame;
     private final OinkGameSolver solver = new OinkGameSolver();
@@ -63,21 +63,22 @@ public final class DeviationSolver<S> implements PunishmentStrategy<S> {
         HistoryGame<S> historyGame = suspectGame.historyGame();
         ConcurrentGame<S> concurrentGame = historyGame.concurrentGame();
         losingAgents = concurrentGame.agents().stream().filter(payoff::isLoser).collect(Collectors.toSet());
-        atomicPropositions = Stream.concat(
-                        concurrentGame.atomicPropositions().stream(),
-                        losingAgents.stream().map(Agent::name))
-                .toList();
-        agentLiterals = losingAgents.stream()
-                .collect(Collectors.toMap(Function.identity(), a -> Literal.of(atomicPropositions.indexOf(a.name()))));
+        atomicPropositions = Stream
+                        .concat(concurrentGame.atomicPropositions().stream(), losingAgents.stream().map(Agent::name))
+                        .toList();
+        agentLiterals = losingAgents.stream().collect(
+                        Collectors.toMap(Function.identity(), a -> Literal.of(atomicPropositions.indexOf(a.name()))));
         assert Set.copyOf(atomicPropositions).size() == atomicPropositions.size();
 
         var historyState = historyGame.initialState();
         var eveState = new EveState<>(historyState, losingAgents);
-        var goal = SimplifierRepository.SYNTACTIC_FAIRNESS.apply(LabelledFormula.of(
-                Disjunction.of(losingAgents.stream()
-                                .map(a -> Conjunction.of(GOperator.of(agentLiterals.get(a)), historyState.goal(a))))
-                        .not(),
-                atomicPropositions));
+        var goal = SimplifierRepository.SYNTACTIC_FAIRNESS
+                        .apply(LabelledFormula.of(
+                                        Disjunction.of(losingAgents.stream()
+                                                        .map(a -> Conjunction.of(GOperator.of(agentLiterals.get(a)),
+                                                                        historyState.goal(a))))
+                                                        .not(),
+                                        atomicPropositions));
 
         var gameSolution = solveParityGame(eveState, goal);
         parityGame = gameSolution.parityGame();
@@ -87,52 +88,35 @@ public final class DeviationSolver<S> implements PunishmentStrategy<S> {
                 return parityGame.successors(s).allMatch(paritySolution.oddWinning()::contains);
             }
             return parityGame.successors(s).anyMatch(paritySolution.oddWinning()::contains);
-        })
-                : "Parity game solution is inconsistent";
+        }) : "Parity game solution is inconsistent";
     }
 
     private LabelledFormula eveGoal(HistoryState<S> historyState) {
-        return LabelledFormula.of(
-                Disjunction.of(losingAgents.stream()
-                                .map(a -> Conjunction.of(GOperator.of(agentLiterals.get(a)), historyState.goal(a))))
-                        .not(),
-                atomicPropositions);
+        return LabelledFormula.of(Disjunction
+                        .of(losingAgents.stream().map(
+                                        a -> Conjunction.of(GOperator.of(agentLiterals.get(a)), historyState.goal(a))))
+                        .not(), atomicPropositions);
     }
 
     public Stream<Move> movesWithoutLosingDeviation(HistoryState<S> historyState) {
-        return suspectGame
-                .historyGame()
-                .transitions(historyState)
-                .map(Transition::move)
-                .filter(m -> hasNoLosingDeviation(historyState, m));
+        return suspectGame.historyGame().transitions(historyState).map(Transition::move)
+                        .filter(m -> hasNoLosingDeviation(historyState, m));
     }
 
     public boolean hasNoLosingDeviation(HistoryState<S> historyState, Move proposedMove) {
-        assert parityGame
-                .deviationStates(historyState, proposedMove)
-                .map(paritySolution::winner)
-                .collect(Collectors.toSet())
-                .size()
-                <= 1
-                : parityGame
-                .deviationStates(historyState, proposedMove)
-                .collect(Collectors.toMap(Function.identity(), paritySolution::winner));
-        return parityGame
-                .deviationStates(historyState, proposedMove)
-                .map(paritySolution::winner)
-                .allMatch(Player.ODD::equals);
+        assert parityGame.deviationStates(historyState, proposedMove).map(paritySolution::winner)
+                        .collect(Collectors.toSet()).size() <= 1
+                        : parityGame.deviationStates(historyState, proposedMove)
+                                        .collect(Collectors.toMap(Function.identity(), paritySolution::winner));
+        return parityGame.deviationStates(historyState, proposedMove).map(paritySolution::winner)
+                        .allMatch(Player.ODD::equals);
     }
 
     private boolean computeWinning(HistoryState<S> historyState) {
         var solution = solveParityGame(new EveState<>(historyState, losingAgents), eveGoal(historyState));
-        return suspectGame
-                .historyGame()
-                .transitions(historyState)
-                .map(Transition::move)
-                .anyMatch(move -> solution.parityGame
-                        .deviationStates(historyState, move)
-                        .map(solution.solution()::winner)
-                        .allMatch(Player.ODD::equals));
+        return suspectGame.historyGame().transitions(historyState).map(Transition::move)
+                        .anyMatch(move -> solution.parityGame.deviationStates(historyState, move)
+                                        .map(solution.solution()::winner).allMatch(Player.ODD::equals));
     }
 
     @Override
@@ -150,9 +134,7 @@ public final class DeviationSolver<S> implements PunishmentStrategy<S> {
 
     @Override
     public Set<PriorityState<S>> successors(PriorityState<S> state) {
-        return state.isEve()
-                ? Set.of(move(state))
-                : parityGame.successors(state).collect(Collectors.toSet());
+        return state.isEve() ? Set.of(move(state)) : parityGame.successors(state).collect(Collectors.toSet());
     }
 
     record ParitySolution<S>(SuspectParityGame<S> parityGame, Solution<PriorityState<S>> solution) {
@@ -161,8 +143,8 @@ public final class DeviationSolver<S> implements PunishmentStrategy<S> {
     private ParitySolution<S> solveParityGame(EveState<S> eveState, LabelledFormula goal) {
         var shifted = LiteralMapper.shiftLiterals(goal);
         @SuppressWarnings("unchecked")
-        var automaton = (Automaton<Object, ParityAcceptance>)
-                ParityUtil.convert(translation.apply(shifted.formula), Parity.MIN_EVEN);
+        var automaton = (Automaton<Object, ParityAcceptance>) ParityUtil.convert(translation.apply(shifted.formula),
+                        Parity.MIN_EVEN);
         assert !automaton.states().isEmpty();
         var parityGame = SuspectParityGame.create(suspectGame, eveState, automaton);
         if (parityGame.states().isEmpty()) {

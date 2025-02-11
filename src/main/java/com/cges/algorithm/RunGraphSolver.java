@@ -19,11 +19,11 @@ import java.util.stream.Collectors;
 
 public final class RunGraphSolver {
     public enum LassoSolver {
-        GRAPH_SEARCH,
-        BMC
+        GRAPH_SEARCH, BMC
     }
 
-    private RunGraphSolver() {}
+    private RunGraphSolver() {
+    }
 
     private static <S> boolean validate(EquilibriumStrategy<S> strategy, RunGraph<S> graph) {
         var lasso = strategy.lasso();
@@ -34,16 +34,13 @@ public final class RunGraphSolver {
         for (int i = 0; i < loopStates.size() - 1; i++) {
             RunState<S> current = loopStates.get(i);
             RunState<S> successor = loopStates.get(i + 1);
-            var historySuccessor = graph.suspectGame()
-                    .historyGame()
-                    .transition(current.historyState(), strategy.moves().get(current))
-                    .map(Transition::destination)
-                    .orElseThrow();
+            var historySuccessor = graph.suspectGame().historyGame()
+                            .transition(current.historyState(), strategy.moves().get(current))
+                            .map(Transition::destination).orElseThrow();
             assert historySuccessor.equals(successor.historyState());
             var graphTransitions = graph.transitions(current).stream()
-                    .filter(t -> historySuccessor.equals(t.successor().historyState()))
-                    .filter(t -> successor.equals(t.successor()))
-                    .collect(Collectors.toSet());
+                            .filter(t -> historySuccessor.equals(t.successor().historyState()))
+                            .filter(t -> successor.equals(t.successor())).collect(Collectors.toSet());
             assert !graphTransitions.isEmpty();
             if (!isAccepting) {
                 isAccepting = graphTransitions.stream().anyMatch(RunGraph.RunTransition::accepting);
@@ -64,11 +61,10 @@ public final class RunGraphSolver {
             });
         }
 
-        var path =
-                switch (solver) {
-                    case GRAPH_SEARCH -> RunGraphSccSolver.search(graph);
-                    case BMC -> RunGraphBmcSolver.search(graph);
-                };
+        var path = switch (solver) {
+            case GRAPH_SEARCH -> RunGraphSccSolver.search(graph);
+            case BMC -> RunGraphBmcSolver.search(graph);
+        };
         if (path.isEmpty()) {
             return Optional.empty();
         }
@@ -85,13 +81,9 @@ public final class RunGraphSolver {
         while (iterator.hasNext()) {
             var next = iterator.next();
             // TODO Bit ugly, could maybe store this information when constructing the lasso
-            Move move = suspectGame
-                    .historyGame()
-                    .transitions(current.historyState())
-                    .filter(t -> t.destination().equals(next.historyState()))
-                    .map(Transition::move)
-                    .iterator()
-                    .next();
+            Move move = suspectGame.historyGame().transitions(current.historyState())
+                            .filter(t -> t.destination().equals(next.historyState())).map(Transition::move).iterator()
+                            .next();
             runGraphMoves.put(current, move);
 
             // For each deviation, provide a proof that we can punish someone
