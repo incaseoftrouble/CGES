@@ -9,22 +9,22 @@ import java.util.stream.Stream;
 import owl.ltl.Formula;
 
 public interface HistoryGame<S> {
-  HistoryState<S> initialState();
+    HistoryState<S> initialState();
 
-  Stream<Transition<HistoryState<S>>> transitions(HistoryState<S> state);
+    Stream<Transition<HistoryState<S>>> transitions(HistoryState<S> state);
 
-  default Optional<Transition<HistoryState<S>>> transition(HistoryState<S> state, Move move) {
-    assert transitions(state).filter(t -> t.move().equals(move)).count() <= 1;
-    return transitions(state).filter(t -> t.move().equals(move)).findAny();
-  }
+    default Optional<Transition<HistoryState<S>>> transition(HistoryState<S> state, Move move) {
+        assert transitions(state).filter(t -> t.move().equals(move)).count() <= 1;
+        return transitions(state).filter(t -> t.move().equals(move)).findAny();
+    }
 
-  ConcurrentGame<S> concurrentGame();
+    ConcurrentGame<S> concurrentGame();
 
-  interface HistoryState<S> {
-    S state();
+    interface HistoryState<S> {
+        S state();
 
-    Formula goal(Agent agent);
+        Formula goal(Agent agent);
 
-    HistoryGame<S> game();
-  }
+        HistoryGame<S> game();
+    }
 }
