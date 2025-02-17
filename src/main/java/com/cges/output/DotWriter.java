@@ -260,7 +260,7 @@ public final class DotWriter {
         writer.append("}");
     }
 
-    public static <S> void writeSolution(GameSolution<S> solution, PrintStream writer) {
+    public static <S> void writeSolution(GameSolution<S> solution,ConcurrentGame<S> inputGame, PrintStream writer) {
         var strategy = solution.strategy();
         var suspectGame = solution.suspectGame();
         var punishmentStrategy = solution.strategy().punishmentStrategy();

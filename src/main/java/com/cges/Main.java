@@ -185,13 +185,13 @@ public final class Main implements Callable<Void> {
                                         game.agents().stream().sorted().map(solution.assignment()::map)
                                                         .map(Agent.Payoff::toString).collect(Collectors.joining()));
                         try (var stream = open(destination)) {
-                            DotWriter.writeSolution(solution, stream);
+                            DotWriter.writeSolution(solution,input.game, stream);
                         }
                     }
                 } else {
                     writeIfPresent(writeDotSolution, solutionList, (list, stream) -> {
-                        for (GameSolution<?> solution : list) {
-                            DotWriter.writeSolution(solution, stream);
+                        for (GameSolution<S> solution : list) {
+                            DotWriter.writeSolution(solution,input.game, stream);
                             stream.println();
                         }
                     });
