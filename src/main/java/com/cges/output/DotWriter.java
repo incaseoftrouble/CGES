@@ -312,10 +312,8 @@ public final class DotWriter {
         });
         var edgeStates = new HashSet<PriorityState<S>>();
         var idToState = new HashMap<Integer, PriorityState<S>>();
-        var stateToId = new HashMap<PriorityState<S>, Integer>();
         gameIds.forEach((gameState, id) -> {
             idToState.put(id, gameState);
-            stateToId.put(gameState, id);
             if (gameState.isEve()) {
                 String eveState = Stream
                         .concat(Stream.of(toDotString(gameState.eve().gameState())), gameState.eve().suspects()
@@ -328,8 +326,6 @@ public final class DotWriter {
                         gameState.priority()));
             } else {
                 edgeStates.add(gameState);
-                writer.append("GS_%d [shape=record,style=dashed,label=\"GS_%d %s|%d\"]\n".formatted(id,id,
-                        toDotString(gameState.adam().move()), gameState.priority()));
             }
         });
 
@@ -359,9 +355,31 @@ public final class DotWriter {
         paths.forEach((src, edgeArr) -> {
             for (PriorityState<S> edge : edgeArr) {
                 if (edgeStates.contains(edge)) {
-                    var label = "[label=\"GS_%d %s|%d\"]\n".formatted(gameIds.getInt(edge),toDotString(edge.adam().move()), edge.priority());
                     for (PriorityState<S> dst : paths.get(edge)) {
-                        writer.append("GS_%d -> GS_%d %s\n".formatted(gameIds.getInt(src), gameIds.getInt(dst), label));
+                        // Get source and destination states from the inputGame perspective
+                        var sourceState = src.eve().historyState().state();
+                        var destState = dst.eve().historyState().state();
+
+                        // Get non-suspect agents in destination state
+                        var nonSuspectAgents = inputGame.agents().stream()
+                            .filter(agent -> !dst.eve().suspects().contains(agent))
+                            .collect(Collectors.toSet());
+
+                        // Get transitions where non-suspect agents' moves match edge.adam().move()
+                        var transitions = inputGame.transitions(sourceState).stream()
+                            .filter(t -> t.destination().equals(destState))
+                            .filter(t -> nonSuspectAgents.stream()
+                                .allMatch(agent -> t.move().action(agent).equals(edge.adam().move().action(agent))))
+                            .map(t -> toDotString(t.move()))
+                            .collect(Collectors.toList());
+
+                        var move = toDotString(edge.adam().move());
+                        if (!transitions.contains(move) && ! transitions.isEmpty()){
+                            move = transitions.get(0);
+                        }
+                        var label = "[label=\"%s|%d\"]\n".formatted(move, edge.priority());
+                        writer.append("GS_%d -> GS_%d %s // Transitions: %s\n"
+                                .formatted(gameIds.getInt(src), gameIds.getInt(dst), label, transitions));
                     }
                 }
             }
