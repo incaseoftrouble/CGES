@@ -335,8 +335,28 @@ public final class DotWriter {
                     loopIds.getInt(lasso.successor(runState)), toDotString(move)));
             punishmentStrategy.states(runState.historyState(), move).stream()
                     .filter(s -> !s.eve().historyState().equals(lasso.successor(runState).historyState()))
-                    .forEach(punishmentState -> writer.append("HS_%d -> GS_%d [style=dotted];\n".formatted(id,
-                            gameIds.getInt(punishmentState))));
+                    .forEach(punishmentState -> {
+                        // Get source and destination states from inputGame perspective
+                        var sourceState = runState.historyState().state();
+                        var destState = punishmentState.eve().historyState().state();
+
+                        // Get non-suspect agents in destination state
+                        var nonSuspectAgents = inputGame.agents().stream()
+                            .filter(agent -> !punishmentState.eve().suspects().contains(agent))
+                            .collect(Collectors.toSet());
+
+                        // Filter transitions where non-suspect agents' moves match the move
+                        var transitions = inputGame.transitions(sourceState).stream()
+                            .filter(t -> t.destination().equals(destState))
+                            .filter(t -> nonSuspectAgents.stream()
+                                .allMatch(agent -> t.move().action(agent).equals(move.action(agent))))
+                            .map(t -> toDotString(t.move()))
+                            .collect(Collectors.toList());
+
+                        writer.append("HS_%d -> GS_%d [style=dotted,label=\"%s\"];\n".formatted(
+                            id, gameIds.getInt(punishmentState), 
+                            transitions.isEmpty() ? "none" : String.join(", ", transitions)));
+                    });
         });
         var paths = new HashMap<PriorityState<S>, ArrayList<PriorityState<S>>>();
         gameIds.forEach((gameState, id) -> {
