@@ -354,7 +354,7 @@ public final class DotWriter {
                             .collect(Collectors.toList());
 
                         writer.append("HS_%d -> GS_%d [style=dotted,label=\"%s\"];\n".formatted(
-                            id, gameIds.getInt(punishmentState), 
+                            id, gameIds.getInt(punishmentState),
                             transitions.isEmpty() ? "none" : String.join(", ", transitions)));
                     });
         });
@@ -394,12 +394,12 @@ public final class DotWriter {
                             .collect(Collectors.toList());
 
                         var move = toDotString(edge.adam().move());
-                        if (!transitions.contains(move) && ! transitions.isEmpty()){
-                            move = transitions.get(0);
+                        if (!transitions.isEmpty()){
+                            move = String.join(", ", transitions);
                         }
-                        var label = "[label=\"%s|%d\"]\n".formatted(move, edge.priority());
-                        writer.append("GS_%d -> GS_%d %s // Transitions: %s\n"
-                                .formatted(gameIds.getInt(src), gameIds.getInt(dst), label, transitions));
+                        var label = "[label=\"%s\"]".formatted(move);
+                        writer.append("GS_%d -> GS_%d %s\n"
+                                .formatted(gameIds.getInt(src), gameIds.getInt(dst), label));
                     }
                 }
             }
