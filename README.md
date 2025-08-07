@@ -2,6 +2,15 @@
 
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
+---
+
+## ExCoS 2025 Workshop Materials
+
+- **Extended Abstract**: [ExCoS2025-ExtendedAbstract.pdf](https://github.com/incaseoftrouble/CGES/blob/master/ExCoS2025-ExtendedAbstract.pdf)
+- **Presentation Slides**: [ExCoS2025-Presentation.pdf](https://github.com/incaseoftrouble/CGES/blob/master/ExCoS2025-Presentation.pdf)
+
+---
+
 ## Overview
 
 CGES (Concurrent Game Equilibrium Solver) is a Java-based tool for computing and explaining Nash equilibria in multi-agent systems with Linear Temporal Logic (LTL) objectives. Version 0.1 focuses on improving both performance and explainability in rational synthesis through efficient algorithms and comprehensive visualization options.
