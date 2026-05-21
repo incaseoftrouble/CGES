@@ -346,12 +346,16 @@ public final class DotWriter {
                             .collect(Collectors.toSet());
 
                         // Filter transitions where non-suspect agents' moves match the move
-                        var transitions = inputGame.transitions(sourceState).stream()
-                            .filter(t -> t.destination().equals(destState))
-                            .filter(t -> nonSuspectAgents.stream()
-                                .allMatch(agent -> t.move().action(agent).equals(move.action(agent))))
-                            .map(t -> toDotString(t.move()))
-                            .collect(Collectors.toList());
+						var transitions = inputGame.transitions(sourceState).stream()
+							.filter(t -> t.destination().equals(destState))
+							.filter(t -> nonSuspectAgents.stream()
+								.allMatch(agent -> t.move().action(agent).equals(move.action(agent))))
+						// New filter: keep only moves where exactly ONE agent deviates
+							.filter(t -> inputGame.agents().stream()
+								.filter(agent -> !t.move().action(agent).equals(move.action(agent)))
+								.count() == 1)
+							.map(t -> toDotString(t.move()))
+							.collect(Collectors.toList());
 
                         writer.append("HS_%d -> GS_%d [style=dotted,label=\"%s\"];\n".formatted(
                             id, gameIds.getInt(punishmentState),
@@ -386,12 +390,16 @@ public final class DotWriter {
                             .collect(Collectors.toSet());
 
                         // Get transitions where non-suspect agents' moves match edge.adam().move()
-                        var transitions = inputGame.transitions(sourceState).stream()
-                            .filter(t -> t.destination().equals(destState))
-                            .filter(t -> nonSuspectAgents.stream()
-                                .allMatch(agent -> t.move().action(agent).equals(edge.adam().move().action(agent))))
-                            .map(t -> toDotString(t.move()))
-                            .collect(Collectors.toList());
+						var transitions = inputGame.transitions(sourceState).stream()
+							.filter(t -> t.destination().equals(destState))
+							.filter(t -> nonSuspectAgents.stream()
+								.allMatch(agent -> t.move().action(agent).equals(edge.adam().move().action(agent))))
+						// Single‑deviation filter: exactly one agent takes a different action
+							.filter(t -> inputGame.agents().stream()
+								.filter(agent -> !t.move().action(agent).equals(edge.adam().move().action(agent)))
+								.count() == 1)
+							.map(t -> toDotString(t.move()))
+							.collect(Collectors.toList());
 
                         var move = toDotString(edge.adam().move());
                         if (!transitions.isEmpty()){
