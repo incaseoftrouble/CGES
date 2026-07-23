@@ -401,11 +401,19 @@ public final class DotWriter {
 							.map(t -> toDotString(t.move()))
 							.collect(Collectors.toList());
 
-                        var move = toDotString(edge.adam().move());
-                        if (!transitions.isEmpty()){
-                            move = String.join(", ", transitions);
-                        }
-                        var label = "[label=\"%s\"]".formatted(move);
+						String move;
+						
+						// Determine if this transition is the compliant "proposed" move
+						                boolean isCompliant = dst.eve().equals(suspectGame.compliantSuccessor(edge.adam()));
+						
+						if (isCompliant) {
+						    move = toDotString(edge.adam().move());  // Always use proposed move
+						} else {
+						    move = transitions.isEmpty() ? "none" : String.join(", ", transitions);
+						}
+		                String style = isCompliant ? "" : "style=dotted";
+		               
+		                var label = "[label=\"%s\",%s]".formatted(move, style);
                         writer.append("GS_%d -> GS_%d %s\n"
                                 .formatted(gameIds.getInt(src), gameIds.getInt(dst), label));
                     }
