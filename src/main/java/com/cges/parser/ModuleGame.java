@@ -160,7 +160,7 @@ public class ModuleGame<S> implements ConcurrentGame<ModuleState<S>> {
 
         @Override
         public String dotString() {
-            return transition.stream().map(Action::name).collect(Collectors.joining(""));
+            return transition.stream().map(Action::name).collect(Collectors.joining(", "));
         }
 
         @Override
