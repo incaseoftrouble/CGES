@@ -117,7 +117,7 @@ final class ExplicitGame<S> implements ConcurrentGame<S> {
         @Override
         public String dotString() {
             return actions.entrySet().stream().sorted(Map.Entry.comparingByKey(Comparator.comparing(Agent::name)))
-                            .map(Map.Entry::getValue).map(Action::name).collect(Collectors.joining());
+                            .map(Map.Entry::getValue).map(Action::name).collect(Collectors.joining(", "));
         }
 
         @Override
