@@ -1,0 +1,43 @@
+{
+  "name": "amm_lvr_game",
+  "type": "explicit",
+  "ap": ["in_range", "lvr_leak", "rebalanced"],
+  "goal": "FG (!rebalanced)",
+  "agents": {
+    "LP": {
+      "goal": "GF in_range",
+      "payoff": "1",
+      "actions": ["provide", "withdraw"]
+    },
+    "Arb": {
+      "goal": "GF (lvr_leak & X lvr_leak)",
+      "payoff": "0",
+      "actions": ["snipe", "idle"]
+    }
+  },
+  "arena": {
+    "initial": "s_normal",
+    "states": {
+      "s_normal": {
+        "labels": ["in_range"],
+        "transitions": [
+          {"actions": {"LP": "provide", "Arb": "idle"}, "to": "s_normal"},
+          {"actions": {"LP": "provide", "Arb": "snipe"}, "to": "s_shock"}
+        ]
+      },
+      "s_shock": {
+        "labels": ["lvr_leak"],
+        "transitions": [
+          {"actions": {"LP": "provide", "Arb": "snipe"}, "to": "s_shock"},
+          {"actions": {"LP": "withdraw", "Arb": "*"}, "to": "s_hedged"}
+        ]
+      },
+      "s_hedged": {
+        "labels": ["rebalanced"],
+        "transitions": [
+          {"actions": {"LP": "provide", "Arb": "idle"}, "to": "s_normal"}
+        ]
+      }
+    }
+  }
+}
