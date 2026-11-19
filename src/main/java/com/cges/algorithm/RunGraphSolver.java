@@ -78,12 +78,17 @@ public final class RunGraphSolver {
 
         // Construct the sequence of moves to obtain the lasso
         Map<RunState<S>, Move> runGraphMoves = new HashMap<>();
+        var deviationSolver = (DeviationSolver<S>) graph.deviationStrategy();        
         while (iterator.hasNext()) {
             var next = iterator.next();
+			var from = current; // effectively final copy for the lambda            
             // TODO Bit ugly, could maybe store this information when constructing the lasso
-            Move move = suspectGame.historyGame().transitions(current.historyState())
-                            .filter(t -> t.destination().equals(next.historyState())).map(Transition::move).iterator()
-                            .next();
+            Move move = suspectGame.historyGame().transitions(from.historyState())
+            .filter(t -> t.destination().equals(next.historyState()))
+            .map(Transition::move)
+            .filter(m -> deviationSolver.hasNoLosingDeviation(from.historyState(), m))
+            .findFirst()
+            .orElseThrow();
             runGraphMoves.put(current, move);
 
             // For each deviation, provide a proof that we can punish someone
